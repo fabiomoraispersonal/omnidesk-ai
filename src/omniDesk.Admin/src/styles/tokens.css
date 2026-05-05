@@ -1,0 +1,169 @@
+/* ============================================================ */
+/* OmniDesk — Design Tokens                                     */
+/* Source of truth for all visual constants.                    */
+/* DO NOT use hardcoded hex/rgb values in component stylesheets.*/
+/* ============================================================ */
+
+/* === PRIMARY (Olive Green) === */
+--color-primary-50:  #F0F2ED;
+--color-primary-100: #D9DDD3;
+--color-primary-200: #B3BBAA;
+--color-primary-300: #8E9980;
+--color-primary-400: #7E8D6C;
+--color-primary-500: #6F7D5C;
+--color-primary-600: #5E6B4E;
+--color-primary-700: #4A563E;
+--color-primary-800: #37402F;
+--color-primary-900: #242A1F;
+
+/* === SECONDARY === */
+--color-secondary-500: #A8A29E;
+
+/* === SEMANTIC === */
+--color-success: #7A9E7E;
+--color-warning: #C08A4D;
+--color-danger:  #B85C5C;
+--color-info:    #6B8FAB;
+
+/* === SURFACE (Light mode — default) === */
+--color-surface-0:   #FFFFFF;
+--color-surface-50:  #F4F1EC;
+--color-surface-100: #EDE7DF;
+--color-surface-200: #E0D9CF;
+
+/* === TEXT (Light mode) === */
+--color-text-primary: #2F2F2F;
+--color-text-secondary: #555555;
+--color-text-muted:   #7A7A7A;
+--color-text-inverse: #FFFFFF;
+
+/* === BORDER / ACCENT (Light mode) === */
+--color-border: #E5E0D8;
+--color-accent: #D6CFC7;
+
+/* === TYPOGRAPHY === */
+--font-family-base: 'Manrope', 'Inter', system-ui, -apple-system, sans-serif;
+--font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+--font-size-xs:   11px;
+--font-size-sm:   13px;
+--font-size-base: 14px;
+--font-size-md:   16px;
+--font-size-lg:   18px;
+--font-size-xl:   20px;
+--font-size-2xl:  24px;
+--font-size-3xl:  30px;
+
+--font-weight-normal:   400;
+--font-weight-medium:   500;
+--font-weight-semibold: 600;
+--font-weight-bold:     700;
+
+--line-height-tight:   1.25;
+--line-height-normal:  1.5;
+--line-height-relaxed: 1.75;
+
+/* === SPACING === */
+--spacing-1:  4px;
+--spacing-2:  8px;
+--spacing-3:  12px;
+--spacing-4:  16px;
+--spacing-5:  20px;
+--spacing-6:  24px;
+--spacing-8:  32px;
+--spacing-10: 40px;
+--spacing-12: 48px;
+
+/* === BORDER RADIUS === */
+--radius-sm:   6px;
+--radius-md:   8px;
+--radius-lg:   12px;
+--radius-xl:   16px;
+--radius-full: 9999px;
+
+/* === SHADOWS (very soft — never exceed --shadow-md in components) === */
+--shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+--shadow-sm: 0 1px 4px 0 rgb(0 0 0 / 0.06);
+--shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.07);
+--shadow-lg: 0 8px 24px 0 rgb(0 0 0 / 0.08);
+
+/* ============================================================ */
+/* DARK MODE — activated by .dark class on <html>               */
+/* Never use #000000 as a surface color.                        */
+/* ============================================================ */
+
+.dark {
+  /* === SURFACE (Dark — warm darks, no pure black) === */
+  --color-surface-0:   #2A2A2A;
+  --color-surface-50:  #1E1E1E;
+  --color-surface-100: #333333;
+  --color-surface-200: #3D3D3D;
+  --color-surface-800: #2A2A2A;
+  --color-surface-900: #1E1E1E;
+
+  /* === TEXT (Dark) === */
+  --color-text-primary:   #EFEFEF;
+  --color-text-secondary: #CCCCCC;
+  --color-text-muted:     #9A9A9A;
+  --color-text-inverse:   #1E1E1E;
+
+  /* === BORDER / ACCENT (Dark) === */
+  --color-border: #3A3A3A;
+  --color-accent: #444444;
+
+  /* === SEMANTIC (slightly adjusted for dark contrast) === */
+  --color-success: #8FB994;
+  --color-warning: #D4A06A;
+  --color-danger:  #CC7070;
+}
+
+/* ============================================================ */
+/* COMPONENT PATTERNS                                           */
+/* Reference only — apply via class utilities or component CSS  */
+/* ============================================================ */
+
+/*
+  .btn-primary {
+    background: var(--color-primary-500);
+    color: var(--color-text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+  }
+  .btn-primary:hover { background: var(--color-primary-600); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  input, .p-inputtext, textarea, select {
+    background: var(--color-surface-50);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  input:focus, .p-inputtext:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgb(111 125 92 / 0.15);
+  }
+
+  .card {
+    background: var(--color-surface-0);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--spacing-6);
+  }
+
+  .sidebar {
+    background: var(--color-surface-0);
+    border-right: 1px solid var(--color-border);
+  }
+  .sidebar-item.active {
+    background: var(--color-surface-100);
+    border-left: 3px solid var(--color-primary-500);
+    color: var(--color-primary-600);
+    font-weight: var(--font-weight-medium);
+  }
+*/
