@@ -1,0 +1,44 @@
+# Node / Angular
+node_modules/
+dist/
+.angular/
+.npm/
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+.vs/
+packages/
+*.nupkg
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Test output
+coverage/
+TestResults/
+
+# MinIO / uploads (local dev)
+minio-data/
+
+# Secrets — never commit
+*.pem
+*.key
+*.pfx
