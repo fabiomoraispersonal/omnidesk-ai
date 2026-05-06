@@ -1,0 +1,5 @@
+@if (authService.currentUser()?.isImpersonation) {
+  <div class="impersonation-banner" role="alert">
+    Você está acessando como admin SaaS. Esta sessão expira em 5 minutos.
+  </div>
+}
