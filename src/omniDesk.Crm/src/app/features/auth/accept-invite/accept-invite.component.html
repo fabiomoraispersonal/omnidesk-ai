@@ -1,0 +1,35 @@
+<div class="accept-invite-container">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <h1>Aceitar convite</h1>
+    <p>Complete o seu cadastro para acessar o OmniDesk.</p>
+
+    @if (error()) {
+      <div class="error-message" role="alert">{{ error() }}</div>
+    }
+
+    <div class="field">
+      <label for="name">Seu nome</label>
+      <input id="name" type="text" formControlName="name" autocomplete="name" />
+    </div>
+
+    <div class="field">
+      <label for="password">Criar senha</label>
+      <input id="password" type="password" formControlName="password" autocomplete="new-password" />
+      @if (form.get('password')?.hasError('minlength')) {
+        <span class="field-error">Mínimo de 8 caracteres</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="confirmPassword">Confirmar senha</label>
+      <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" />
+      @if (form.hasError('passwordsMismatch')) {
+        <span class="field-error">As senhas não coincidem</span>
+      }
+    </div>
+
+    <button type="submit" [disabled]="form.invalid || loading()">
+      @if (loading()) { Salvando... } @else { Criar conta e acessar }
+    </button>
+  </form>
+</div>
