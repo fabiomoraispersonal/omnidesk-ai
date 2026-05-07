@@ -7,6 +7,7 @@ public static class MeEndpointRegistration
         GetProfileEndpoint.Map(me);
         UpdateProfileEndpoint.Map(me);
         ChangePasswordEndpoint.Map(me);
+        GetPermissionsEndpoint.Map(me);
         return app;
     }
 }

@@ -71,14 +71,14 @@ it('converts UTC to São Paulo time', () => {
    `"turnstileToken": "<non-empty string>"`.
 5. Make a direct `curl` POST to `/api/auth/login` without the token:
    ```bash
-   curl -X POST https://api.omnideskcrm.com.br/api/auth/login \
+   curl -X POST https://api.omnicare.ia.br/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"email":"test@test.com","password":"pass"}'
    ```
    Expected: HTTP 400 (missing required field) or HTTP 403.
 6. Make a POST with a forged token:
    ```bash
-   curl -X POST https://api.omnideskcrm.com.br/api/auth/login \
+   curl -X POST https://api.omnicare.ia.br/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"email":"test@test.com","password":"pass","turnstileToken":"fake"}'
    ```

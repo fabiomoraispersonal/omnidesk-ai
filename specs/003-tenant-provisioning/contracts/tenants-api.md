@@ -240,7 +240,7 @@ Gera token JWT de impersonation (15 min, não renovável) e retorna URL de redir
 ```json
 {
   "impersonation_token": "<jwt>",
-  "redirect_url": "https://clinica-abc.omnideskcrm.com.br/impersonate?token=<jwt>",
+  "redirect_url": "https://clinica-abc.omnicare.ia.br/impersonate?token=<jwt>",
   "expires_at": "2026-05-06T15:15:00Z"
 }
 ```

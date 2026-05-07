@@ -151,7 +151,7 @@ $argon2id$v=19$m=65536,t=3,p=1$<salt_base64>$<hash_base64>
 **Fluxo**:
 1. saas_admin chama `POST /api/admin/tenants/{slug}/impersonate`
 2. API retorna `{ "impersonation_token": "<jwt>" }`
-3. Admin frontend redireciona para `{slug}.omnideskcrm.com.br/impersonate?token=<jwt>`
+3. Admin frontend redireciona para `{slug}.omnicare.ia.br/impersonate?token=<jwt>`
 4. CRM valida o token (mesma chave pública RSA), detecta `impersonation: true`, armazena em memória
 5. Middleware de auditoria adiciona `impersonated_by` em todos os logs enquanto `impersonation: true` estiver no token
 

@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     totp_enabled   boolean      NOT NULL DEFAULT false,
     last_login_at  timestamptz,
     created_at     timestamptz  NOT NULL DEFAULT now(),
-    updated_at     timestamptz  NOT NULL DEFAULT now()
+    updated_at     timestamptz  NOT NULL DEFAULT now(),
+    deactivated_at timestamptz
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON public.users (email);

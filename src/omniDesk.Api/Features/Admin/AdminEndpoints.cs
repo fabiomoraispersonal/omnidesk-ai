@@ -1,4 +1,5 @@
 using omniDesk.Api.Features.Admin.AgentTemplates;
+using omniDesk.Api.Features.Admin.Impersonate;
 using omniDesk.Api.Features.Admin.Tenants;
 
 namespace omniDesk.Api.Features.Admin;
@@ -9,6 +10,7 @@ public static class AdminEndpointRegistration
     {
         TenantsEndpoints.Map(admin);
         AgentTemplatesEndpoints.Map(admin);
+        ImpersonateEndpoint.Map(admin);
         return app;
     }
 }

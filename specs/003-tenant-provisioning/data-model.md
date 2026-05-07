@@ -53,7 +53,7 @@ Schema Postgres:  tenant_{slug}          (hífens → underscore)
 Bucket MinIO:     tenant-{slug}
 Database MongoDB: tenant_{slug}          (hífens → underscore)
 Prefixo Redis:    {slug}:
-Subdomínio:       {slug}.omnideskcrm.com.br
+Subdomínio:       {slug}.omnicare.ia.br
 ```
 
 ---

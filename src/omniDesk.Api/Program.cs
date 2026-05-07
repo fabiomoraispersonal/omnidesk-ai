@@ -1,7 +1,15 @@
 using Hangfire;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Minio;
 using MongoDB.Driver;
+using omniDesk.Api.Features.Authorization.Impersonation;
+using omniDesk.Api.Features.Authorization.Policies;
+using omniDesk.Api.Features.Authorization.UserLifecycle;
 using omniDesk.Api.Infrastructure.Auth;
+using omniDesk.Api.Infrastructure.Authentication;
+using omniDesk.Api.Infrastructure.Authorization;
 using omniDesk.Api.Infrastructure.Jobs;
 using omniDesk.Api.Infrastructure.Security;
 using omniDesk.Api.Infrastructure.Tenants;
@@ -16,12 +24,28 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((ctx, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
     .Enrich.FromLogContext()
+    .Enrich.With<ImpersonationAuditEnricher>()
     .WriteTo.Console(outputTemplate:
         "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"));
 
 builder.Services.AddAuthInfrastructure(builder.Configuration);
 builder.Services.AddAuthRateLimiting();
 builder.Services.AddTenantInfrastructure(builder.Configuration);
+
+// Spec 004 — Authorization framework (Roles e Permissões)
+ImpersonationTokenIssuer.ValidateStartupConfig(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ClaimsCache>();
+builder.Services.AddScoped<IClaimsTransformation, ClaimsTransformer>();
+builder.Services.AddSingleton<IAuthorizationHandler, RoleRequirementHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, ForbidsDuringImpersonationHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, DepartmentScopeHandler>();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<ImpersonationTokenIssuer>();
+builder.Services.AddScoped<LastTenantAdminGuard>();
+builder.Services.AddScoped<DeactivateUserCommandHandler>();
+builder.Services.AddScoped<ReactivateUserCommandHandler>();
+AuthorizationPoliciesRegistration.Register(builder.Services);
 
 builder.Services.AddCors(options =>
 {
@@ -45,6 +69,8 @@ app.UseExceptionHandler();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+// Spec 004 (R7) — capture authorization denials with PT-BR body and Warning log.
+app.UseAuthorizationFailureLogging();
 app.UseRateLimiter();
 
 app.UseHangfireDashboard("/hangfire");
@@ -68,9 +94,15 @@ var me = api.MapGroup("/me")
 app.MapMeEndpoints(me);
 
 var admin = api.MapGroup("/admin")
-               .RequireAuthorization()
+               .RequireAuthorization(Policies.PainelAdminAccess)
                .AddEndpointFilter<ImpersonationAuditFilter>();
 app.MapAdminEndpoints(admin);
+
+// Spec 004 — User lifecycle (deactivate/reactivate) under /api/users
+var users = api.MapGroup("/users")
+               .RequireAuthorization()
+               .AddEndpointFilter<ImpersonationAuditFilter>();
+UserLifecycleEndpoints.Map(users);
 
 app.Run();
 

@@ -1,52 +1,71 @@
-using System.Security.Claims;
-using omniDesk.Api.Domain.Users;
-using omniDesk.Api.Infrastructure.Security;
+using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Authorization;
+using omniDesk.Api.Domain.Tenants;
+using omniDesk.Api.Features.Authorization.Impersonation;
+using omniDesk.Api.Infrastructure.Persistence;
 
 namespace omniDesk.Api.Features.Admin.Impersonate;
 
 public record ImpersonateResponse(
     string ImpersonationToken,
     DateTimeOffset ExpiresAt,
-    string RedirectUrl);
+    string RedirectUrl,
+    string Jti);
 
 public static class ImpersonateEndpoint
 {
     public static void Map(RouteGroupBuilder group)
     {
-        group.MapPost("/tenants/{slug}/impersonate", HandleAsync)
+        // Spec 004 contract: POST /admin/tenants/{slug}/impersonation (PainelAdmin scope).
+        // Legacy /impersonate is kept as alias for backwards compatibility.
+        group.MapPost("/tenants/{slug}/impersonation", HandleAsync)
              .WithName("ImpersonateTenant")
-             .RequireAuthorization();
+             .RequireAuthorization(Policies.PainelAdminAccess);
+
+        group.MapPost("/tenants/{slug}/impersonate", HandleAsync)
+             .WithName("ImpersonateTenantLegacy")
+             .RequireAuthorization(Policies.PainelAdminAccess);
     }
 
     private static async Task<IResult> HandleAsync(
         string slug,
-        ClaimsPrincipal principal,
-        IUserRepository users,
-        JwtService jwt,
+        AppDbContext db,
+        ImpersonationTokenIssuer issuer,
         IConfiguration config,
+        ILogger<ImpersonateResponse> logger,
         CancellationToken ct)
     {
-        var currentRole = principal.FindFirst("role")?.Value;
-        if (currentRole != "SaasAdmin")
-            return Results.Problem(
-                detail: "Only saas_admin can impersonate tenants.",
-                statusCode: 403,
-                extensions: new Dictionary<string, object?> { ["code"] = "forbidden" });
+        var tenant = await db.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Slug == slug, ct);
 
-        var currentUserId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? principal.FindFirst("sub")!.Value);
+        if (tenant is null)
+            return Results.NotFound(new
+            {
+                success = false,
+                error = new { code = "TENANT_NOT_FOUND", message = "Tenant não encontrado." }
+            });
 
-        // In V1, tenant lookup is by slug via users table (tenant_id must be resolved)
-        // When the Tenants module is implemented, this will query a tenants repository.
-        // For now, we derive tenant_id from an existing user with that slug context.
-        var tenantId = Guid.NewGuid(); // Placeholder — replaced when Tenants module is implemented
+        if (tenant.Status != TenantStatus.Active)
+            return Results.UnprocessableEntity(new
+            {
+                success = false,
+                error = new
+                {
+                    code = "TENANT_NOT_ACTIVE",
+                    message = "Apenas tenants ativos podem ser impersonados."
+                }
+            });
+
         var crmBaseUrl = config["FRONTEND_CRM_BASE_URL"]
             ?? $"https://{slug}.omnideskcrm.com.br";
 
-        var token = jwt.GenerateImpersonationToken(tenantId, slug, currentUserId);
-        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(5);
-        var redirectUrl = $"{crmBaseUrl}/dashboard?token={token}";
+        var token = issuer.Issue(slug, tenant.Id);
 
-        return Results.Ok(new ImpersonateResponse(token, expiresAt, redirectUrl));
+        logger.LogInformation(
+            "ImpersonationTokenIssued {TenantSlug} {TenantId} {Jti} {ExpiresAt}",
+            slug, tenant.Id, token.Jti, token.ExpiresAt);
+
+        var redirectUrl = $"{crmBaseUrl}/impersonate?token={Uri.EscapeDataString(token.Token)}";
+        return Results.Ok(new ImpersonateResponse(token.Token, token.ExpiresAt, redirectUrl, token.Jti));
     }
 }

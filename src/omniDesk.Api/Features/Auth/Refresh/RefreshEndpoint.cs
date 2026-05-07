@@ -23,6 +23,16 @@ public static class RefreshEndpoint
         JwtService jwt,
         CancellationToken ct)
     {
+        // Spec 004 (FR-029, T046): impersonation tokens have no refresh — reject explicitly.
+        if (string.Equals(context.User.FindFirst("impersonating")?.Value, "true",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.Problem(
+                detail: "Sessões de suporte (impersonation) não podem ser renovadas. Gere um novo token no Painel Admin.",
+                statusCode: 400,
+                extensions: new Dictionary<string, object?> { ["code"] = "impersonation_not_refreshable" });
+        }
+
         var rawToken = context.Request.Cookies["refresh_token"];
 
         if (string.IsNullOrEmpty(rawToken))

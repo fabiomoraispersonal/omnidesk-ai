@@ -89,7 +89,7 @@ public static class AuthExtensions
                         ctx.Response.ContentType = "application/problem+json";
                         return ctx.Response.WriteAsJsonAsync(new
                         {
-                            type = "https://omnideskcrm.com.br/errors/unauthorized",
+                            type = "https://omnicare.ia.br/errors/unauthorized",
                             title = "Unauthorized",
                             status = 401,
                             detail = "Authentication required.",
@@ -102,7 +102,7 @@ public static class AuthExtensions
                         ctx.Response.ContentType = "application/problem+json";
                         return ctx.Response.WriteAsJsonAsync(new
                         {
-                            type = "https://omnideskcrm.com.br/errors/forbidden",
+                            type = "https://omnicare.ia.br/errors/forbidden",
                             title = "Forbidden",
                             status = 403,
                             detail = "You do not have permission to perform this action.",

@@ -1,5 +1,11 @@
-@if (authService.currentUser()?.isImpersonation) {
-  <div class="impersonation-banner" role="alert">
-    Você está acessando como admin SaaS. Esta sessão expira em 5 minutos.
+@if (visible()) {
+  <div class="impersonation-banner" role="alert" aria-live="polite">
+    <span>
+      Sessão de suporte (<strong>admin SaaS</strong>) — expira em
+      <strong>{{ remaining() }}</strong>
+    </span>
+    <button type="button" (click)="endNow()" aria-label="Encerrar agora">
+      Encerrar agora
+    </button>
   </div>
 }

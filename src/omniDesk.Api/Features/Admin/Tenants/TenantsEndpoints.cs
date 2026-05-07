@@ -303,7 +303,7 @@ public static class TenantsEndpoints
 
         var token = jwt.GenerateImpersonationToken(tenant.Id, tenant.Slug, saasAdminId);
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
-        var crmBase = config["FRONTEND_CRM_BASE_URL"] ?? $"https://{tenant.Slug}.omnideskcrm.com.br";
+        var crmBase = config["FRONTEND_CRM_BASE_URL"] ?? $"https://{tenant.Slug}.omnicare.ia.br";
         var redirectUrl = $"{crmBase}/impersonate?token={token}";
 
         return Results.Ok(new
