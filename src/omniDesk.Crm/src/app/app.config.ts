@@ -11,6 +11,7 @@ import { provideNgxMask } from 'ngx-mask';
 import { routes } from './app.routes';
 import { environment } from '../environments/environment';
 import { TURNSTILE_SITE_KEY } from './core/tokens/turnstile.tokens';
+import { tenantAccessInterceptor } from './core/tenant-access.interceptor';
 
 registerLocaleData(localePt);
 
@@ -51,7 +52,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withInterceptors([])),
+    provideHttpClient(withInterceptors([tenantAccessInterceptor])),
     provideAnimationsAsync(),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
     providePrimeNG({

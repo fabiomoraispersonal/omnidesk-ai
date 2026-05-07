@@ -16,7 +16,7 @@ public sealed class ImpersonationAuditFilter : IEndpointFilter
         var httpContext = context.HttpContext;
         var user = httpContext.User;
 
-        var isImpersonation = user.FindFirst("impersonation")?.Value == "true";
+        var isImpersonation = user.FindFirst("impersonating")?.Value == "true";
         if (isImpersonation)
         {
             var impersonatedBy = user.FindFirst("impersonated_by")?.Value;

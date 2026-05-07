@@ -1,6 +1,12 @@
+using Hangfire;
+using Minio;
+using MongoDB.Driver;
 using omniDesk.Api.Infrastructure.Auth;
+using omniDesk.Api.Infrastructure.Jobs;
 using omniDesk.Api.Infrastructure.Security;
+using omniDesk.Api.Infrastructure.Tenants;
 using Serilog;
+using StackExchange.Redis;
 using omniDesk.Api.Features.Admin;
 using omniDesk.Api.Features.Auth;
 using omniDesk.Api.Features.Me;
@@ -15,6 +21,7 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 builder.Services.AddAuthInfrastructure(builder.Configuration);
 builder.Services.AddAuthRateLimiting();
+builder.Services.AddTenantInfrastructure(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
@@ -39,6 +46,15 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+
+app.UseHangfireDashboard("/hangfire");
+
+RecurringJob.AddOrUpdate<TenantMetricsCollectorJob>(
+    "tenant-metrics-collector",
+    job => job.RunAsync(CancellationToken.None),
+    "*/5 * * * *");
+
+await app.SeedDatabaseAsync();
 
 var api = app.MapGroup("/api");
 

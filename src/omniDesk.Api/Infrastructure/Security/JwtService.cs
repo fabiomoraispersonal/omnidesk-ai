@@ -101,10 +101,10 @@ public class JwtService
             new("role", UserRole.TenantAdmin.ToString()),
             new("tenant_id", tenantId.ToString()),
             new("tenant_slug", tenantSlug),
-            new("impersonation", "true"),
+            new("impersonating", "true"),
             new("impersonated_by", impersonatedBy.ToString())
         };
-        return BuildToken(claims, TimeSpan.FromMinutes(5));
+        return BuildToken(claims, TimeSpan.FromMinutes(15));
     }
 
     public TokenValidationParameters GetValidationParameters() => _validationParameters;
