@@ -132,7 +132,7 @@ O administrador do SaaS pode acessar temporariamente o painel de um tenant como 
 
 **Autenticação Base — US1**
 
-- **FR-001**: O sistema DEVE permitir autenticação com e-mail e senha nos dois contextos independentes: Admin SaaS (`admin.omnideskcrm.com.br`) e CRM do Tenant (`{slug}.omnideskcrm.com.br`).
+- **FR-001**: O sistema DEVE permitir autenticação com e-mail e senha nos dois contextos independentes: Admin SaaS (`admin.omnicare.ia.br`) e CRM do Tenant (`{slug}.omnicare.ia.br`).
 - **FR-002**: Após autenticação bem-sucedida, o sistema DEVE emitir um token de acesso de curta duração (15 minutos) e um token de renovação de longa duração.
 - **FR-003**: O token de renovação DEVE ter duração de 7 dias por padrão; quando o usuário marca "lembrar-me", a duração DEVE ser de 30 dias.
 - **FR-004**: O sistema DEVE renovar automaticamente o token de acesso usando o token de renovação, sem interromper o fluxo do usuário.

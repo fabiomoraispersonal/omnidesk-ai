@@ -40,6 +40,18 @@ public static class SendInviteEndpoint
                 statusCode: 400,
                 extensions: new Dictionary<string, object?> { ["code"] = "invalid_role" });
 
+        // Spec 004 (T031, FR-002): saas_admin cannot be created via the CRM context.
+        if (role == UserRole.SaasAdmin)
+            return Results.UnprocessableEntity(new
+            {
+                success = false,
+                error = new
+                {
+                    code = "INVALID_ROLE_SAAS_ADMIN",
+                    message = "A role saas_admin não pode ser atribuída a usuários de tenant. Saas_admin é exclusivo do Painel Admin."
+                }
+            });
+
         var emailNorm = request.Email.ToLowerInvariant();
         var exists = await users.ExistsByEmailAsync(emailNorm, ct);
         if (exists)
@@ -74,7 +86,7 @@ public static class SendInviteEndpoint
         await inviteTokens.CreateAsync(invite, ct);
 
         var tenantSlug = principal.FindFirst("tenant_slug")?.Value ?? "app";
-        var baseUrl = config["FRONTEND_CRM_BASE_URL"] ?? $"https://{tenantSlug}.omnideskcrm.com.br";
+        var baseUrl = config["FRONTEND_CRM_BASE_URL"] ?? $"https://{tenantSlug}.omnicare.ia.br";
         var inviteLink = $"{baseUrl}/aceitar-convite?token={rawToken}";
 
         await email.SendInviteAsync(emailNorm, tenantSlug, inviteLink, ct);

@@ -14,5 +14,6 @@ public class User
     public DateTimeOffset? LastLoginAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
+    public DateTimeOffset? DeactivatedAt { get; set; }
     public string Name { get; set; } = string.Empty;
 }

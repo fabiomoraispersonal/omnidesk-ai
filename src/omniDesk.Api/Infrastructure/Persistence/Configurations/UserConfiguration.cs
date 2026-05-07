@@ -27,6 +27,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LastLoginAt).HasColumnName("last_login_at");
         builder.Property(u => u.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
         builder.Property(u => u.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
+        builder.Property(u => u.DeactivatedAt).HasColumnName("deactivated_at");
 
         builder.HasIndex(u => u.Email).IsUnique().HasDatabaseName("idx_users_email");
         builder.HasIndex(u => u.TenantId).HasDatabaseName("idx_users_tenant_id");

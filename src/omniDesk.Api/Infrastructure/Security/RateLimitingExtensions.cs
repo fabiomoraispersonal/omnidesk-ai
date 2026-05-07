@@ -21,7 +21,7 @@ public static class RateLimitingExtensions
                 ctx.HttpContext.Response.ContentType = "application/problem+json";
                 await ctx.HttpContext.Response.WriteAsJsonAsync(new
                 {
-                    type = "https://omnideskcrm.com.br/errors/rate-limit-exceeded",
+                    type = "https://omnicare.ia.br/errors/rate-limit-exceeded",
                     title = "Too Many Requests",
                     status = 429,
                     detail = "Too many attempts. Please wait 15 minutes before trying again.",

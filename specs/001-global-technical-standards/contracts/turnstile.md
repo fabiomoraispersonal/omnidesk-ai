@@ -39,7 +39,7 @@ public interface ITurnstileService
 {
   "success": true,
   "challenge_ts": "2026-05-05T17:00:00Z",
-  "hostname": "app.omnideskcrm.com.br",
+  "hostname": "app.omnicare.ia.br",
   "error-codes": []
 }
 ```

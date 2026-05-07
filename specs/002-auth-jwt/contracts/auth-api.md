@@ -414,7 +414,7 @@ Gera token de impersonation. Exclusivo para `saas_admin`.
 {
   "impersonation_token": "<jwt-5min>",
   "expires_at": "2026-05-05T14:05:00Z",
-  "redirect_url": "https://clinica-abc.omnideskcrm.com.br/impersonate?token=<jwt-5min>"
+  "redirect_url": "https://clinica-abc.omnicare.ia.br/impersonate?token=<jwt-5min>"
 }
 ```
 
@@ -432,7 +432,7 @@ Gera token de impersonation. Exclusivo para `saas_admin`.
 
 ```json
 {
-  "type": "https://omnideskcrm.com.br/errors/invalid_credentials",
+  "type": "https://omnicare.ia.br/errors/invalid_credentials",
   "title": "Credenciais inválidas",
   "status": 401,
   "detail": "E-mail ou senha incorretos.",

@@ -65,7 +65,9 @@ export class AuthService {
           name: '',
           role: payload['role'],
           tenantSlug: payload['tenant_slug'],
-          isImpersonation: payload['impersonation'] === 'true',
+          isImpersonation:
+            payload['impersonating'] === true ||
+            payload['impersonating'] === 'true',
         });
         history.replaceState(null, '', window.location.pathname);
         return of(true);

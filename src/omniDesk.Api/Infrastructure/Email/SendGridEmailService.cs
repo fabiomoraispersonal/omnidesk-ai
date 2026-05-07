@@ -13,7 +13,7 @@ public class SendGridEmailService : IEmailService
     {
         var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
             ?? throw new InvalidOperationException("SENDGRID_API_KEY not set");
-        _fromEmail = Environment.GetEnvironmentVariable("SENDGRID_FROM_EMAIL") ?? "noreply@omnideskcrm.com.br";
+        _fromEmail = Environment.GetEnvironmentVariable("SENDGRID_FROM_EMAIL") ?? "noreply@omnicare.ia.br";
         _fromName = "OmniDesk";
         _client = new SendGridClient(apiKey);
     }
@@ -52,7 +52,7 @@ public class SendGridEmailService : IEmailService
 
     public async Task SendTenantWelcomeAsync(string to, string recipientName, string slug, string email, string password, CancellationToken ct = default)
     {
-        var crmUrl = $"https://{slug}.omnideskcrm.com.br";
+        var crmUrl = $"https://{slug}.omnicare.ia.br";
         var msg = MailHelper.CreateSingleEmail(
             from: new EmailAddress(_fromEmail, _fromName),
             to: new EmailAddress(to),

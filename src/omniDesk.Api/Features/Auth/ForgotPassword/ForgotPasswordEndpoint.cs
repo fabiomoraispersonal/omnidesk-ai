@@ -56,7 +56,7 @@ public static class ForgotPasswordEndpoint
 
             await tokens.CreateAsync(resetToken, ct);
 
-            var baseUrl = config["FRONTEND_BASE_URL"] ?? "https://app.omnideskcrm.com.br";
+            var baseUrl = config["FRONTEND_BASE_URL"] ?? "https://app.omnicare.ia.br";
             var resetLink = $"{baseUrl}/redefinir-senha?token={rawToken}";
             await email.SendPasswordResetAsync(user.Email, resetLink, ct);
         }
