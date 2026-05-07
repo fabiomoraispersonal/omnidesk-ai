@@ -75,6 +75,18 @@ public static class AuthTestHelpers
         return (body.AccessToken, rawToken);
     }
 
+    public static async Task<string> GetSaasAdminTokenAsync(IServiceScope scope)
+    {
+        var user = await SeedUserAsync(
+            scope,
+            $"saas-admin-{Guid.NewGuid():N}@test.com",
+            "Admin@12345",
+            UserRole.SaasAdmin);
+        var jwt = scope.ServiceProvider
+            .GetRequiredService<omniDesk.Api.Infrastructure.Security.JwtService>();
+        return jwt.GenerateAccessToken(user);
+    }
+
     public static string ComputeSha256(string input)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(input);

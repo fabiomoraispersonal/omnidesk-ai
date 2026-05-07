@@ -49,4 +49,41 @@ public class SendGridEmailService : IEmailService
 
         await _client.SendEmailAsync(msg, ct);
     }
+
+    public async Task SendTenantWelcomeAsync(string to, string recipientName, string slug, string email, string password, CancellationToken ct = default)
+    {
+        var crmUrl = $"https://{slug}.omnideskcrm.com.br";
+        var msg = MailHelper.CreateSingleEmail(
+            from: new EmailAddress(_fromEmail, _fromName),
+            to: new EmailAddress(to),
+            subject: $"Seu ambiente OmniDesk está pronto",
+            plainTextContent: $"Olá, {recipientName}!\n\nSeu ambiente OmniDesk foi configurado com sucesso.\n\nAcesse em: {crmUrl}\nUsuário: {email}\nSenha: {password}\n\nRecomendamos que você altere sua senha no primeiro acesso.",
+            htmlContent: $"""
+                <p>Olá, {recipientName}!</p>
+                <p>Seu ambiente OmniDesk foi configurado com sucesso.</p>
+                <p>Acesse em: <a href="{crmUrl}">{crmUrl}</a></p>
+                <p><strong>Usuário:</strong> {email}<br/>
+                   <strong>Senha:</strong> {password}</p>
+                <p>Recomendamos que você altere sua senha no primeiro acesso.</p>
+                """);
+
+        await _client.SendEmailAsync(msg, ct);
+    }
+
+    public async Task SendSuperAdminPasswordResetAsync(string to, string recipientName, string newPassword, CancellationToken ct = default)
+    {
+        var msg = MailHelper.CreateSingleEmail(
+            from: new EmailAddress(_fromEmail, _fromName),
+            to: new EmailAddress(to),
+            subject: "Sua senha OmniDesk foi redefinida",
+            plainTextContent: $"Olá, {recipientName}!\n\nSua senha foi redefinida pelo operador.\n\nNova senha: {newPassword}\n\nRecomendamos que você altere sua senha no próximo acesso.",
+            htmlContent: $"""
+                <p>Olá, {recipientName}!</p>
+                <p>Sua senha foi redefinida pelo operador OmniDesk.</p>
+                <p><strong>Nova senha:</strong> {newPassword}</p>
+                <p>Recomendamos que você altere sua senha no próximo acesso.</p>
+                """);
+
+        await _client.SendEmailAsync(msg, ct);
+    }
 }
