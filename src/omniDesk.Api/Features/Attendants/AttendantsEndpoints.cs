@@ -19,6 +19,7 @@ public static class AttendantsEndpoints
         group.MapDelete("/{id:guid}", DeactivateAsync).RequireAuthorization(Policies.CanDeactivateAttendant);
         group.MapPut("/{id:guid}/departments", UpdateDepartmentsAsync).RequireAuthorization(Policies.CanEditAttendant);
         AvatarUploadEndpoint.Map(group);
+        UpdateStatusEndpoint.Map(group);
         return group;
     }
 

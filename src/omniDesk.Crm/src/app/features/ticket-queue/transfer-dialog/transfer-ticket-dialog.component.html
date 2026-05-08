@@ -1,0 +1,64 @@
+<p-dialog
+  header="Transferir ticket"
+  [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [style]="{ width: '420px' }">
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  <div class="mode-toggle">
+    <label>
+      <input type="radio" name="mode" value="attendant" [(ngModel)]="mode" />
+      Para um atendente
+    </label>
+    <label>
+      <input type="radio" name="mode" value="department" [(ngModel)]="mode" />
+      Para um departamento (fila)
+    </label>
+  </div>
+
+  <label class="field">
+    <span>Departamento {{ mode === 'attendant' ? '(filtra atendentes)' : '*' }}</span>
+    <p-select
+      [options]="departments()"
+      optionLabel="name"
+      optionValue="id"
+      [(ngModel)]="selectedDepartmentId"
+      (ngModelChange)="onDepartmentChange($event)"
+      placeholder="Selecione um departamento"
+      [showClear]="true">
+    </p-select>
+  </label>
+
+  @if (mode === 'attendant') {
+    <label class="field">
+      <span>Atendente *</span>
+      <p-select
+        [options]="attendantOptions()"
+        optionLabel="name"
+        optionValue="attendantId"
+        [(ngModel)]="selectedAttendantId"
+        placeholder="Selecione o destinatário"
+        [disabled]="!selectedDepartmentId">
+      </p-select>
+    </label>
+  }
+
+  <label class="field">
+    <span>Motivo (opcional)</span>
+    <input pInputText type="text" [(ngModel)]="reason" maxlength="500" />
+  </label>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" (onClick)="close()"></p-button>
+    <p-button
+      label="Transferir"
+      icon="pi pi-arrow-right"
+      [disabled]="!canSubmit() || submitting()"
+      (onClick)="submit()">
+    </p-button>
+  </ng-template>
+</p-dialog>

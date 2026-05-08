@@ -174,16 +174,16 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Transfer
 
-- [ ] T049 [US4] Criar `TransferTicketCommand` em `src/omniDesk.Api/Features/Distribution/Commands/TransferTicketCommand.cs` aceitando `to_attendant_id` OU `to_department_id` + motivo opcional; reseta `sla_started_at` quando muda de departamento (FR-026); registra `ticket_transfers` (assume tabela ou metadata em Spec 008)
-- [ ] T050 [US4] Expor `POST /api/tickets/{id}/transfer` em `Features/Distribution/TransferTicketEndpoint.cs`; valida que o caller é o assignee atual ou supervisor; emite `ticket.transferred`
+- [X] T049 [US4] Criar `TransferTicketCommand` em `src/omniDesk.Api/Features/Distribution/Commands/TransferTicketCommand.cs` aceitando `to_attendant_id` OU `to_department_id` + motivo opcional; reseta `sla_started_at` quando muda de departamento (FR-026); registra `ticket_transfers` (assume tabela ou metadata em Spec 008)
+- [X] T050 [US4] Expor `POST /api/tickets/{id}/transfer` em `Features/Distribution/TransferTicketEndpoint.cs`; valida que o caller é o assignee atual ou supervisor; emite `ticket.transferred`
 
 ### Frontend — Transfer UI
 
-- [ ] T051 [P] [US4] Criar `transfer-ticket-dialog.component` em `src/omniDesk.Crm/src/app/features/ticket-queue/transfer-dialog/` — modal PrimeNG com seletor de atendente/departamento, campo motivo opcional; `.spec.ts`
+- [X] T051 [P] [US4] Criar `transfer-ticket-dialog.component` em `src/omniDesk.Crm/src/app/features/ticket-queue/transfer-dialog/` — modal PrimeNG com seletor de atendente/departamento, campo motivo opcional; `.spec.ts`
 
 ### Tests — backend
 
-- [ ] T052 [P] [US4] Criar `TransferTicketTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: transferência mantém histórico (assert mensagens preservadas), recalcula SLA (FR-026, assert `sla_started_at` mudou), motivo registrado, evento WebSocket emitido nos canais corretos
+- [X] T052 [P] [US4] Criar `TransferTicketTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: transferência mantém histórico (assert mensagens preservadas), recalcula SLA (FR-026, assert `sla_started_at` mudou), motivo registrado, evento WebSocket emitido nos canais corretos
 
 **Checkpoint**: Operação ganha flexibilidade sem perder integridade do histórico.
 
@@ -197,21 +197,21 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Status endpoints
 
-- [ ] T053 [US5] Implementar `PATCH /api/attendants/{id}/status` em `src/omniDesk.Api/Features/Attendants/UpdateStatusEndpoint.cs` aceitando `{ status }`; restrição: atendente só muda o próprio (a menos que seja supervisor); side-effects: Redis + Postgres + Mongo + evento WebSocket (FR-007, FR-011, FR-012)
-- [ ] T054 [US5] Implementar `PATCH /api/attendants/{id}/heartbeat` em `Features/Attendants/HeartbeatEndpoint.cs`: renova TTL Redis e atualiza `last_heartbeat_at`; sem body, sem evento; idempotente
-- [ ] T055 [US5] Criar `PresenceTimeoutJob` em `src/omniDesk.Api/Features/Distribution/PresenceTimeoutJob.cs` (Hangfire recurring 1 min): varre `attendant_status` para `online` há 15 min sem heartbeat → `away` (changed_by=system); varre `away` há 30 min → `offline`; cada transição reusa o mesmo pipeline de side-effects do T053
-- [ ] T056 [US5] Registrar `PresenceTimeoutJob` em `Program.cs` via `RecurringJob.AddOrUpdate(...)` com cron `*/1 * * * *`
+- [X] T053 [US5] Implementar `PATCH /api/attendants/{id}/status` em `src/omniDesk.Api/Features/Attendants/UpdateStatusEndpoint.cs` aceitando `{ status }`; restrição: atendente só muda o próprio (a menos que seja supervisor); side-effects: Redis + Postgres + Mongo + evento WebSocket (FR-007, FR-011, FR-012)
+- [X] T054 [US5] Implementar `PATCH /api/attendants/{id}/heartbeat` em `Features/Attendants/HeartbeatEndpoint.cs`: renova TTL Redis e atualiza `last_heartbeat_at`; sem body, sem evento; idempotente
+- [X] T055 [US5] Criar `PresenceTimeoutJob` em `src/omniDesk.Api/Features/Distribution/PresenceTimeoutJob.cs` (Hangfire recurring 1 min): varre `attendant_status` para `online` há 15 min sem heartbeat → `away` (changed_by=system); varre `away` há 30 min → `offline`; cada transição reusa o mesmo pipeline de side-effects do T053
+- [X] T056 [US5] Registrar `PresenceTimeoutJob` em `Program.cs` via `RecurringJob.AddOrUpdate(...)` com cron `*/1 * * * *`
 
 ### Frontend — Status toggle e supervisor view
 
-- [ ] T057 [P] [US5] Criar `attendant-status-toggle.component` em `src/omniDesk.Crm/src/app/features/attendants/attendant-status-toggle/` — toggle 3-way `online`/`away`/`offline` com PrimeNG SelectButton; integra com `presence.service.ts`; dispara heartbeat HTTP a cada 60 s enquanto aba ativa + interação detectada (mouse/keyboard); `.spec.ts`
-- [ ] T058 [P] [US5] Atualizar `presence.service.ts` para incluir `setStatus(status)`, `heartbeat()`; gerencia visibility events da aba (Document Visibility API); `.spec.ts`
+- [X] T057 [P] [US5] Criar `attendant-status-toggle.component` em `src/omniDesk.Crm/src/app/features/attendants/attendant-status-toggle/` — toggle 3-way `online`/`away`/`offline` com PrimeNG SelectButton; integra com `presence.service.ts`; dispara heartbeat HTTP a cada 60 s enquanto aba ativa + interação detectada (mouse/keyboard); `.spec.ts`
+- [X] T058 [P] [US5] Atualizar `presence.service.ts` para incluir `setStatus(status)`, `heartbeat()`; gerencia visibility events da aba (Document Visibility API); `.spec.ts`
 
 ### Tests — backend
 
-- [ ] T059 [P] [US5] Criar `PresenceCacheTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Infrastructure/Presence/` — Testcontainers Redis; valida TTL 5 min, `RenewHeartbeatAsync` reseta TTL, `InvalidateAsync` apaga
-- [ ] T060 [P] [US5] Criar `PresenceTimeoutJobTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — usa `IClock` mockável; cenários: 15 min sem heartbeat → away; 45 min → offline; com heartbeat recente não muda; eventos emitidos com `changed_by=system`
-- [ ] T061 [P] [US5] Criar `UpdateStatusTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Attendants/`: side-effects em todos os 4 lugares (Redis, Postgres, Mongo, WebSocket); supervisor pode alterar de outros; atendente não pode alterar de outros (403)
+- [X] T059 [P] [US5] Criar `PresenceCacheTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Infrastructure/Presence/` — Testcontainers Redis; valida TTL 5 min, `RenewHeartbeatAsync` reseta TTL, `InvalidateAsync` apaga
+- [X] T060 [P] [US5] Criar `PresenceTimeoutJobTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — usa `IClock` mockável; cenários: 15 min sem heartbeat → away; 45 min → offline; com heartbeat recente não muda; eventos emitidos com `changed_by=system`
+- [X] T061 [P] [US5] Criar `UpdateStatusTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Attendants/`: side-effects em todos os 4 lugares (Redis, Postgres, Mongo, WebSocket); supervisor pode alterar de outros; atendente não pode alterar de outros (403)
 
 **Checkpoint**: Presença em tempo real auditável e consistente.
 

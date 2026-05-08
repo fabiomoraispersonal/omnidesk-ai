@@ -63,6 +63,8 @@ builder.Services.AddSingleton<DepartmentEventBus>();
 builder.Services.AddSingleton<AttendantHubHandler>();
 builder.Services.AddScoped<EligibleAttendantsQuery>();
 builder.Services.AddScoped<TicketAssignmentService>();
+builder.Services.AddScoped<omniDesk.Api.Features.Distribution.Commands.TransferTicketCommandHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.Attendants.UpdateAttendantStatusService>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Departments.Validators.CreateDepartmentValidator>();
 
 builder.Services.AddCors(options =>
@@ -97,6 +99,12 @@ RecurringJob.AddOrUpdate<TenantMetricsCollectorJob>(
     "tenant-metrics-collector",
     job => job.RunAsync(CancellationToken.None),
     "*/5 * * * *");
+
+// Spec 005 / US5 — Presence timeout (FR-008/FR-009): online→away aos 15 min, away→offline aos 30 min.
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.Distribution.PresenceTimeoutJob>(
+    "presence-timeout-job",
+    job => job.RunAsync(CancellationToken.None),
+    "*/1 * * * *");
 
 await app.SeedDatabaseAsync();
 
@@ -134,11 +142,12 @@ var attendants = api.MapGroup("/attendants")
                     .AddEndpointFilter<ImpersonationAuditFilter>();
 AttendantsEndpoints.Map(attendants);
 
-// Spec 005 — Tickets (manual pickup) and internal assignment
+// Spec 005 — Tickets (manual pickup, transfer) and internal assignment
 var tickets = api.MapGroup("/tickets")
                  .RequireAuthorization()
                  .AddEndpointFilter<ImpersonationAuditFilter>();
 PickupTicketEndpoint.Map(tickets);
+TransferTicketEndpoint.Map(tickets);
 
 var internalTickets = api.MapGroup("/internal/tickets")
                          .RequireAuthorization()
