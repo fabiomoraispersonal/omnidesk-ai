@@ -7,6 +7,7 @@ using omniDesk.Api.Domain.InviteTokens;
 using omniDesk.Api.Domain.PasswordResetTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Tenants;
+using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Domain.TotpRecoveryCodes;
 using omniDesk.Api.Domain.Users;
 
@@ -29,6 +30,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AttendantDepartment> AttendantDepartments => Set<AttendantDepartment>();
     public DbSet<AttendantStatusEntry> AttendantStatuses => Set<AttendantStatusEntry>();
     public DbSet<CannedResponse> CannedResponses => Set<CannedResponse>();
+    public DbSet<Ticket> Tickets => Set<Ticket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

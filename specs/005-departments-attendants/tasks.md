@@ -127,21 +127,21 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Distribution core
 
-- [ ] T037 [US2] Criar `BusinessHoursEvaluator` em `src/omniDesk.Api/Features/Distribution/BusinessHoursEvaluator.cs` com `IsAvailable(now, businessHours)` (24/7 quando null, conforme research §R5) e `ElapsedBusinessMinutes(start, now, hours)` (cálculo somando intervalos úteis)
-- [ ] T038 [US2] Criar `TicketAssignmentService` em `src/omniDesk.Api/Features/Distribution/TicketAssignmentService.cs` implementando o pseudocódigo de `contracts/round-robin-distribution.md`: aquire lock → query elegíveis → escolhe via cursor → UPDATE ticket + increment counter → publish events → release lock
-- [ ] T039 [US2] Criar query helper `EligibleAttendantsQuery` em `Features/Distribution/EligibleAttendantsQuery.cs`: junta `attendants × attendant_departments × attendant_status` (Postgres) cruzando com presença Redis; retorna `List<AttendantSnapshot>` com `id`, `active_ticket_count`, `max_simultaneous_chats` ordenado por `id`
-- [ ] T040 [US2] Expor endpoint interno `POST /api/internal/tickets/{id}/assign` (consumido pelo Spec 008 — Tickets) que invoca `TicketAssignmentService.AssignAsync(...)`; retorna `AssignmentResult` com `outcome`, `assigned_attendant_id`, `queue_reason`
+- [X] T037 [US2] Criar `BusinessHoursEvaluator` em `src/omniDesk.Api/Features/Distribution/BusinessHoursEvaluator.cs` com `IsAvailable(now, businessHours)` (24/7 quando null, conforme research §R5) e `ElapsedBusinessMinutes(start, now, hours)` (cálculo somando intervalos úteis)
+- [X] T038 [US2] Criar `TicketAssignmentService` em `src/omniDesk.Api/Features/Distribution/TicketAssignmentService.cs` implementando o pseudocódigo de `contracts/round-robin-distribution.md`: aquire lock → query elegíveis → escolhe via cursor → UPDATE ticket + increment counter → publish events → release lock
+- [X] T039 [US2] Criar query helper `EligibleAttendantsQuery` em `Features/Distribution/EligibleAttendantsQuery.cs`: junta `attendants × attendant_departments × attendant_status` (Postgres) cruzando com presença Redis; retorna `List<AttendantSnapshot>` com `id`, `active_ticket_count`, `max_simultaneous_chats` ordenado por `id`
+- [X] T040 [US2] Expor endpoint interno `POST /api/internal/tickets/{id}/assign` (consumido pelo Spec 008 — Tickets) que invoca `TicketAssignmentService.AssignAsync(...)`; retorna `AssignmentResult` com `outcome`, `assigned_attendant_id`, `queue_reason`
 
 ### Frontend — Queue board (supervisor view)
 
-- [ ] T041 [P] [US2] Criar `ticket-queue.service.ts` em `src/omniDesk.Crm/src/app/features/ticket-queue/services/` consumindo eventos `ticket.assigned`/`ticket.queued` para manter estado da fila por departamento; `.spec.ts`
-- [ ] T042 [P] [US2] Criar `queue-board.component` em `src/omniDesk.Crm/src/app/features/ticket-queue/queue-board/` — visão de supervisor com colunas por departamento, badges de fila e atendentes online; `.spec.ts`
+- [X] T041 [P] [US2] Criar `ticket-queue.service.ts` em `src/omniDesk.Crm/src/app/features/ticket-queue/services/` consumindo eventos `ticket.assigned`/`ticket.queued` para manter estado da fila por departamento; `.spec.ts`
+- [X] T042 [P] [US2] Criar `queue-board.component` em `src/omniDesk.Crm/src/app/features/ticket-queue/queue-board/` — visão de supervisor com colunas por departamento, badges de fila e atendentes online; `.spec.ts`
 
 ### Tests — backend
 
-- [ ] T043 [P] [US2] Criar `RoundRobinCursorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — Testcontainers Redis real; 100 incrementos com 5 atendentes, valida diff máx ≤ 1 (SC-003); cobre cursor expirado (TTL) e reset
-- [ ] T044 [P] [US2] Criar `TicketAssignmentServiceTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: distribui em rajada (FR-013/014), respeita capacity (FR-018), enfileira sem elegíveis (FR-015), classifica `QueueReason` corretamente
-- [ ] T045 [P] [US2] Criar `BusinessHoursEvaluatorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: cobre matriz 4×4 da Spec §3.3, departamento sem horário = 24/7 (FR-002), `ElapsedBusinessMinutes` com cruzamento de noite/fim de semana
+- [X] T043 [P] [US2] Criar `RoundRobinCursorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — Testcontainers Redis real; 100 incrementos com 5 atendentes, valida diff máx ≤ 1 (SC-003); cobre cursor expirado (TTL) e reset
+- [X] T044 [P] [US2] Criar `TicketAssignmentServiceTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: distribui em rajada (FR-013/014), respeita capacity (FR-018), enfileira sem elegíveis (FR-015), classifica `QueueReason` corretamente
+- [X] T045 [P] [US2] Criar `BusinessHoursEvaluatorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: cobre matriz 4×4 da Spec §3.3, departamento sem horário = 24/7 (FR-002), `ElapsedBusinessMinutes` com cruzamento de noite/fim de semana
 
 **Checkpoint**: Distribuição automática funcional + verificação algorítmica.
 
@@ -155,12 +155,12 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Manual pickup endpoint
 
-- [ ] T046 [US3] Implementar `POST /api/tickets/{id}/pickup` em `src/omniDesk.Api/Features/Distribution/PickupTicketEndpoint.cs`: usa `TicketLock`; se ticket já atribuído a outro, retorna `409 ALREADY_PICKED_UP`; se ticket atribuído ao próprio caller, idempotente; emite `ticket.assigned` ou `ticket.transferred` conforme caso
+- [X] T046 [US3] Implementar `POST /api/tickets/{id}/pickup` em `src/omniDesk.Api/Features/Distribution/PickupTicketEndpoint.cs`: usa `TicketLock`; se ticket já atribuído a outro, retorna `409 ALREADY_PICKED_UP`; se ticket atribuído ao próprio caller, idempotente; emite `ticket.assigned` ou `ticket.transferred` conforme caso
 
 ### Tests — backend
 
-- [ ] T047 [P] [US3] Criar `TicketLockTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Infrastructure/Distribution/` — Testcontainers Redis; valida `SET NX EX`, expira em 10 s, libera no Dispose, lock órfão expira sozinho
-- [ ] T048 [P] [US3] Criar `ConcurrentPickupTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — 50 pares de requests `POST /pickup` paralelos para o mesmo ticket; assert exatamente 1 sucesso por par (SC-002); mede latência p95 ≤ 200 ms
+- [X] T047 [P] [US3] Criar `TicketLockTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Infrastructure/Distribution/` — Testcontainers Redis; valida `SET NX EX`, expira em 10 s, libera no Dispose, lock órfão expira sozinho
+- [X] T048 [P] [US3] Criar `ConcurrentPickupTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — 50 pares de requests `POST /pickup` paralelos para o mesmo ticket; assert exatamente 1 sucesso por par (SC-002); mede latência p95 ≤ 200 ms
 
 **Checkpoint**: Garantia de integridade em concorrência.
 

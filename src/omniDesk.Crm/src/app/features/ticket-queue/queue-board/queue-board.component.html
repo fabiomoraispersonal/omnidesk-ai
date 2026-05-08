@@ -1,0 +1,37 @@
+<div class="queue-board">
+  <h1>Fila de tickets</h1>
+
+  <div class="columns">
+    @for (col of columns(); track col.department.id) {
+      <p-card>
+        <ng-template pTemplate="header">
+          <header class="dept-header">
+            <h3>{{ col.department.name }}</h3>
+            <p-badge [value]="col.queue.length.toString()" severity="info"></p-badge>
+          </header>
+        </ng-template>
+
+        @if (col.queue.length === 0) {
+          <p class="muted">Nenhum ticket na fila</p>
+        } @else {
+          <ul class="queue">
+            @for (item of col.queue; track item.ticketId) {
+              <li class="queue-item">
+                <strong>#{{ item.ticketNumber }}</strong>
+                <p-tag
+                  [value]="reasonLabel(item.reason)"
+                  [severity]="reasonSeverity(item.reason)">
+                </p-tag>
+                @if (item.nextBusinessWindowStart) {
+                  <small class="muted">
+                    Próximo expediente: {{ item.nextBusinessWindowStart | date:'short' }}
+                  </small>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </p-card>
+    }
+  </div>
+</div>

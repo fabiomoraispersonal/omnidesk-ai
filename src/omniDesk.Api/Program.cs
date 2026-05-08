@@ -21,6 +21,7 @@ using omniDesk.Api.Features.Attendants;
 using omniDesk.Api.Features.Auth;
 using omniDesk.Api.Features.Departments;
 using omniDesk.Api.Features.Me;
+using omniDesk.Api.Features.Distribution;
 using omniDesk.Api.Infrastructure.Distribution;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
@@ -60,6 +61,8 @@ builder.Services.AddSingleton<TicketLock>();
 builder.Services.AddSingleton<RoundRobinCursorRedis>();
 builder.Services.AddSingleton<DepartmentEventBus>();
 builder.Services.AddSingleton<AttendantHubHandler>();
+builder.Services.AddScoped<EligibleAttendantsQuery>();
+builder.Services.AddScoped<TicketAssignmentService>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Departments.Validators.CreateDepartmentValidator>();
 
 builder.Services.AddCors(options =>
@@ -130,6 +133,17 @@ var attendants = api.MapGroup("/attendants")
                     .RequireAuthorization()
                     .AddEndpointFilter<ImpersonationAuditFilter>();
 AttendantsEndpoints.Map(attendants);
+
+// Spec 005 — Tickets (manual pickup) and internal assignment
+var tickets = api.MapGroup("/tickets")
+                 .RequireAuthorization()
+                 .AddEndpointFilter<ImpersonationAuditFilter>();
+PickupTicketEndpoint.Map(tickets);
+
+var internalTickets = api.MapGroup("/internal/tickets")
+                         .RequireAuthorization()
+                         .AddEndpointFilter<ImpersonationAuditFilter>();
+AssignTicketEndpoint.Map(internalTickets);
 
 // Spec 005 — WebSocket native handler (research §R4)
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
