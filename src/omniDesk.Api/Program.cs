@@ -19,6 +19,7 @@ using StackExchange.Redis;
 using omniDesk.Api.Features.Admin;
 using omniDesk.Api.Features.Attendants;
 using omniDesk.Api.Features.Auth;
+using omniDesk.Api.Features.CannedResponses;
 using omniDesk.Api.Features.Departments;
 using omniDesk.Api.Features.Me;
 using omniDesk.Api.Features.Distribution;
@@ -153,6 +154,12 @@ var internalTickets = api.MapGroup("/internal/tickets")
                          .RequireAuthorization()
                          .AddEndpointFilter<ImpersonationAuditFilter>();
 AssignTicketEndpoint.Map(internalTickets);
+
+// Spec 005 — Canned responses
+var canned = api.MapGroup("/canned-responses")
+                .RequireAuthorization()
+                .AddEndpointFilter<ImpersonationAuditFilter>();
+CannedResponsesEndpoints.Map(canned);
 
 // Spec 005 — WebSocket native handler (research §R4)
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });

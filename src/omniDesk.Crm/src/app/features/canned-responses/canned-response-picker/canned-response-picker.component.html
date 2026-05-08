@@ -1,0 +1,18 @@
+<div #host class="canned-picker" [class.visible]="visible()">
+  @if (visible() && results().length > 0) {
+    <p-listbox
+      [options]="results()"
+      optionLabel="title"
+      [listStyle]="{ 'max-height': '200px' }"
+      (onChange)="onSelect($event.value)">
+      <ng-template let-item pTemplate="item">
+        <div class="picker-item">
+          <strong>{{ item.title }}</strong>
+          <small class="muted">{{ item.scope === 'global' ? 'Global' : 'Departamento' }}</small>
+        </div>
+      </ng-template>
+    </p-listbox>
+  } @else if (visible()) {
+    <p class="muted empty">Nenhuma resposta encontrada</p>
+  }
+</div>

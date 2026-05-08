@@ -1,0 +1,44 @@
+<form class="canned-form" [formGroup]="form" (ngSubmit)="save()">
+  <h1>{{ editing() ? 'Editar resposta' : 'Nova resposta pré-formada' }}</h1>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  <label class="field">
+    <span>Título *</span>
+    <input pInputText type="text" formControlName="title" maxlength="100" />
+  </label>
+
+  <label class="field">
+    <span>Conteúdo *</span>
+    <textarea pTextarea rows="6" formControlName="content" maxlength="4000"></textarea>
+    <small class="muted">
+      Variáveis disponíveis:
+      <code>&#123;&#123;client_name&#125;&#125;</code>,
+      <code>&#123;&#123;attendant_name&#125;&#125;</code>,
+      <code>&#123;&#123;ticket_number&#125;&#125;</code>,
+      <code>&#123;&#123;department_name&#125;&#125;</code>
+    </small>
+    @if (previewVariables().length > 0) {
+      <small class="muted">Detectadas: {{ previewVariables().join(', ') }}</small>
+    }
+  </label>
+
+  <label class="field">
+    <span>Escopo</span>
+    <p-select
+      [options]="availableDepartments()"
+      optionLabel="name"
+      optionValue="id"
+      formControlName="departmentId"
+      placeholder="Global (todos os departamentos)"
+      [showClear]="true">
+    </p-select>
+  </label>
+
+  <div class="actions">
+    <p-button label="Cancelar" severity="secondary" type="button" (onClick)="cancel()"></p-button>
+    <p-button label="Salvar" icon="pi pi-check" type="submit" [disabled]="form.invalid"></p-button>
+  </div>
+</form>

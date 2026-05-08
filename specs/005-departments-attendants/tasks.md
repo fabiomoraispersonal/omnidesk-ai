@@ -225,22 +225,22 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Canned responses
 
-- [ ] T062 [US6] Implementar `CannedResponsesEndpoints.Map` em `src/omniDesk.Api/Features/CannedResponses/CannedResponsesEndpoints.cs` com `GET /`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`, `POST /render`
-- [ ] T063 [US6] Criar `VariableSubstitution` em `src/omniDesk.Api/Features/CannedResponses/VariableSubstitution.cs`: regex puro `\{\{(\w+)\}\}` com tabela de fallbacks (research §R7, FR-034); variáveis desconhecidas preservadas + log Warning
-- [ ] T064 [US6] Criar `CannedResponseValidator` em `Features/CannedResponses/Validators/CannedResponseValidator.cs`: `title 2-100`, `content 1-4000`, `department_id` existente e ativo; título único por escopo
-- [ ] T065 [US6] Implementar `RenderCannedResponseEndpoint` (`POST /render`): aceita `template_id` + `conversation_id`; busca contexto (cliente, atendente, ticket, dept); aplica `VariableSubstitution`; retorna `rendered` + `missing_variables`
-- [ ] T066 [US6] Implementar guarda de autor: PUT/DELETE só permite ao `created_by` ou ao tenant_admin (Spec 004); response 403 `FORBIDDEN_NOT_OWNER` quando outro atendente tenta
+- [X] T062 [US6] Implementar `CannedResponsesEndpoints.Map` em `src/omniDesk.Api/Features/CannedResponses/CannedResponsesEndpoints.cs` com `GET /`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`, `POST /render`
+- [X] T063 [US6] Criar `VariableSubstitution` em `src/omniDesk.Api/Features/CannedResponses/VariableSubstitution.cs`: regex puro `\{\{(\w+)\}\}` com tabela de fallbacks (research §R7, FR-034); variáveis desconhecidas preservadas + log Warning
+- [X] T064 [US6] Criar `CannedResponseValidator` em `Features/CannedResponses/Validators/CannedResponseValidator.cs`: `title 2-100`, `content 1-4000`, `department_id` existente e ativo; título único por escopo
+- [X] T065 [US6] Implementar `RenderCannedResponseEndpoint` (`POST /render`): aceita `template_id` + `conversation_id`; busca contexto (cliente, atendente, ticket, dept); aplica `VariableSubstitution`; retorna `rendered` + `missing_variables`
+- [X] T066 [US6] Implementar guarda de autor: PUT/DELETE só permite ao `created_by` ou ao tenant_admin (Spec 004); response 403 `FORBIDDEN_NOT_OWNER` quando outro atendente tenta
 
 ### Frontend — Picker e form
 
-- [ ] T067 [P] [US6] Criar `canned-response.service.ts` em `src/omniDesk.Crm/src/app/features/canned-responses/services/` com CRUD + `render(templateId, conversationId)`; `.spec.ts`
-- [ ] T068 [P] [US6] Criar `canned-response-picker.component` em `src/omniDesk.Crm/src/app/features/canned-responses/canned-response-picker/` — autocomplete acionado por `/`, busca por título e conteúdo, render preview + insert no campo de mensagem; `.spec.ts`
-- [ ] T069 [P] [US6] Criar `canned-response-form.component` em `src/omniDesk.Crm/src/app/features/canned-responses/canned-response-form/` — Reactive Form com escopo (global/dept), preview de variáveis em tempo real; `.spec.ts`
+- [X] T067 [P] [US6] Criar `canned-response.service.ts` em `src/omniDesk.Crm/src/app/features/canned-responses/services/` com CRUD + `render(templateId, conversationId)`; `.spec.ts`
+- [X] T068 [P] [US6] Criar `canned-response-picker.component` em `src/omniDesk.Crm/src/app/features/canned-responses/canned-response-picker/` — autocomplete acionado por `/`, busca por título e conteúdo, render preview + insert no campo de mensagem; `.spec.ts`
+- [X] T069 [P] [US6] Criar `canned-response-form.component` em `src/omniDesk.Crm/src/app/features/canned-responses/canned-response-form/` — Reactive Form com escopo (global/dept), preview de variáveis em tempo real; `.spec.ts`
 
 ### Tests — backend
 
-- [ ] T070 [P] [US6] Criar `VariableSubstitutionTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/CannedResponses/`: substitui as 4 variáveis canônicas, fallbacks corretos (FR-034), preserva variáveis desconhecidas, performance < 1 ms para template de 4000 chars (SC-006)
-- [ ] T071 [P] [US6] Criar `CannedResponsesCrudTests.cs`: CRUD completo, escopo por dept respeita filtro, autor pode editar, supervisor não-autor bloqueado, tenant_admin sempre pode
+- [X] T070 [P] [US6] Criar `VariableSubstitutionTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/CannedResponses/`: substitui as 4 variáveis canônicas, fallbacks corretos (FR-034), preserva variáveis desconhecidas, performance < 1 ms para template de 4000 chars (SC-006)
+- [X] T071 [P] [US6] Criar `CannedResponsesCrudTests.cs`: CRUD completo, escopo por dept respeita filtro, autor pode editar, supervisor não-autor bloqueado, tenant_admin sempre pode
 
 **Checkpoint**: Produtividade do atendente no chat com variáveis sem vazar placeholders.
 
@@ -254,12 +254,12 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Wire-up de transbordo
 
-- [ ] T072 [US7] Estender `TicketAssignmentService.AssignAsync` em `src/omniDesk.Api/Features/Distribution/TicketAssignmentService.cs`: quando `Outcome.Queued`, popular `QueueReason` corretamente baseado em `BusinessHoursEvaluator.IsAvailable(now)` × `eligible.IsEmpty`; o evento `ticket.queued` carrega `next_business_window_start` calculado quando `OutsideBusinessHoursNoOneOnline`
-- [ ] T073 [US7] Adicionar método `BusinessHoursEvaluator.NextBusinessWindowStart(now, hours)` que retorna `DateTimeOffset?` com início do próximo período comercial considerando timezone do tenant (Spec 003 — `tenants.timezone`)
+- [X] T072 [US7] Estender `TicketAssignmentService.AssignAsync` em `src/omniDesk.Api/Features/Distribution/TicketAssignmentService.cs`: quando `Outcome.Queued`, popular `QueueReason` corretamente baseado em `BusinessHoursEvaluator.IsAvailable(now)` × `eligible.IsEmpty`; o evento `ticket.queued` carrega `next_business_window_start` calculado quando `OutsideBusinessHoursNoOneOnline`
+- [X] T073 [US7] Adicionar método `BusinessHoursEvaluator.NextBusinessWindowStart(now, hours)` que retorna `DateTimeOffset?` com início do próximo período comercial considerando timezone do tenant (Spec 003 — `tenants.timezone`)
 
 ### Tests — backend
 
-- [ ] T074 [P] [US7] Criar `OverflowBehaviorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — 4 cenários da matriz §3.3 (FR-027–030); valida `QueueReason` correto + payload do evento `ticket.queued`
+- [X] T074 [P] [US7] Criar `OverflowBehaviorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/` — 4 cenários da matriz §3.3 (FR-027–030); valida `QueueReason` correto + payload do evento `ticket.queued`
 
 **Checkpoint**: Sem mensagens incoerentes ao cliente quando ninguém pode atender agora.
 
