@@ -1,3 +1,4 @@
+using FluentValidation;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -16,8 +17,13 @@ using omniDesk.Api.Infrastructure.Tenants;
 using Serilog;
 using StackExchange.Redis;
 using omniDesk.Api.Features.Admin;
+using omniDesk.Api.Features.Attendants;
 using omniDesk.Api.Features.Auth;
+using omniDesk.Api.Features.Departments;
 using omniDesk.Api.Features.Me;
+using omniDesk.Api.Infrastructure.Distribution;
+using omniDesk.Api.Infrastructure.Presence;
+using omniDesk.Api.Infrastructure.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +52,15 @@ builder.Services.AddScoped<LastTenantAdminGuard>();
 builder.Services.AddScoped<DeactivateUserCommandHandler>();
 builder.Services.AddScoped<ReactivateUserCommandHandler>();
 AuthorizationPoliciesRegistration.Register(builder.Services);
+
+// Spec 005 — Departamentos e Atendentes (presença, lock, round-robin, WebSocket)
+builder.Services.AddSingleton<PresenceCache>();
+builder.Services.AddSingleton<PresenceLogger>();
+builder.Services.AddSingleton<TicketLock>();
+builder.Services.AddSingleton<RoundRobinCursorRedis>();
+builder.Services.AddSingleton<DepartmentEventBus>();
+builder.Services.AddSingleton<AttendantHubHandler>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Departments.Validators.CreateDepartmentValidator>();
 
 builder.Services.AddCors(options =>
 {
@@ -103,6 +118,25 @@ var users = api.MapGroup("/users")
                .RequireAuthorization()
                .AddEndpointFilter<ImpersonationAuditFilter>();
 UserLifecycleEndpoints.Map(users);
+
+// Spec 005 — Departments
+var departments = api.MapGroup("/departments")
+                     .RequireAuthorization()
+                     .AddEndpointFilter<ImpersonationAuditFilter>();
+DepartmentsEndpoints.Map(departments);
+
+// Spec 005 — Attendants
+var attendants = api.MapGroup("/attendants")
+                    .RequireAuthorization()
+                    .AddEndpointFilter<ImpersonationAuditFilter>();
+AttendantsEndpoints.Map(attendants);
+
+// Spec 005 — WebSocket native handler (research §R4)
+app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
+app.Map("/ws", async (HttpContext ctx, AttendantHubHandler hub, CancellationToken ct) =>
+{
+    await hub.HandleAsync(ctx, ct);
+}).RequireAuthorization();
 
 app.Run();
 

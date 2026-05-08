@@ -30,10 +30,10 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 **Purpose**: Configuração de ambiente e estrutura de pastas para esta feature.
 
-- [ ] T001 Adicionar `MAX_SUGGESTION_CONTEXT_MESSAGES=20` em `src/omniDesk.Api/.env.example` e `src/omniDesk.Api/appsettings.Development.json` (chave `Ai:MaxSuggestionContextMessages`); documentar cap de 50 em README local
-- [ ] T002 Criar migration SQL `Add_Departments_Attendants.sql` em `src/omniDesk.Api/Infrastructure/Persistence/Migrations/` com as 5 tabelas (`departments`, `attendants`, `attendant_departments`, `attendant_status`, `canned_responses`) conforme `data-model.md` §1; aplicar em template do schema `tenant_{slug}` (a Spec 003 já provisiona o schema)
-- [ ] T003 [P] Criar estrutura de pastas backend: `src/omniDesk.Api/Domain/{Departments,Attendants,CannedResponses}/`, `src/omniDesk.Api/Features/{Departments,Attendants,CannedResponses,AiSuggestions,Distribution}/`, `src/omniDesk.Api/Infrastructure/{Departments,Attendants,CannedResponses,Presence,Distribution,WebSockets}/`
-- [ ] T004 [P] Criar estrutura de pastas frontend: `src/omniDesk.Crm/src/app/core/presence/`, `src/omniDesk.Crm/src/app/features/{departments,attendants,canned-responses,ticket-queue,ai-suggestion}/`
+- [X] T001 Adicionar `MAX_SUGGESTION_CONTEXT_MESSAGES=20` em `src/omniDesk.Api/.env.example` e `src/omniDesk.Api/appsettings.Development.json` (chave `Ai:MaxSuggestionContextMessages`); documentar cap de 50 em README local
+- [X] T002 Criar migration SQL `Add_Departments_Attendants.sql` em `src/omniDesk.Api/Infrastructure/Persistence/Migrations/` com as 5 tabelas (`departments`, `attendants`, `attendant_departments`, `attendant_status`, `canned_responses`) conforme `data-model.md` §1; aplicar em template do schema `tenant_{slug}` (a Spec 003 já provisiona o schema)
+- [X] T003 [P] Criar estrutura de pastas backend: `src/omniDesk.Api/Domain/{Departments,Attendants,CannedResponses}/`, `src/omniDesk.Api/Features/{Departments,Attendants,CannedResponses,AiSuggestions,Distribution}/`, `src/omniDesk.Api/Infrastructure/{Departments,Attendants,CannedResponses,Presence,Distribution,WebSockets}/`
+- [X] T004 [P] Criar estrutura de pastas frontend: `src/omniDesk.Crm/src/app/core/presence/`, `src/omniDesk.Crm/src/app/features/{departments,attendants,canned-responses,ticket-queue,ai-suggestion}/`
 
 ---
 
@@ -45,34 +45,34 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — domínio compartilhado
 
-- [ ] T005 [P] Criar enum `AttendanceStatus` em `src/omniDesk.Api/Domain/Attendants/AttendanceStatus.cs` com valores `Online`, `Away`, `Offline` (data-model §1.4)
-- [ ] T006 [P] Criar `Department` em `src/omniDesk.Api/Domain/Departments/Department.cs` com propriedades de data-model §1.1; criar `DepartmentBusinessHours.cs` (Value Object com `Start`, `End`, `Days`)
-- [ ] T007 [P] Criar `Attendant` em `src/omniDesk.Api/Domain/Attendants/Attendant.cs`; `AttendantStatusEntry.cs` (snapshot de presença); interface `IAttendantRepository.cs`
-- [ ] T008 [P] Criar `CannedResponse` em `src/omniDesk.Api/Domain/CannedResponses/CannedResponse.cs`; `CannedResponseVariable.cs` com constantes (`ClientName`, `AttendantName`, `TicketNumber`, `DepartmentName`)
-- [ ] T009 [P] Criar `RedisKeys.cs` em `src/omniDesk.Api/Infrastructure/Authorization/RedisKeys.cs` (ou amplia existente) com helpers tipados: `AttendantStatus(slug, id)`, `RoundRobin(slug, deptId)`, `TicketLock(slug, ticketId)`, `WsTenant(slug)`, `WsDept(slug, id)`, `WsAttendant(slug, id)` — princípio I
+- [X] T005 [P] Criar enum `AttendanceStatus` em `src/omniDesk.Api/Domain/Attendants/AttendanceStatus.cs` com valores `Online`, `Away`, `Offline` (data-model §1.4)
+- [X] T006 [P] Criar `Department` em `src/omniDesk.Api/Domain/Departments/Department.cs` com propriedades de data-model §1.1; criar `DepartmentBusinessHours.cs` (Value Object com `Start`, `End`, `Days`)
+- [X] T007 [P] Criar `Attendant` em `src/omniDesk.Api/Domain/Attendants/Attendant.cs`; `AttendantStatusEntry.cs` (snapshot de presença); interface `IAttendantRepository.cs`
+- [X] T008 [P] Criar `CannedResponse` em `src/omniDesk.Api/Domain/CannedResponses/CannedResponse.cs`; `CannedResponseVariable.cs` com constantes (`ClientName`, `AttendantName`, `TicketNumber`, `DepartmentName`)
+- [X] T009 [P] Criar `RedisKeys.cs` em `src/omniDesk.Api/Infrastructure/Authorization/RedisKeys.cs` (ou amplia existente) com helpers tipados: `AttendantStatus(slug, id)`, `RoundRobin(slug, deptId)`, `TicketLock(slug, ticketId)`, `WsTenant(slug)`, `WsDept(slug, id)`, `WsAttendant(slug, id)` — princípio I
 
 ### Backend — infraestrutura de presença e lock
 
-- [ ] T010 Criar `PresenceCache` em `src/omniDesk.Api/Infrastructure/Presence/PresenceCache.cs` — Redis-backed, TTL 5 min; métodos `GetAsync(slug, attendantId)`, `SetAsync(...)`, `RenewHeartbeatAsync(...)`, `InvalidateAsync(...)`; depende de T009
-- [ ] T011 Criar `PresenceLogger` em `src/omniDesk.Api/Infrastructure/Presence/PresenceLogger.cs` — Mongo-backed, coleção `{slug}_attendant_status_logs` (data-model §2.1); método `LogTransitionAsync(from, to, by, attendantId, attendantName)`
-- [ ] T012 Criar `TicketLock` em `src/omniDesk.Api/Infrastructure/Distribution/TicketLock.cs` — `SET NX EX 10` wrapper sobre `IConnectionMultiplexer`; método `TryAcquireAsync(slug, ticketId, holderId)` retorna `IAsyncDisposable` que libera o lock no `Dispose`; depende de T009 (research §R2)
-- [ ] T013 Criar `RoundRobinCursor` em `src/omniDesk.Api/Infrastructure/Distribution/RoundRobinCursorRedis.cs` — `INCR + EXPIRE 3600`; método `NextIndexAsync(slug, deptId, eligibleCount)`; depende de T009 (research §R1)
+- [X] T010 Criar `PresenceCache` em `src/omniDesk.Api/Infrastructure/Presence/PresenceCache.cs` — Redis-backed, TTL 5 min; métodos `GetAsync(slug, attendantId)`, `SetAsync(...)`, `RenewHeartbeatAsync(...)`, `InvalidateAsync(...)`; depende de T009
+- [X] T011 Criar `PresenceLogger` em `src/omniDesk.Api/Infrastructure/Presence/PresenceLogger.cs` — Mongo-backed, coleção `{slug}_attendant_status_logs` (data-model §2.1); método `LogTransitionAsync(from, to, by, attendantId, attendantName)`
+- [X] T012 Criar `TicketLock` em `src/omniDesk.Api/Infrastructure/Distribution/TicketLock.cs` — `SET NX EX 10` wrapper sobre `IConnectionMultiplexer`; método `TryAcquireAsync(slug, ticketId, holderId)` retorna `IAsyncDisposable` que libera o lock no `Dispose`; depende de T009 (research §R2)
+- [X] T013 Criar `RoundRobinCursor` em `src/omniDesk.Api/Infrastructure/Distribution/RoundRobinCursorRedis.cs` — `INCR + EXPIRE 3600`; método `NextIndexAsync(slug, deptId, eligibleCount)`; depende de T009 (research §R1)
 
 ### Backend — EF Core configurations e migration
 
-- [ ] T014 Criar configurations EF Core em `src/omniDesk.Api/Infrastructure/Departments/DepartmentConfiguration.cs` (com mapeamento de `business_hours` como owned type ou colunas separadas), `Infrastructure/Attendants/{Attendant,AttendantStatus,AttendantDepartment}Configuration.cs`, `Infrastructure/CannedResponses/CannedResponseConfiguration.cs`; registrar em `AppDbContext` (use schema dinâmico `tenant_{slug}` já existente)
-- [ ] T015 Aplicar migration de T002 em ambiente de dev: rodar `dotnet ef database update --project src/omniDesk.Api` (operador valida; documenta em `quickstart-evidences.md` deste spec)
+- [X] T014 Criar configurations EF Core em `src/omniDesk.Api/Infrastructure/Departments/DepartmentConfiguration.cs` (com mapeamento de `business_hours` como owned type ou colunas separadas), `Infrastructure/Attendants/{Attendant,AttendantStatus,AttendantDepartment}Configuration.cs`, `Infrastructure/CannedResponses/CannedResponseConfiguration.cs`; registrar em `AppDbContext` (use schema dinâmico `tenant_{slug}` já existente)
+- [X] T015 Aplicar migration de T002 em ambiente de dev: rodar `dotnet ef database update --project src/omniDesk.Api` (operador valida; documenta em `quickstart-evidences.md` deste spec)
 
 ### Backend — WebSocket e DI
 
-- [ ] T016 Criar `DepartmentEventBus` em `src/omniDesk.Api/Infrastructure/WebSockets/DepartmentEventBus.cs` — publica em pub/sub Redis nos canais por escopo (research §R4); método `PublishAsync<T>(channel, eventType, payload)`
-- [ ] T017 Criar `AttendantHubHandler` em `src/omniDesk.Api/Infrastructure/WebSockets/AttendantHubHandler.cs` — handler WebSocket nativo que aceita `subscribe` por canal e valida claims contra os 3 níveis (`tenant`, `dept:{id}`, `attendant:self`); recusa `attendant:{other_id}` com 403
-- [ ] T018 Wire DI em `src/omniDesk.Api/Program.cs`: registrar `PresenceCache`, `PresenceLogger`, `TicketLock`, `RoundRobinCursor`, `DepartmentEventBus` (Singleton); mapear endpoint `/ws` para `AttendantHubHandler`; registrar `Add_Departments_Attendants` migration na pipeline de provisioning (Spec 003 já roda os SQLs do tenant — basta adicionar o arquivo)
+- [X] T016 Criar `DepartmentEventBus` em `src/omniDesk.Api/Infrastructure/WebSockets/DepartmentEventBus.cs` — publica em pub/sub Redis nos canais por escopo (research §R4); método `PublishAsync<T>(channel, eventType, payload)`
+- [X] T017 Criar `AttendantHubHandler` em `src/omniDesk.Api/Infrastructure/WebSockets/AttendantHubHandler.cs` — handler WebSocket nativo que aceita `subscribe` por canal e valida claims contra os 3 níveis (`tenant`, `dept:{id}`, `attendant:self`); recusa `attendant:{other_id}` com 403
+- [X] T018 Wire DI em `src/omniDesk.Api/Program.cs`: registrar `PresenceCache`, `PresenceLogger`, `TicketLock`, `RoundRobinCursor`, `DepartmentEventBus` (Singleton); mapear endpoint `/ws` para `AttendantHubHandler`; registrar `Add_Departments_Attendants` migration na pipeline de provisioning (Spec 003 já roda os SQLs do tenant — basta adicionar o arquivo)
 
 ### Frontend — base de presença e WebSocket
 
-- [ ] T019 [P] Criar `presence.signal.ts` em `src/omniDesk.Crm/src/app/core/presence/` — `signal<AttendanceStatus>` derivado dos eventos WebSocket
-- [ ] T020 [P] Criar `presence-websocket.service.ts` em `src/omniDesk.Crm/src/app/core/presence/` — abre conexão `/ws`, subscreve `tenant`/`dept:{id}`/`attendant:self`, despacha eventos para signals; `.spec.ts` co-localizado verificando subscribe/unsubscribe e dispatch
+- [X] T019 [P] Criar `presence.signal.ts` em `src/omniDesk.Crm/src/app/core/presence/` — `signal<AttendanceStatus>` derivado dos eventos WebSocket
+- [X] T020 [P] Criar `presence-websocket.service.ts` em `src/omniDesk.Crm/src/app/core/presence/` — abre conexão `/ws`, subscreve `tenant`/`dept:{id}`/`attendant:self`, despacha eventos para signals; `.spec.ts` co-localizado verificando subscribe/unsubscribe e dispatch
 
 **Checkpoint**: Foundation pronta. User stories podem prosseguir em paralelo respeitando dependências entre US.
 
@@ -86,34 +86,34 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Departments
 
-- [ ] T021 [US1] Implementar `DepartmentsEndpoints.Map` em `src/omniDesk.Api/Features/Departments/DepartmentsEndpoints.cs` com `GET /`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`, `GET /{id}/attendants`; cada um com policy correta da Spec 004 (`CanCreateDepartment`, `CanEditDepartment`, `CanListDepartments`)
-- [ ] T022 [US1] Criar commands em `src/omniDesk.Api/Features/Departments/Commands/{Create,Update,Deactivate}DepartmentCommand.cs` com handlers; depende de T021
-- [ ] T023 [US1] Criar `CreateDepartmentValidator` em `src/omniDesk.Api/Features/Departments/Validators/CreateDepartmentValidator.cs` com regras: `name 2-100`, `business_hours.start < end`, `business_hours` tudo nulo OU tudo preenchido, nome único por tenant (FluentValidation); idem `UpdateDepartmentValidator`
-- [ ] T024 [US1] Implementar guarda de exclusão em `DeactivateDepartmentCommand`: bloqueia se `attendant_departments.count > 0` ou se houver tickets ativos (consulta defensiva caso Spec 008 ainda não esteja implementada — try/catch + fallback de "verificação não suportada"); responder 422 `DEPARTMENT_HAS_ACTIVE_TICKETS` ou `DEPARTMENT_HAS_LINKED_ATTENDANTS`
+- [X] T021 [US1] Implementar `DepartmentsEndpoints.Map` em `src/omniDesk.Api/Features/Departments/DepartmentsEndpoints.cs` com `GET /`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`, `GET /{id}/attendants`; cada um com policy correta da Spec 004 (`CanCreateDepartment`, `CanEditDepartment`, `CanListDepartments`)
+- [X] T022 [US1] Criar commands em `src/omniDesk.Api/Features/Departments/Commands/{Create,Update,Deactivate}DepartmentCommand.cs` com handlers; depende de T021
+- [X] T023 [US1] Criar `CreateDepartmentValidator` em `src/omniDesk.Api/Features/Departments/Validators/CreateDepartmentValidator.cs` com regras: `name 2-100`, `business_hours.start < end`, `business_hours` tudo nulo OU tudo preenchido, nome único por tenant (FluentValidation); idem `UpdateDepartmentValidator`
+- [X] T024 [US1] Implementar guarda de exclusão em `DeactivateDepartmentCommand`: bloqueia se `attendant_departments.count > 0` ou se houver tickets ativos (consulta defensiva caso Spec 008 ainda não esteja implementada — try/catch + fallback de "verificação não suportada"); responder 422 `DEPARTMENT_HAS_ACTIVE_TICKETS` ou `DEPARTMENT_HAS_LINKED_ATTENDANTS`
 
 ### Backend — Attendants
 
-- [ ] T025 [US1] Implementar `AttendantsEndpoints.Map` em `src/omniDesk.Api/Features/Attendants/AttendantsEndpoints.cs` com `GET /`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`, `PUT /{id}/departments`, `POST /{id}/avatar`; policies da Spec 004 (`CanCreateAttendant`, `CanEditAttendant`, `CanDeactivateAttendant`)
-- [ ] T026 [US1] Criar commands `{Create,Update,Deactivate}AttendantCommand.cs`; criar handler de `UpdateAttendantDepartmentsCommand` com transação (zera `is_primary`, marca o escolhido); validação `primary_department_id ∈ department_ids`
-- [ ] T027 [US1] Criar `CreateAttendantValidator` em `src/omniDesk.Api/Features/Attendants/Validators/CreateAttendantValidator.cs`: `user_id` existe em `public.users`, ainda não é atendente; `max_simultaneous_chats` 1–100; `department_ids` ≥ 1 quando `primary_department_id` for fornecido
-- [ ] T028 [US1] Implementar upload de avatar em `Features/Attendants/AvatarUploadEndpoint.cs`: aceita multipart (≤ 2 MB, JPG/PNG/WebP), redimensiona para 256×256 (System.Drawing.Common), persiste em `tenant-{slug}/avatars/attendants/{id}/256x256.{ext}`, retorna URL assinada de 7 dias (research §R9)
+- [X] T025 [US1] Implementar `AttendantsEndpoints.Map` em `src/omniDesk.Api/Features/Attendants/AttendantsEndpoints.cs` com `GET /`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`, `PUT /{id}/departments`, `POST /{id}/avatar`; policies da Spec 004 (`CanCreateAttendant`, `CanEditAttendant`, `CanDeactivateAttendant`)
+- [X] T026 [US1] Criar commands `{Create,Update,Deactivate}AttendantCommand.cs`; criar handler de `UpdateAttendantDepartmentsCommand` com transação (zera `is_primary`, marca o escolhido); validação `primary_department_id ∈ department_ids`
+- [X] T027 [US1] Criar `CreateAttendantValidator` em `src/omniDesk.Api/Features/Attendants/Validators/CreateAttendantValidator.cs`: `user_id` existe em `public.users`, ainda não é atendente; `max_simultaneous_chats` 1–100; `department_ids` ≥ 1 quando `primary_department_id` for fornecido
+- [X] T028 [US1] Implementar upload de avatar em `Features/Attendants/AvatarUploadEndpoint.cs`: aceita multipart (≤ 2 MB, JPG/PNG/WebP), redimensiona para 256×256 (System.Drawing.Common), persiste em `tenant-{slug}/avatars/attendants/{id}/256x256.{ext}`, retorna URL assinada de 7 dias (research §R9)
 
 ### Frontend — Departments
 
-- [ ] T029 [P] [US1] Criar `department.service.ts` em `src/omniDesk.Crm/src/app/features/departments/services/` com métodos `list()`, `get(id)`, `create(...)`, `update(id, ...)`, `deactivate(id)`, `getAttendants(id)`; `.spec.ts` cobrindo cada método + erro 422
-- [ ] T030 [P] [US1] Criar `department-list.component` em `src/omniDesk.Crm/src/app/features/departments/department-list/` com tabela PrimeNG (nome, status, atendentes, tickets ativos), botão "Novo"; `.spec.ts` co-localizado
-- [ ] T031 [P] [US1] Criar `department-form.component` em `src/omniDesk.Crm/src/app/features/departments/department-form/` com Reactive Form (validação dos campos), seletor de dias com chips, time-picker início/fim, inputs SLA opcionais; `.spec.ts` co-localizado
+- [X] T029 [P] [US1] Criar `department.service.ts` em `src/omniDesk.Crm/src/app/features/departments/services/` com métodos `list()`, `get(id)`, `create(...)`, `update(id, ...)`, `deactivate(id)`, `getAttendants(id)`; `.spec.ts` cobrindo cada método + erro 422
+- [X] T030 [P] [US1] Criar `department-list.component` em `src/omniDesk.Crm/src/app/features/departments/department-list/` com tabela PrimeNG (nome, status, atendentes, tickets ativos), botão "Novo"; `.spec.ts` co-localizado
+- [X] T031 [P] [US1] Criar `department-form.component` em `src/omniDesk.Crm/src/app/features/departments/department-form/` com Reactive Form (validação dos campos), seletor de dias com chips, time-picker início/fim, inputs SLA opcionais; `.spec.ts` co-localizado
 
 ### Frontend — Attendants
 
-- [ ] T032 [P] [US1] Criar `attendant.service.ts` em `src/omniDesk.Crm/src/app/features/attendants/services/` com CRUD + `updateDepartments(...)` + `uploadAvatar(file)`; `.spec.ts`
-- [ ] T033 [P] [US1] Criar `attendant-list.component` com tabela PrimeNG (avatar, nome, departamentos, status, tickets ativos); filtros por dept + status; `.spec.ts`
-- [ ] T034 [P] [US1] Criar `attendant-form.component` com seletor multi-departamento (chips), marcação de principal, slider de `max_simultaneous_chats`, file input para avatar com preview; `.spec.ts`
+- [X] T032 [P] [US1] Criar `attendant.service.ts` em `src/omniDesk.Crm/src/app/features/attendants/services/` com CRUD + `updateDepartments(...)` + `uploadAvatar(file)`; `.spec.ts`
+- [X] T033 [P] [US1] Criar `attendant-list.component` com tabela PrimeNG (avatar, nome, departamentos, status, tickets ativos); filtros por dept + status; `.spec.ts`
+- [X] T034 [P] [US1] Criar `attendant-form.component` com seletor multi-departamento (chips), marcação de principal, slider de `max_simultaneous_chats`, file input para avatar com preview; `.spec.ts`
 
 ### Tests — backend
 
-- [ ] T035 [P] [US1] Criar `DepartmentsEndpointsTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Departments/` — Testcontainers Postgres real; CRUD completo, regra de soft delete bloqueado, validação `business_hours` mistura nulos
-- [ ] T036 [P] [US1] Criar `AttendantsEndpointsTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Attendants/` — CRUD, vínculos N:N atomicidade do `is_primary`, upload de avatar (mock MinIO), guarda de `user_id` único
+- [X] T035 [P] [US1] Criar `DepartmentsEndpointsTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Departments/` — Testcontainers Postgres real; CRUD completo, regra de soft delete bloqueado, validação `business_hours` mistura nulos
+- [X] T036 [P] [US1] Criar `AttendantsEndpointsTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Attendants/` — CRUD, vínculos N:N atomicidade do `is_primary`, upload de avatar (mock MinIO), guarda de `user_id` único
 
 **Checkpoint**: Estrutura mínima pronta — nada do CRM operacional funciona sem isto. **MVP entregável.**
 

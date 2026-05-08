@@ -452,3 +452,19 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 - **Erros de validação** devem usar o código de erro semântico (`TICKET_NOT_FOUND`, não mensagens genéricas)
 - **Segurança:** nunca logar dados sensíveis (senhas, tokens, dados de saúde do cliente)
 - Todo endpoint que não é público **deve** exigir autenticação e checar o `tenant_slug` do token
+
+## 15. Sub-Agent Routing Rules
+
+**Parallel dispatch** (ALL conditions must be met):
+- 3+ tarefas independentes
+- Sem estado compartilhado entre as tarefas
+- Limites de arquivo claros sem sobreposição
+
+**Sequential dispatch** (ANY condition triggers):
+- Tarefas com dependências (B precisa do output de A)
+- Arquivos ou estado compartilhados
+- Escopo não está claro ainda
+
+**Background dispatch**:
+- Pesquisa ou análise (não modificação de arquivos)
+- Resultados não estão bloqueando o trabalho atual

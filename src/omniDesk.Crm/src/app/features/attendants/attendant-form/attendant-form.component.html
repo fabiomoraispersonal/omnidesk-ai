@@ -1,0 +1,60 @@
+<form class="attendant-form" [formGroup]="form" (ngSubmit)="save()">
+  <h1>{{ editing() ? 'Editar atendente' : 'Novo atendente' }}</h1>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  <label class="field">
+    <span>ID do usuário (Spec 002) *</span>
+    <input pInputText type="text" formControlName="userId" />
+    <small class="muted">UUID do usuário previamente convidado.</small>
+  </label>
+
+  <label class="field">
+    <span>Nome de exibição *</span>
+    <input pInputText type="text" formControlName="name" maxlength="255" />
+  </label>
+
+  <label class="field">
+    <span>Atendimentos simultâneos</span>
+    <p-inputNumber formControlName="maxSimultaneousChats" [min]="1" [max]="100"></p-inputNumber>
+  </label>
+
+  <label class="field">
+    <span>Departamentos</span>
+    <p-multiSelect
+      [options]="availableDepartments()"
+      optionLabel="name"
+      optionValue="id"
+      formControlName="departmentIds"
+      placeholder="Selecione um ou mais"
+      display="chip">
+    </p-multiSelect>
+  </label>
+
+  <label class="field">
+    <span>Departamento principal</span>
+    <p-select
+      [options]="availableDepartments()"
+      optionLabel="name"
+      optionValue="id"
+      formControlName="primaryDepartmentId"
+      placeholder="(opcional)"
+      [showClear]="true">
+    </p-select>
+  </label>
+
+  <label class="field">
+    <span>Avatar (≤ 2 MB, JPG/PNG/WebP)</span>
+    <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onAvatarSelected($event)" />
+    @if (avatarPreview()) {
+      <img class="avatar-preview" [src]="avatarPreview()!" alt="Preview" />
+    }
+  </label>
+
+  <div class="actions">
+    <p-button label="Cancelar" severity="secondary" type="button" (onClick)="cancel()"></p-button>
+    <p-button label="Salvar" icon="pi pi-check" type="submit" [disabled]="form.invalid"></p-button>
+  </div>
+</form>
