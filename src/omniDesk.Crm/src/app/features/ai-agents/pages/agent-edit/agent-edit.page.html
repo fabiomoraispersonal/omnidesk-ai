@@ -1,0 +1,38 @@
+<section class="agent-edit-page" *ngIf="agent() as a">
+  <p-toast></p-toast>
+  <header class="page-header">
+    <h1>{{ isOrchestrator() ? 'Editar Orchestrator' : 'Editar Sub-agente' }}</h1>
+    <p class="muted">{{ a.name }}</p>
+  </header>
+
+  <p-card>
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="field">
+        <label for="name">Nome</label>
+        <input pInputText id="name" formControlName="name" />
+      </div>
+
+      <div class="field" *ngIf="!isOrchestrator()">
+        <label for="short_description">Descritivo curto</label>
+        <input pInputText id="short_description" formControlName="short_description" maxlength="300" />
+        <small class="muted">Texto que orienta o Orchestrator a rotear para este agente.</small>
+      </div>
+
+      <div class="field">
+        <label for="model">Modelo</label>
+        <p-select id="model" [options]="modelOptions()" formControlName="model" optionLabel="label" optionValue="value"></p-select>
+      </div>
+
+      <div class="field">
+        <label for="prompt">Prompt</label>
+        <textarea pInputTextarea id="prompt" formControlName="prompt" rows="14" autoResize="true"></textarea>
+        <small class="muted">Variáveis suportadas: <code>{{ '{{company_name}}' }}</code>, <code>{{ '{{department_name}}' }}</code>, <code>{{ '{{attendant_name}}' }}</code>.</small>
+      </div>
+
+      <div class="actions">
+        <p-button type="button" label="Cancelar" severity="secondary" [text]="true" (onClick)="cancel()"></p-button>
+        <p-button type="submit" label="Salvar" [loading]="saving()" [disabled]="form.invalid"></p-button>
+      </div>
+    </form>
+  </p-card>
+</section>

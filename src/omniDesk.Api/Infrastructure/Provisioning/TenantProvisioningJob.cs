@@ -36,8 +36,11 @@ public class TenantProvisioningJob(
             // Step 1: Postgres schema + migrations
             await schemaProvisioner.ProvisionSchemaAsync(tenant.Slug, ct);
 
-            // Step 2: Copy active agent templates into tenant schema
-            await CopyAgentTemplatesAsync(tenant, ct);
+            // Step 2: Copy active agent templates into tenant schema (Spec 006 — `ai_agents` table)
+            await ProvisionAiAgentsAsync(tenant, ct);
+
+            // Step 2b: Initialize ai_settings row for tenant (Spec 006)
+            await ProvisionAiSettingsAsync(tenant, ct);
 
             // Step 3: MinIO bucket
             await minioProvisioner.CreateBucketAsync(tenant.Slug, ct);
@@ -93,7 +96,7 @@ public class TenantProvisioningJob(
         }
     }
 
-    private async Task CopyAgentTemplatesAsync(Tenant tenant, CancellationToken ct)
+    private async Task ProvisionAiAgentsAsync(Tenant tenant, CancellationToken ct)
     {
         var templates = await db.AgentTemplates
             .Where(t => t.IsActive && t.DeletedAt == null)
@@ -101,24 +104,48 @@ public class TenantProvisioningJob(
 
         if (templates.Count == 0) return;
 
-        // Insert agents into tenant schema via raw SQL to avoid requiring a full EF model for the tenant schema
+        // Insert agents into tenant schema via raw SQL — keeps the public schema decoupled from tenant tables.
+        // Idempotent: orchestrator uniqueness is enforced by partial unique index ux_ai_agents_orchestrator.
         var schemaName = tenant.SchemaName;
-        var now = DateTimeOffset.UtcNow;
+
+        // System "provisioning" actor — created_by uses tenant id as a sentinel until the human admin exists.
+        var sentinelCreatedBy = tenant.Id;
 
         foreach (var template in templates)
         {
+            var typeWire = template.Type.ToString().ToLowerInvariant() == "orchestrator" ? "orchestrator" : "sub_agent";
+            var promptValue = template.Prompt is null ? "''" : $"'{EscapeSql(template.Prompt)}'";
+
             await db.Database.ExecuteSqlRawAsync($"""
-                INSERT INTO "{schemaName}".agents (id, template_id, name, type, description, prompt, is_active, created_at, updated_at)
-                VALUES (gen_random_uuid(), '{template.Id}', '{EscapeSql(template.Name)}', '{template.Type}',
-                        '{EscapeSql(template.Description)}', {(template.Prompt != null ? $"'{EscapeSql(template.Prompt)}'" : "NULL")},
-                        true, now(), now())
-                ON CONFLICT DO NOTHING
+                INSERT INTO "{schemaName}".ai_agents
+                    (id, template_id, type, name, short_description, prompt, model, department_id,
+                     is_active, created_by, created_at, updated_at)
+                SELECT gen_random_uuid(), '{template.Id}', '{typeWire}', '{EscapeSql(template.Name)}',
+                       '{EscapeSql(template.Description)}', {promptValue}, 'gpt-4o', NULL,
+                       true, '{sentinelCreatedBy}', now(), now()
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM "{schemaName}".ai_agents
+                    WHERE template_id = '{template.Id}' AND deleted_at IS NULL
+                )
                 """, ct);
 
             template.UsedInProvisioningCount++;
         }
 
         await db.SaveChangesAsync(ct);
+    }
+
+    private async Task ProvisionAiSettingsAsync(Tenant tenant, CancellationToken ct)
+    {
+        var schemaName = tenant.SchemaName;
+        await db.Database.ExecuteSqlRawAsync($"""
+            INSERT INTO "{schemaName}".ai_settings
+                (id, tenant_id, context_window_messages, available_models, updated_at)
+            SELECT gen_random_uuid(), '{tenant.Id}', 20, ARRAY[]::text[], now()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "{schemaName}".ai_settings WHERE tenant_id = '{tenant.Id}'
+            )
+            """, ct);
     }
 
     public static async Task<(string plain, string hash)> GenerateStrongPasswordAsync(PasswordHasher hasher)

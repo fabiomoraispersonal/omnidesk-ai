@@ -20,6 +20,9 @@ public class Tenant
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? BlockedAt { get; set; }
 
+    // Spec 006 — FR-016: depto padrão para transbordo automático do Orchestrator (sem depto vinculado).
+    public Guid? DefaultDepartmentId { get; set; }
+
     public ICollection<TenantContact> Contacts { get; set; } = [];
 
     public string SchemaName => $"tenant_{Slug.Replace('-', '_')}";

@@ -468,3 +468,9 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 **Background dispatch**:
 - Pesquisa ou análise (não modificação de arquivos)
 - Resultados não estão bloqueando o trabalho atual
+
+<!-- SPECKIT START -->
+## Active Spec
+
+**Spec 006 — Agentes de IA** — plano em [specs/006-ai-agents/plan.md](specs/006-ai-agents/plan.md). Branch `006-ai-agents`. Status: planejado, pronto para `/speckit-tasks`.
+<!-- SPECKIT END -->

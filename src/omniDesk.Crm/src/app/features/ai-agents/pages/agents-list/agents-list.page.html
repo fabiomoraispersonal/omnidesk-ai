@@ -1,0 +1,47 @@
+<section class="agents-list-page">
+  <header class="page-header">
+    <h1>Agentes de IA</h1>
+    <p class="muted">Configure o Orchestrator e seus sub-agentes especializados.</p>
+  </header>
+
+  <div *ngIf="loading()" class="loading">
+    <p-progressSpinner ariaLabel="Carregando" strokeWidth="4"></p-progressSpinner>
+  </div>
+
+  <div *ngIf="error()" class="error" role="alert">{{ error() }}</div>
+
+  <div *ngIf="!loading() && !error()" class="cards">
+    <p-card *ngFor="let agent of agents()" class="agent-card" [styleClass]="agent.is_active ? '' : 'inactive'">
+      <ng-template pTemplate="header">
+        <div class="badges">
+          <p-tag
+            [severity]="isOrchestrator(agent) ? 'info' : 'success'"
+            [value]="isOrchestrator(agent) ? 'Orchestrator' : 'Sub-agente'">
+          </p-tag>
+          <p-tag
+            *ngIf="!agent.is_active"
+            severity="secondary"
+            value="Inativo">
+          </p-tag>
+        </div>
+      </ng-template>
+
+      <h3>{{ agent.name }}</h3>
+      <p *ngIf="agent.short_description" class="muted">{{ agent.short_description }}</p>
+      <p *ngIf="agent.department_name">
+        Departamento: <strong>{{ agent.department_name }}</strong>
+      </p>
+      <p class="muted">Modelo: {{ agent.model }}</p>
+
+      <ng-template pTemplate="footer">
+        <p-button
+          icon="pi pi-pencil"
+          label="Editar"
+          severity="secondary"
+          [text]="true"
+          (onClick)="edit(agent)">
+        </p-button>
+      </ng-template>
+    </p-card>
+  </div>
+</section>

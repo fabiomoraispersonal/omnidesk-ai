@@ -30,6 +30,9 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
         builder.Property(t => t.BlockedAt).HasColumnName("blocked_at");
 
+        // Spec 006 — FR-016
+        builder.Property(t => t.DefaultDepartmentId).HasColumnName("default_department_id");
+
         builder.Ignore(t => t.SchemaName);
         builder.Ignore(t => t.BucketName);
         builder.Ignore(t => t.MongoDatabaseName);

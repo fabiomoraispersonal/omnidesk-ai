@@ -17,8 +17,17 @@ using omniDesk.Api.Infrastructure.Tenants;
 using Serilog;
 using StackExchange.Redis;
 using omniDesk.Api.Features.Admin;
+using omniDesk.Api.Features.AgentRuntime;
+using omniDesk.Api.Features.AiAgents;
+using omniDesk.Api.Features.AiAgents.Variables;
+using omniDesk.Api.Features.AiSettings;
 using omniDesk.Api.Features.AiSuggestions;
 using omniDesk.Api.Features.Attendants;
+using omniDesk.Api.Infrastructure.ActivityLogs;
+using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.AiAgents;
+using omniDesk.Api.Infrastructure.OpenAi;
+using omniDesk.Api.Infrastructure.Queues;
 using omniDesk.Api.Features.Auth;
 using omniDesk.Api.Features.CannedResponses;
 using omniDesk.Api.Features.Departments;
@@ -71,7 +80,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Depar
 
 // Spec 005 / US8 — Sugestão IA
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<IAgentRuntime, FallbackAgentRuntime>();
+// Spec 006 substitui o FallbackAgentRuntime pela impl real (cross-spec §005-A).
+builder.Services.AddScoped<IAgentRuntime, AgentRuntime>();
 builder.Services.AddScoped<IOpenAiSuggestionClient, OpenAiSuggestionClient>();
 builder.Services.AddSingleton<AiSuggestionLogger>();
 builder.Services.AddScoped<SuggestReplyService>();
@@ -91,6 +101,28 @@ builder.Services.AddRateLimiter(options =>
             });
     });
 });
+
+// Spec 006 — Agentes de IA (orchestrator, sub-agentes, transbordo, playground)
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<TenantContextHolder>();
+builder.Services.AddScoped<ITenantSlugAccessor>(sp => sp.GetRequiredService<TenantContextHolder>());
+builder.Services.AddScoped<IAssistantsApi, AssistantsApi>();
+builder.Services.AddScoped<OpenAiKeyResolver>();
+builder.Services.AddScoped<AgentActivityLogger>();
+builder.Services.AddScoped<RetryPolicy>();
+builder.Services.AddScoped<PromptVariableSubstitutor>();
+builder.Services.AddScoped<HandoffKeywordDetector>();
+builder.Services.AddScoped<ContextBuilder>();
+builder.Services.AddScoped<AgentResolver>();
+builder.Services.AddScoped<ToolCallDispatcher>();
+builder.Services.AddScoped<AgentOrchestrator>();
+builder.Services.AddScoped<IConversationGateway, ChannelStubGateway>();
+builder.Services.AddScoped<ITicketCreationGateway, StubTicketCreationGateway>();
+builder.Services.AddScoped<IncomingMessagePublisher>();
+builder.Services.AddScoped<OutgoingMessagePublisher>();
+builder.Services.AddScoped<IncomingMessageWorker>();
+builder.Services.AddScoped<OutgoingMessageWorker>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.AiAgents.Validators.CreateAiAgentValidator>();
 
 builder.Services.AddCors(options =>
 {
@@ -184,6 +216,19 @@ var canned = api.MapGroup("/canned-responses")
                 .RequireAuthorization()
                 .AddEndpointFilter<ImpersonationAuditFilter>();
 CannedResponsesEndpoints.Map(canned);
+
+// Spec 006 — Agentes de IA (CRUD + playground)
+var agents = api.MapGroup("/agents")
+                .RequireAuthorization()
+                .AddEndpointFilter<ImpersonationAuditFilter>();
+AiAgentsEndpoints.Map(agents);
+
+// Spec 006 — Internal endpoints (Development only) — atalho para QS-2/QS-7
+if (app.Environment.IsDevelopment())
+{
+    var internalAi = api.MapGroup("/internal");
+    InternalTestEndpoint.Map(internalAi);
+}
 
 // Spec 005 / US8 — Sugestão IA
 var conversations = api.MapGroup("/conversations")
