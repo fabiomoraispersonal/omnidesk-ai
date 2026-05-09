@@ -94,10 +94,10 @@ description: "Task list for Agentes de IA implementation"
 
 - [X] T034 [P] Criar `AgentTypeTests.cs` em `tests/omniDesk.Api.Tests/Domain/AiAgents/AgentTypeTests.cs` cobrindo enum + `Parse`
 - [X] T035 [P] Criar `HandoffKeywordsTests.cs` em `tests/omniDesk.Api.Tests/Domain/AiAgents/HandoffKeywordsTests.cs` cobrindo PT-BR + acentos + case-insensitive (FR-013)
-- [ ] T036 [P] Criar `OpenAiKeyResolverTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/OpenAi/OpenAiKeyResolverTests.cs` (Testcontainers Postgres) cobrindo: tenant com chave → usa tenant; tenant sem chave → cai no global; descriptografia via `IDataProtectionProvider` (FR-025)
+- [X] T036 [P] Criar `OpenAiKeyResolverTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/OpenAi/OpenAiKeyResolverTests.cs` (Testcontainers Postgres) cobrindo: tenant com chave → usa tenant; tenant sem chave → cai no global; descriptografia via `IDataProtectionProvider` (FR-025)
 - [X] T037 [P] Criar `RetryPolicyTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/RetryPolicyTests.cs` cobrindo: 5xx faz 1 retry; 401 não retenta; rate-limit faz 1 retry; timeout faz 1 retry (FR-018/019, research §R9)
-- [ ] T038 Criar `AssistantsApiContractTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/OpenAi/AssistantsApiContractTests.cs` com `MockHttpMessageHandler` cobrindo create/update assistant, create/delete thread, append message, create run, poll run, submit tool outputs (ADR-006-001)
-- [ ] T039 [P] Criar `AgentActivityLoggerTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/ActivityLogs/AgentActivityLoggerTests.cs` (Testcontainers Mongo) verificando: cada `action` produz 1 doc; campos certos; **zero PII** — buscar conteúdo da mensagem retorna nada (constituição IV)
+- [X] T038 Criar `AssistantsApiContractTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/OpenAi/AssistantsApiContractTests.cs` com `MockHttpMessageHandler` cobrindo create/update assistant, create/delete thread, append message, create run, poll run, submit tool outputs (ADR-006-001)
+- [X] T039 [P] Criar `AgentActivityLoggerTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/ActivityLogs/AgentActivityLoggerTests.cs` (Testcontainers Mongo) verificando: cada `action` produz 1 doc; campos certos; **zero PII** — buscar conteúdo da mensagem retorna nada (constituição IV)
 
 **Checkpoint**: Foundation pronta. Provisionamento de novo tenant cria `ai_agents` + `ai_settings`. User stories podem começar.
 
