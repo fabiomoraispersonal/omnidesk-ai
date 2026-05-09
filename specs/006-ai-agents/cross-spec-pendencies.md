@@ -167,6 +167,15 @@
 
 ---
 
+## CRM Shell pendency (post-Spec 006)
+
+A Spec 006 entrega 3 páginas Angular (`agents-list`, `agent-edit`, `ai-settings`) e a rota lazy `/configuracoes/agentes-de-ia/*`. Porém o `omniDesk.Crm` **ainda não tem layout autenticado** — `app.routes.ts` só tem rotas de auth (`/login`, `/forgot-password`, etc.). As páginas funcionam quando navegadas diretamente pela URL, mas **não há sidebar para acessá-las** (T064).
+
+**Workaround**: navegar manualmente para `/configuracoes/agentes-de-ia` enquanto o shell autenticado não chega.
+**Issue de follow-up**: [`follow-up-issues.md`](follow-up-issues.md) ISSUE-1.
+
+---
+
 ## Pós-implementação — checklist
 
 Após `/speckit-implement` da Spec 006, verificar:
