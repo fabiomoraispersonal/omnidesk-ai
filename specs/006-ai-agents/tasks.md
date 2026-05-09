@@ -156,7 +156,7 @@ description: "Task list for Agentes de IA implementation"
 ### Tests for User Story 2 ⚠️
 
 - [ ] T065 [P] [US2] Criar `HandoffKeywordDetectorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandoffKeywordDetectorTests.cs` cobrindo: cada palavra-chave; case-insensitive; com/sem acento (FR-013, US2 cenário 1)
-- [ ] T066 [P] [US2] Criar `ToolCallDispatcherTransferToHumanTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ToolCallDispatcherTransferToHumanTests.cs` cobrindo: depto explícito; fallback para `default_department_id` quando agente é Orchestrator; fallback para `agent.department_id` quando sub-agente; nenhum disponível → erro de configuração (US2 cenário 3, FR-014/016)
+- [X] T066 [P] [US2] Criar `ToolCallDispatcherTransferToHumanTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ToolCallDispatcherTransferToHumanTests.cs` cobrindo: depto explícito; fallback para `default_department_id` quando agente é Orchestrator; fallback para `agent.department_id` quando sub-agente; nenhum disponível → erro de configuração (US2 cenário 3, FR-014/016)
 - [X] T067 [P] [US2] Criar `StubTicketCreationGatewayTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/AgentRuntime/StubTicketCreationGatewayTests.cs` (Testcontainers Postgres+Redis): cria ticket `status=queued`, `subject` truncado em 255, `sla_started_at` preenchido; insere snapshot em `ai_handoff_snapshots`; publica evento Redis `{slug}:ws:dept:{id}` (contracts/ticket-creation-gateway.md)
 - [ ] T068 [US2] Criar `HandedOffAutoReplyTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandedOffAutoReplyTests.cs` verificando: thread com `handed_off_to_human_at != null` recebe nova mensagem → IncomingMessageWorker enfileira auto-reply do sistema sem chamar OpenAI; **zero novos docs** em `agent_activity_logs` (FR-015, US2 cenário 4)
 - [ ] T069 [US2] Criar `AgentTransbordoMessageTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentTransbordoMessageTests.cs` verificando que após `transfer_to_human`, mensagem do agente "Vou transferir você para nossa equipe de [Departamento]. Aguarde um momento." chega à fila outgoing (FR-033, US2 cenário 2a)
@@ -188,12 +188,12 @@ description: "Task list for Agentes de IA implementation"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T078 [P] [US3] Criar `ToolCallDispatcherHandoffTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ToolCallDispatcherHandoffTests.cs` cobrindo: handoff sucesso atualiza `current_agent_id` + grava log + publica evento Redis; handoff para sub-agente inativo retorna erro estruturado; handoff para `'orchestrator'` (atalho) resolve para o orchestrator do tenant; **loop detectado** após 3 handoffs ao mesmo agente retorna `HANDOFF_LOOP_DETECTED` (research §R4, contracts/tool-calls.md §1)
+- [X] T078 [P] [US3] Criar `ToolCallDispatcherHandoffTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ToolCallDispatcherHandoffTests.cs` cobrindo: handoff sucesso atualiza `current_agent_id` + grava log + publica evento Redis; handoff para sub-agente inativo retorna erro estruturado; handoff para `'orchestrator'` (atalho) resolve para o orchestrator do tenant; **loop detectado** após 3 handoffs ao mesmo agente retorna `HANDOFF_LOOP_DETECTED` (research §R4, contracts/tool-calls.md §1)
 - [X] T079 [P] [US3] Criar `AgentResolverActiveSubAgentsTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentResolverActiveSubAgentsTests.cs` (Testcontainers Postgres) cobrindo: lista de sub-agentes ativos para o Orchestrator inclui apenas `is_active=true AND deleted_at IS NULL AND department.is_active=true`; ordenação alfabética por nome (cross-spec §005-E, FR-004)
 - [X] T080 [P] [US3] Criar `CreateAiAgentValidatorTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/CreateAiAgentValidatorTests.cs` cobrindo: required fields; descritivo curto ≤300; prompt 10..50000; modelo na allowlist; depto ativo (data-model §6.1)
 - [X] T081 [P] [US3] Criar `SubAgentSoftDeleteTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/SubAgentSoftDeleteTests.cs` cobrindo: sub-agente sem histórico → DELETE físico; sub-agente com `agent_activity_logs` → soft delete (FR-010)
-- [ ] T082 [US3] Criar `SubAgentDeactivatedDuringConversationTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/SubAgentDeactivatedDuringConversationTests.cs` cobrindo: thread com `current_agent_id=X`; X é desativado; nova mensagem → cai no Orchestrator (FR-032, US3 cenário 4a)
-- [ ] T083 [P] [US3] Criar `AgentRuntimeRealImplTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/AiAgents/AgentRuntimeRealImplTests.cs` verificando que `AgentRuntime` (impl real) substitui `FallbackAgentRuntime` em DI e retorna sub-agente real do depto (cross-spec §005-A)
+- [X] T082 [US3] Criar `SubAgentDeactivatedDuringConversationTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/SubAgentDeactivatedDuringConversationTests.cs` cobrindo: thread com `current_agent_id=X`; X é desativado; nova mensagem → cai no Orchestrator (FR-032, US3 cenário 4a)
+- [X] T083 [P] [US3] Criar `AgentRuntimeRealImplTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/AiAgents/AgentRuntimeRealImplTests.cs` verificando que `AgentRuntime` (impl real) substitui `FallbackAgentRuntime` em DI e retorna sub-agente real do depto (cross-spec §005-A)
 
 ### Backend implementation US3
 
@@ -256,7 +256,7 @@ description: "Task list for Agentes de IA implementation"
 
 - [ ] T106 [P] [US5] Criar `AiSettingsEndpointsContractTests.cs` em `tests/omniDesk.Api.Tests/Features/AiSettings/AiSettingsEndpointsContractTests.cs` cobrindo: GET retorna shape; PUT respeita range [5,100]; PUT com modelo fora da allowlist global retorna 400; auth `tenant_admin` only (contracts/ai-settings-api.md, FR-022/024)
 - [ ] T107 [P] [US5] Criar `OpenAiCredentialsValidationTests.cs` em `tests/omniDesk.Api.Tests/Features/AiSettings/OpenAiCredentialsValidationTests.cs` — PUT `/openai-credentials` com chave válida → 200 + `key_preview`; chave inválida (mock 401) → 400 `OPENAI_KEY_INVALID`
-- [ ] T108 [P] [US5] Criar `ContextWindowMessagesPropagationTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ContextWindowMessagesPropagationTests.cs` verificando que `ContextBuilder` lê `ai_settings.context_window_messages` e respeita o limite (FR-023, SC-006)
+- [X] T108 [P] [US5] Criar `ContextWindowMessagesPropagationTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ContextWindowMessagesPropagationTests.cs` verificando que `ContextBuilder` lê `ai_settings.context_window_messages` e respeita o limite (FR-023, SC-006)
 
 ### Backend implementation US5
 
@@ -304,7 +304,7 @@ description: "Task list for Agentes de IA implementation"
 - [X] T122 Atualizar `docs/ARCHITECTURE.md` adicionando entradas dos 2 ADRs na seção "ADRs"
 - [X] T123 Criar PR de emenda à constituição: editar `.specify/memory/constitution.md` Principle II (texto proposto em ADR-006-002); incrementar versão para `1.0.1` (PATCH); atualizar `LAST_AMENDED_DATE`; preencher Sync Impact Report
 - [ ] T124 [P] Criar `OpenAiLiveSmoke.cs` em `tests/omniDesk.Api.Tests/Smoke/OpenAiLiveSmoke.cs` com `[Trait("openai-live", "true")]` cobrindo 1 cenário fim-a-fim contra OpenAI real (Assistants v2 com `gpt-4o`-mini para custo controlado) — ADR-006-001
-- [ ] T125 [P] Atualizar `src/omniDesk.Api/tests/omniDesk.Api.Tests/.runsettings` (ou criar) excluindo `openai-live=true` no filter padrão do CI
+- [X] T125 [P] Atualizar `src/omniDesk.Api/tests/omniDesk.Api.Tests/.runsettings` (ou criar) excluindo `openai-live=true` no filter padrão do CI
 - [ ] T126 Rodar `quickstart.md` integralmente (QS-1 a QS-8) em ambiente de dev local; capturar evidências em `quickstart-evidences.md` (mesmo padrão da Spec 005)
 - [X] T127 [P] Atualizar `docs/DEPENDENCIES.md` marcando Spec 006 como pronta + descrevendo seus consumidores (Specs 005/007/008/010)
 - [ ] T128 Verificar `cross-spec-pendencies.md` — todos os bloqueadores efetivos resolvidos (003-B, 003-C, 005-E); criar issues GitHub para os patches futuros não-bloqueantes (UI default_department_id; auto-distribuição de ticket de IA; badge "ticket de IA" na fila)
