@@ -17,6 +17,7 @@ using omniDesk.Api.Infrastructure.Tenants;
 using Serilog;
 using StackExchange.Redis;
 using omniDesk.Api.Features.Admin;
+using omniDesk.Api.Features.AiSuggestions;
 using omniDesk.Api.Features.Attendants;
 using omniDesk.Api.Features.Auth;
 using omniDesk.Api.Features.CannedResponses;
@@ -67,6 +68,29 @@ builder.Services.AddScoped<TicketAssignmentService>();
 builder.Services.AddScoped<omniDesk.Api.Features.Distribution.Commands.TransferTicketCommandHandler>();
 builder.Services.AddScoped<omniDesk.Api.Features.Attendants.UpdateAttendantStatusService>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Departments.Validators.CreateDepartmentValidator>();
+
+// Spec 005 / US8 — Sugestão IA
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IAgentRuntime, FallbackAgentRuntime>();
+builder.Services.AddScoped<IOpenAiSuggestionClient, OpenAiSuggestionClient>();
+builder.Services.AddSingleton<AiSuggestionLogger>();
+builder.Services.AddScoped<SuggestReplyService>();
+// Sliding-window rate limit for suggestion calls (FR-040 / contracts/ai-suggestion-api.md).
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("ai-suggestion", httpContext =>
+    {
+        var key = httpContext.User.FindFirst("sub")?.Value ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        return System.Threading.RateLimiting.RateLimitPartition.GetSlidingWindowLimiter(key, _ =>
+            new System.Threading.RateLimiting.SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueLimit = 0,
+            });
+    });
+});
 
 builder.Services.AddCors(options =>
 {
@@ -160,6 +184,12 @@ var canned = api.MapGroup("/canned-responses")
                 .RequireAuthorization()
                 .AddEndpointFilter<ImpersonationAuditFilter>();
 CannedResponsesEndpoints.Map(canned);
+
+// Spec 005 / US8 — Sugestão IA
+var conversations = api.MapGroup("/conversations")
+                       .RequireAuthorization()
+                       .AddEndpointFilter<ImpersonationAuditFilter>();
+SuggestReplyEndpoint.Map(conversations);
 
 // Spec 005 — WebSocket native handler (research §R4)
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });

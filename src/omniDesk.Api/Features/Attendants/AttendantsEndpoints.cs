@@ -20,6 +20,7 @@ public static class AttendantsEndpoints
         group.MapPut("/{id:guid}/departments", UpdateDepartmentsAsync).RequireAuthorization(Policies.CanEditAttendant);
         AvatarUploadEndpoint.Map(group);
         UpdateStatusEndpoint.Map(group);
+        GetAttendantTicketsEndpoint.Map(group);
         return group;
     }
 

@@ -1,0 +1,7 @@
+@if (displayed(); as item) {
+  <p-tag
+    [value]="item.label"
+    [severity]="item.severity"
+    [icon]="item.status === 'overdue' ? 'pi pi-exclamation-triangle' : item.status === 'warning' ? 'pi pi-clock' : 'pi pi-check'">
+  </p-tag>
+}

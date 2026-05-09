@@ -273,22 +273,22 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — Suggestion service
 
-- [ ] T075 [US8] Criar `SuggestReplyService` em `src/omniDesk.Api/Features/AiSuggestions/SuggestReplyService.cs`: consome `IAgentRuntime` (Spec 002 — Agentes IA) para buscar prompt do sub-agente vinculado ao dept; monta prompt conforme research §R6 (system prompts + N últimas mensagens); chama OpenAI; trunca resposta a 1000 caracteres
-- [ ] T076 [US8] Implementar `POST /api/conversations/{id}/suggest-reply` em `Features/AiSuggestions/SuggestReplyEndpoint.cs`: valida ownership da conversa OU `Policies.CanViewAllConversations`; rate limit 30/min/atendente (RateLimiter por chave de usuário); retorna `suggestion_id` + `text` + `model` + `elapsed_ms` + tokens
-- [ ] T077 [US8] Criar `AiSuggestionLogger` em `Features/AiSuggestions/AiSuggestionLogger.cs`: persiste em `{slug}_ai_suggestion_logs` (data-model §2.2); método `LogGenerationAsync(...)` retorna `_id` usado como `suggestion_id`
-- [ ] T078 [US8] Implementar `PATCH /api/conversations/{id}/suggestions/{suggestion_id}` em `Features/AiSuggestions/UpdateSuggestionActionEndpoint.cs`: aceita `{ human_action, final_message_text? }`; **não envia mensagem** — apenas grava ação no Mongo (FR-038, SC-007); valida que o caller é o atendente que originou a sugestão
-- [ ] T079 [US8] Tratar erros de provedor em `SuggestReplyService`: timeout > 10 s → 504 `AI_PROVIDER_TIMEOUT`, 5xx → 502 `AI_PROVIDER_ERROR`, rate limit → 429 `AI_RATE_LIMIT`; mensagens PT-BR; log estruturado (FR-040)
+- [X] T075 [US8] Criar `SuggestReplyService` em `src/omniDesk.Api/Features/AiSuggestions/SuggestReplyService.cs`: consome `IAgentRuntime` (Spec 002 — Agentes IA) para buscar prompt do sub-agente vinculado ao dept; monta prompt conforme research §R6 (system prompts + N últimas mensagens); chama OpenAI; trunca resposta a 1000 caracteres
+- [X] T076 [US8] Implementar `POST /api/conversations/{id}/suggest-reply` em `Features/AiSuggestions/SuggestReplyEndpoint.cs`: valida ownership da conversa OU `Policies.CanViewAllConversations`; rate limit 30/min/atendente (RateLimiter por chave de usuário); retorna `suggestion_id` + `text` + `model` + `elapsed_ms` + tokens
+- [X] T077 [US8] Criar `AiSuggestionLogger` em `Features/AiSuggestions/AiSuggestionLogger.cs`: persiste em `{slug}_ai_suggestion_logs` (data-model §2.2); método `LogGenerationAsync(...)` retorna `_id` usado como `suggestion_id`
+- [X] T078 [US8] Implementar `PATCH /api/conversations/{id}/suggestions/{suggestion_id}` em `Features/AiSuggestions/UpdateSuggestionActionEndpoint.cs`: aceita `{ human_action, final_message_text? }`; **não envia mensagem** — apenas grava ação no Mongo (FR-038, SC-007); valida que o caller é o atendente que originou a sugestão
+- [X] T079 [US8] Tratar erros de provedor em `SuggestReplyService`: timeout > 10 s → 504 `AI_PROVIDER_TIMEOUT`, 5xx → 502 `AI_PROVIDER_ERROR`, rate limit → 429 `AI_RATE_LIMIT`; mensagens PT-BR; log estruturado (FR-040)
 
 ### Frontend — Suggestion panel
 
-- [ ] T080 [P] [US8] Criar `suggestion.service.ts` em `src/omniDesk.Crm/src/app/features/ai-suggestion/services/` com `request(conversationId)`, `recordAction(conversationId, suggestionId, action, finalText?)`; tratamento de erros com toast PT-BR; `.spec.ts`
-- [ ] T081 [P] [US8] Criar `suggestion-panel.component` em `src/omniDesk.Crm/src/app/features/ai-suggestion/suggestion-panel/`: botão "Sugerir resposta com IA", área de preview editável (textarea), botões "Aprovar e enviar", "Editar e enviar", "Descartar"; integra com endpoint de mensagens da Spec 008 quando aprovar; **não envia mensagem se a resposta vier via API mock** (defense-in-depth); `.spec.ts`
+- [X] T080 [P] [US8] Criar `suggestion.service.ts` em `src/omniDesk.Crm/src/app/features/ai-suggestion/services/` com `request(conversationId)`, `recordAction(conversationId, suggestionId, action, finalText?)`; tratamento de erros com toast PT-BR; `.spec.ts`
+- [X] T081 [P] [US8] Criar `suggestion-panel.component` em `src/omniDesk.Crm/src/app/features/ai-suggestion/suggestion-panel/`: botão "Sugerir resposta com IA", área de preview editável (textarea), botões "Aprovar e enviar", "Editar e enviar", "Descartar"; integra com endpoint de mensagens da Spec 008 quando aprovar; **não envia mensagem se a resposta vier via API mock** (defense-in-depth); `.spec.ts`
 
 ### Tests — backend
 
-- [ ] T082 [P] [US8] Criar `SuggestReplyServiceTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/AiSuggestions/`: monta prompt corretamente (sub-agente do dept incluso, N últimas mensagens), trunca em 1000 chars, mock OpenAI retorna texto, falha de provedor cai no fallback
-- [ ] T083 [P] [US8] Criar `SuggestionActionTests.cs`: PATCH grava ação correta no Mongo, **não cria mensagem na conversa** (assert via repositório de mensagens); 403 quando outro atendente tenta atualizar; idempotente (duas chamadas com mesma action sobrescreve)
-- [ ] T084 [P] [US8] Criar `SuggestionAuditTests.cs`: cobertura de SC-007 (zero mensagens enviadas via fluxo de sugestão sem PATCH human_action); inspeciona que entre POST /suggest-reply e o envio real só ocorre PATCH na timeline
+- [X] T082 [P] [US8] Criar `SuggestReplyServiceTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/AiSuggestions/`: monta prompt corretamente (sub-agente do dept incluso, N últimas mensagens), trunca em 1000 chars, mock OpenAI retorna texto, falha de provedor cai no fallback
+- [X] T083 [P] [US8] Criar `SuggestionActionTests.cs`: PATCH grava ação correta no Mongo, **não cria mensagem na conversa** (assert via repositório de mensagens); 403 quando outro atendente tenta atualizar; idempotente (duas chamadas com mesma action sobrescreve)
+- [X] T084 [P] [US8] Criar `SuggestionAuditTests.cs`: cobertura de SC-007 (zero mensagens enviadas via fluxo de sugestão sem PATCH human_action); inspeciona que entre POST /suggest-reply e o envio real só ocorre PATCH na timeline
 
 **Checkpoint**: IA assistiva entregue com defense-in-depth; SC-007 verificado.
 
@@ -302,17 +302,17 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 ### Backend — SLA calculator
 
-- [ ] T085 [US9] Criar `SlaCalculator` em `src/omniDesk.Api/Features/Distribution/SlaCalculator.cs`: calcula `elapsed_business_minutes` reusando `BusinessHoursEvaluator`; expõe `ComputeSlaSnapshot(ticket, dept, now)` retornando `{ first_response_status, first_response_elapsed_minutes, resolution_status, resolution_elapsed_minutes }`; status ∈ `ok`/`warning`/`overdue`/`not_configured`
-- [ ] T086 [US9] Atualizar `GET /api/attendants/{id}/tickets` para incluir `sla` no payload (data-model — contracts/attendants-api.md); idem para endpoints de listagem de tickets em fila
+- [X] T085 [US9] Criar `SlaCalculator` em `src/omniDesk.Api/Features/Distribution/SlaCalculator.cs`: calcula `elapsed_business_minutes` reusando `BusinessHoursEvaluator`; expõe `ComputeSlaSnapshot(ticket, dept, now)` retornando `{ first_response_status, first_response_elapsed_minutes, resolution_status, resolution_elapsed_minutes }`; status ∈ `ok`/`warning`/`overdue`/`not_configured`
+- [X] T086 [US9] Atualizar `GET /api/attendants/{id}/tickets` para incluir `sla` no payload (data-model — contracts/attendants-api.md); idem para endpoints de listagem de tickets em fila
 
 ### Frontend — SLA badge
 
-- [ ] T087 [P] [US9] Criar `sla-badge.component` em `src/omniDesk.Crm/src/app/shared/components/sla-badge/`: aceita `@Input() snapshot`; renderiza badge PrimeNG com cor (amarelo ≥ 80 %, vermelho ≥ 100 %, ok < 80 %); contador regressivo MM:SS atualizando a cada segundo; `.spec.ts`
-- [ ] T088 [P] [US9] Integrar `sla-badge` no `ticket-queue/queue-board.component` e em qualquer card de ticket existente do CRM
+- [X] T087 [P] [US9] Criar `sla-badge.component` em `src/omniDesk.Crm/src/app/shared/components/sla-badge/`: aceita `@Input() snapshot`; renderiza badge PrimeNG com cor (amarelo ≥ 80 %, vermelho ≥ 100 %, ok < 80 %); contador regressivo MM:SS atualizando a cada segundo; `.spec.ts`
+- [X] T088 [P] [US9] Integrar `sla-badge` no `ticket-queue/queue-board.component` e em qualquer card de ticket existente do CRM
 
 ### Tests — backend
 
-- [ ] T089 [P] [US9] Criar `SlaCalculatorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: cenários de pause/resume cruzando 18h → 08h dia útil seguinte (FR-043); badges nas thresholds 80/100 % com erro ≤ 30 s (SC-008); dept sem SLA retorna `not_configured`
+- [X] T089 [P] [US9] Criar `SlaCalculatorTests.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Distribution/`: cenários de pause/resume cruzando 18h → 08h dia útil seguinte (FR-043); badges nas thresholds 80/100 % com erro ≤ 30 s (SC-008); dept sem SLA retorna `not_configured`
 
 **Checkpoint**: Visibilidade visual do SLA sem engine de notificação (V2).
 
@@ -322,13 +322,13 @@ description: "Task list for Departamentos e Atendentes implementation"
 
 **Purpose**: Documentação, observabilidade, perf check, integração com Spec 004 (`dept_ids`).
 
-- [ ] T090 [P] Atualizar `ClaimsTransformer` (Spec 004) em `src/omniDesk.Api/Infrastructure/Authorization/ClaimsTransformer.cs` para popular `dept_ids` claim consultando `tenant_{slug}.attendant_departments` JOIN `tenant_{slug}.attendants ON user_id` (research §R8); remover o try/catch fallback de "tabela ausente"
-- [ ] T091 [P] Adicionar `DistributionBenchmark` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Performance/DistributionBenchmark.cs`: mede p95 do `TicketAssignmentService.AssignAsync` em rajada de 1000 tickets; assert ≤ 150 ms (Performance Goal do plan)
-- [ ] T092 [P] Adicionar `WebSocketLatencyBenchmark` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Performance/WebSocketLatencyBenchmark.cs`: mede latência de `attendant.status_changed` até cliente receber; assert ≤ 1 s (SC-004)
-- [ ] T093 Atualizar `docs/ARCHITECTURE.md` adicionando seção "Departamentos e Atendentes" com fluxo de distribuição, regra de transbordo e cross-link com `contracts/round-robin-distribution.md`
-- [ ] T094 [P] Auditar endpoints existentes em busca de uso correto das policies novas necessárias (`Policies.CanCreateAttendant`, etc.) — verificar que nenhuma checagem manual de role permanece em `SendInviteEndpoint` e endpoints similares
-- [ ] T095 Executar `quickstart.md` §§ A–G manualmente em ambiente local; preencher `quickstart-evidences.md` (não comitar dados sensíveis)
-- [ ] T096 [P] Adicionar logs estruturados de negação de policy específicos desta feature (department/attendant) — reusa `AuthorizationFailureLogger` da Spec 004
+- [X] T090 [P] Atualizar `ClaimsTransformer` (Spec 004) em `src/omniDesk.Api/Infrastructure/Authorization/ClaimsTransformer.cs` para popular `dept_ids` claim consultando `tenant_{slug}.attendant_departments` JOIN `tenant_{slug}.attendants ON user_id` (research §R8); remover o try/catch fallback de "tabela ausente"
+- [X] T091 [P] Adicionar `DistributionBenchmark` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Performance/DistributionBenchmark.cs`: mede p95 do `TicketAssignmentService.AssignAsync` em rajada de 1000 tickets; assert ≤ 150 ms (Performance Goal do plan)
+- [X] T092 [P] Adicionar `WebSocketLatencyBenchmark` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Performance/WebSocketLatencyBenchmark.cs`: mede latência de `attendant.status_changed` até cliente receber; assert ≤ 1 s (SC-004)
+- [X] T093 Atualizar `docs/ARCHITECTURE.md` adicionando seção "Departamentos e Atendentes" com fluxo de distribuição, regra de transbordo e cross-link com `contracts/round-robin-distribution.md`
+- [X] T094 [P] Auditar endpoints existentes em busca de uso correto das policies novas necessárias (`Policies.CanCreateAttendant`, etc.) — verificar que nenhuma checagem manual de role permanece em `SendInviteEndpoint` e endpoints similares
+- [X] T095 Executar `quickstart.md` §§ A–G manualmente em ambiente local; preencher `quickstart-evidences.md` (não comitar dados sensíveis)
+- [X] T096 [P] Adicionar logs estruturados de negação de policy específicos desta feature (department/attendant) — reusa `AuthorizationFailureLogger` da Spec 004
 
 ---
 
