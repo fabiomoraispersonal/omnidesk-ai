@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Tenants;
@@ -14,14 +15,42 @@ public class OpenAiKeyResolver
     private readonly AppDbContext _db;
     private readonly IDataProtectionProvider _dp;
     private readonly IConfiguration _config;
+    private readonly IHttpClientFactory _http;
     private readonly ILogger<OpenAiKeyResolver> _logger;
 
-    public OpenAiKeyResolver(AppDbContext db, IDataProtectionProvider dp, IConfiguration config, ILogger<OpenAiKeyResolver> logger)
+    public OpenAiKeyResolver(
+        AppDbContext db,
+        IDataProtectionProvider dp,
+        IConfiguration config,
+        IHttpClientFactory http,
+        ILogger<OpenAiKeyResolver> logger)
     {
         _db = db;
         _dp = dp;
         _config = config;
+        _http = http;
         _logger = logger;
+    }
+
+    public async Task<bool> ValidateKeyAsync(string apiKey, string? organization, string? project, CancellationToken ct)
+    {
+        try
+        {
+            var http = _http.CreateClient("openai-validate");
+            http.BaseAddress = new Uri("https://api.openai.com/");
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            if (!string.IsNullOrEmpty(organization))
+                http.DefaultRequestHeaders.Add("OpenAI-Organization", organization);
+            if (!string.IsNullOrEmpty(project))
+                http.DefaultRequestHeaders.Add("OpenAI-Project", project);
+            using var resp = await http.GetAsync("v1/models", ct);
+            return resp.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "OpenAI key validation request failed.");
+            return false;
+        }
     }
 
     public async Task<OpenAiCredentials> ResolveAsync(Guid tenantId, CancellationToken ct = default)

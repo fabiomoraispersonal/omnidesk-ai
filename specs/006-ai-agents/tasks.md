@@ -190,7 +190,7 @@ description: "Task list for Agentes de IA implementation"
 
 - [ ] T078 [P] [US3] Criar `ToolCallDispatcherHandoffTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ToolCallDispatcherHandoffTests.cs` cobrindo: handoff sucesso atualiza `current_agent_id` + grava log + publica evento Redis; handoff para sub-agente inativo retorna erro estruturado; handoff para `'orchestrator'` (atalho) resolve para o orchestrator do tenant; **loop detectado** após 3 handoffs ao mesmo agente retorna `HANDOFF_LOOP_DETECTED` (research §R4, contracts/tool-calls.md §1)
 - [ ] T079 [P] [US3] Criar `AgentResolverActiveSubAgentsTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentResolverActiveSubAgentsTests.cs` (Testcontainers Postgres) cobrindo: lista de sub-agentes ativos para o Orchestrator inclui apenas `is_active=true AND deleted_at IS NULL AND department.is_active=true`; ordenação alfabética por nome (cross-spec §005-E, FR-004)
-- [ ] T080 [P] [US3] Criar `CreateAiAgentValidatorTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/CreateAiAgentValidatorTests.cs` cobrindo: required fields; descritivo curto ≤300; prompt 10..50000; modelo na allowlist; depto ativo (data-model §6.1)
+- [X] T080 [P] [US3] Criar `CreateAiAgentValidatorTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/CreateAiAgentValidatorTests.cs` cobrindo: required fields; descritivo curto ≤300; prompt 10..50000; modelo na allowlist; depto ativo (data-model §6.1)
 - [ ] T081 [P] [US3] Criar `SubAgentSoftDeleteTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/SubAgentSoftDeleteTests.cs` cobrindo: sub-agente sem histórico → DELETE físico; sub-agente com `agent_activity_logs` → soft delete (FR-010)
 - [ ] T082 [US3] Criar `SubAgentDeactivatedDuringConversationTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/SubAgentDeactivatedDuringConversationTests.cs` cobrindo: thread com `current_agent_id=X`; X é desativado; nova mensagem → cai no Orchestrator (FR-032, US3 cenário 4a)
 - [ ] T083 [P] [US3] Criar `AgentRuntimeRealImplTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/AiAgents/AgentRuntimeRealImplTests.cs` verificando que `AgentRuntime` (impl real) substitui `FallbackAgentRuntime` em DI e retorna sub-agente real do depto (cross-spec §005-A)
@@ -209,11 +209,11 @@ description: "Task list for Agentes de IA implementation"
 
 ### Frontend US3
 
-- [ ] T093 [P] [US3] Estender `ai-agents.types.ts` com tipos para Create/Update sub-agente
-- [ ] T094 [P] [US3] Estender `ai-agents.service.ts` com `create()`, `delete()`, `toggle()`
-- [ ] T095 [US3] Estender `AgentsListPage` para mostrar cards de sub-agentes; botão "Novo sub-agente"; toggle ativo/inativo via `PrimeNG InputSwitch`; ação "Excluir" (com confirmação) apenas em sub-agente — não no Orchestrator
-- [ ] T096 [US3] Estender `AgentEditPage` com modo "sub-agente": campos completos `name`, `short_description`, `prompt`, `model`, `department_id` (Select de departamentos ativos da Spec 005), `is_active`
-- [ ] T097 [US3] Criar `PromptVariablesHelperComponent` em `src/omniDesk.Crm/src/app/features/ai-agents/shared/prompt-variables-helper.component.ts` — exibe variáveis disponíveis e botão "Inserir" no editor
+- [X] T093 [P] [US3] Estender `ai-agents.types.ts` com tipos para Create/Update sub-agente
+- [X] T094 [P] [US3] Estender `ai-agents.service.ts` com `create()`, `delete()`, `toggle()`
+- [X] T095 [US3] Estender `AgentsListPage` para mostrar cards de sub-agentes; botão "Novo sub-agente"; toggle ativo/inativo via `PrimeNG InputSwitch`; ação "Excluir" (com confirmação) apenas em sub-agente — não no Orchestrator
+- [X] T096 [US3] Estender `AgentEditPage` com modo "sub-agente": campos completos `name`, `short_description`, `prompt`, `model`, `department_id` (Select de departamentos ativos da Spec 005), `is_active`
+- [X] T097 [US3] Criar `PromptVariablesHelperComponent` em `src/omniDesk.Crm/src/app/features/ai-agents/shared/prompt-variables-helper.component.ts` — exibe variáveis disponíveis e botão "Inserir" no editor
 
 **Checkpoint US3**: tenant compõe operação multi-agente fim-a-fim; QS-4 passa.
 
@@ -232,15 +232,15 @@ description: "Task list for Agentes de IA implementation"
 
 ### Backend implementation US4
 
-- [ ] T100 [US4] Criar `PlaygroundEndpoint.cs` em `src/omniDesk.Api/Features/AiAgents/Playground/PlaygroundEndpoint.cs` — `POST /api/agents/{id}/test` + `DELETE /api/agents/playground-sessions/{session_id}` (contracts/playground-api.md)
-- [ ] T101 [US4] Criar `PlaygroundSessionStore.cs` em `src/omniDesk.Api/Features/AiAgents/Playground/PlaygroundSessionStore.cs` (Redis hash `{slug}:playground:{session_id}` com TTL via `Ai:PlaygroundTtlSeconds`)
-- [ ] T102 [US4] Criar `PlaygroundCleanupJob.cs` em `src/omniDesk.Api/Features/AiAgents/Playground/PlaygroundCleanupJob.cs` (Hangfire recurring 1h) — varre Redis e deleta threads OpenAI órfãos (research §R12)
-- [ ] T103 [US4] Modificar `ToolCallDispatcher` para detectar contexto playground (`isPlayground` flag) e retornar `{simulated: true}` sem efeitos colaterais
+- [X] T100 [US4] Criar `PlaygroundEndpoint.cs` em `src/omniDesk.Api/Features/AiAgents/Playground/PlaygroundEndpoint.cs` — `POST /api/agents/{id}/test` + `DELETE /api/agents/playground-sessions/{session_id}` (contracts/playground-api.md)
+- [X] T101 [US4] Criar `PlaygroundSessionStore.cs` em `src/omniDesk.Api/Features/AiAgents/Playground/PlaygroundSessionStore.cs` (Redis hash `{slug}:playground:{session_id}` com TTL via `Ai:PlaygroundTtlSeconds`)
+- [X] T102 [US4] Criar `PlaygroundCleanupJob.cs` em `src/omniDesk.Api/Features/AiAgents/Playground/PlaygroundCleanupJob.cs` (Hangfire recurring 1h) — varre Redis e deleta threads OpenAI órfãos (research §R12)
+- [X] T103 [US4] Modificar `ToolCallDispatcher` para detectar contexto playground (`isPlayground` flag) e retornar `{simulated: true}` sem efeitos colaterais
 
 ### Frontend US4
 
-- [ ] T104 [US4] Criar `PlaygroundPaneComponent` em `src/omniDesk.Crm/src/app/features/ai-agents/shared/playground-pane.component.ts` (PrimeNG Card + InputText + Button + área de resposta com Signal); botão "Limpar conversa" (DELETE session)
-- [ ] T105 [US4] Integrar `PlaygroundPaneComponent` em `AgentEditPage` na aba "Testar"
+- [X] T104 [US4] Criar `PlaygroundPaneComponent` em `src/omniDesk.Crm/src/app/features/ai-agents/shared/playground-pane.component.ts` (PrimeNG Card + InputText + Button + área de resposta com Signal); botão "Limpar conversa" (DELETE session)
+- [X] T105 [US4] Integrar `PlaygroundPaneComponent` em `AgentEditPage` na aba "Testar"
 
 **Checkpoint US4**: QS-5 passa — admin valida prompts sem poluir produção.
 
@@ -260,15 +260,15 @@ description: "Task list for Agentes de IA implementation"
 
 ### Backend implementation US5
 
-- [ ] T109 [US5] Criar `UpdateAiSettingsValidator.cs` em `src/omniDesk.Api/Features/AiSettings/Validators/UpdateAiSettingsValidator.cs` (data-model §6.3)
-- [ ] T110 [US5] Criar `AiSettingsEndpoints.cs` em `src/omniDesk.Api/Features/AiSettings/AiSettingsEndpoints.cs` com `GET /api/ai-settings`, `PUT /api/ai-settings`, `PUT /api/ai-settings/openai-credentials`, `DELETE /api/ai-settings/openai-credentials` — autoriza `Policies.ManageAiSettings` (admin only, FR-016 da Spec 004)
-- [ ] T111 [US5] Estender `OpenAiKeyResolver` com método `ValidateKeyAsync(key)` que faz `GET https://api.openai.com/v1/models` e retorna sucesso/falha (FR-025 + contracts/ai-settings-api.md)
-- [ ] T112 [US5] Garantir que `ContextBuilder` consome `IAiSettingsRepository.GetForTenantAsync(tenantId).ContextWindowMessages` em vez de hardcode
+- [X] T109 [US5] Criar `UpdateAiSettingsValidator.cs` em `src/omniDesk.Api/Features/AiSettings/Validators/UpdateAiSettingsValidator.cs` (data-model §6.3)
+- [X] T110 [US5] Criar `AiSettingsEndpoints.cs` em `src/omniDesk.Api/Features/AiSettings/AiSettingsEndpoints.cs` com `GET /api/ai-settings`, `PUT /api/ai-settings`, `PUT /api/ai-settings/openai-credentials`, `DELETE /api/ai-settings/openai-credentials` — autoriza `Policies.ManageAiSettings` (admin only, FR-016 da Spec 004)
+- [X] T111 [US5] Estender `OpenAiKeyResolver` com método `ValidateKeyAsync(key)` que faz `GET https://api.openai.com/v1/models` e retorna sucesso/falha (FR-025 + contracts/ai-settings-api.md)
+- [X] T112 [US5] Garantir que `ContextBuilder` consome `IAiSettingsRepository.GetForTenantAsync(tenantId).ContextWindowMessages` em vez de hardcode
 
 ### Frontend US5
 
-- [ ] T113 [P] [US5] Criar `AiSettingsPage` em `src/omniDesk.Crm/src/app/features/ai-agents/pages/ai-settings/ai-settings.page.ts` com slider/InputNumber para `context_window_messages` (5-100), MultiSelect para `available_models`, seção "Credenciais OpenAI" com input mascarado para chave + botões "Cadastrar" e "Remover"
-- [ ] T114 [US5] Adicionar rota lazy `/configuracoes/agentes-de-ia/avancadas` em `ai-agents.routes.ts`; visível apenas para `tenant_admin`
+- [X] T113 [P] [US5] Criar `AiSettingsPage` em `src/omniDesk.Crm/src/app/features/ai-agents/pages/ai-settings/ai-settings.page.ts` com slider/InputNumber para `context_window_messages` (5-100), MultiSelect para `available_models`, seção "Credenciais OpenAI" com input mascarado para chave + botões "Cadastrar" e "Remover"
+- [X] T114 [US5] Adicionar rota lazy `/configuracoes/agentes-de-ia/avancadas` em `ai-agents.routes.ts`; visível apenas para `tenant_admin`
 
 **Checkpoint US5**: QS-6 passa.
 
@@ -289,7 +289,7 @@ description: "Task list for Agentes de IA implementation"
 ### Backend implementation US6
 
 - [ ] T118 [US6] Estender `AgentOrchestrator.ProcessAsync` com bloco try/catch envolvendo todo o fluxo OpenAI: ao capturar exceção, consulta `RetryPolicy.ShouldRetry(error)`; se sim → aguarda `Ai:RunRetryBackoffSeconds` e retenta uma vez; se não/após retry → loga `agent_activity_logs` com `action=api_error`, chama `ToolCallDispatcher.HandleApiFailure(threadId, currentAgentId)` que dispara transbordo automático com motivo "Falha técnica no agente de IA" + envia mensagem do sistema "Estamos com uma instabilidade técnica no momento. Vou transferir você para um de nossos atendentes." (FR-020, US6 cenário 1)
-- [ ] T119 [US6] Adicionar fault injection endpoint `POST /api/internal/fault-injector` em `src/omniDesk.Api/Features/AgentRuntime/InternalFaultInjector.cs` (gated por `IHostEnvironment.IsDevelopment` + DI flag `ASSISTANTS_API_FAULT_INJECTOR=true`) que faz `IAssistantsApi` retornar status code controlado nas próximas N chamadas — habilita QS-7
+- [X] T119 [US6] Adicionar fault injection endpoint `POST /api/internal/fault-injector` em `src/omniDesk.Api/Features/AgentRuntime/InternalFaultInjector.cs` (gated por `IHostEnvironment.IsDevelopment` + DI flag `ASSISTANTS_API_FAULT_INJECTOR=true`) que faz `IAssistantsApi` retornar status code controlado nas próximas N chamadas — habilita QS-7
 - [ ] T120 [US6] Garantir que `ToolCallDispatcher.HandleApiFailure` resolve depto: sub-agente → `agent.department_id`; orchestrator → `tenants.default_department_id`; nenhum → fallback do T077
 
 **Checkpoint US6**: QS-7 passa; SC-005 medido < 10s.
@@ -300,15 +300,15 @@ description: "Task list for Agentes de IA implementation"
 
 **Purpose**: ADRs, emenda constitucional, smoke live, documentação, varredura final.
 
-- [ ] T121 [P] Mover `ADR-006-001-openai-mock-strategy.md` e `ADR-006-002-frustration-detection-via-prompt.md` de `specs/006-ai-agents/` para `docs/adr/` conforme convenção do projeto (ARCHITECTURE.md §ADRs)
-- [ ] T122 Atualizar `docs/ARCHITECTURE.md` adicionando entradas dos 2 ADRs na seção "ADRs"
-- [ ] T123 Criar PR de emenda à constituição: editar `.specify/memory/constitution.md` Principle II (texto proposto em ADR-006-002); incrementar versão para `1.0.1` (PATCH); atualizar `LAST_AMENDED_DATE`; preencher Sync Impact Report
+- [X] T121 [P] Mover `ADR-006-001-openai-mock-strategy.md` e `ADR-006-002-frustration-detection-via-prompt.md` de `specs/006-ai-agents/` para `docs/adr/` conforme convenção do projeto (ARCHITECTURE.md §ADRs)
+- [X] T122 Atualizar `docs/ARCHITECTURE.md` adicionando entradas dos 2 ADRs na seção "ADRs"
+- [X] T123 Criar PR de emenda à constituição: editar `.specify/memory/constitution.md` Principle II (texto proposto em ADR-006-002); incrementar versão para `1.0.1` (PATCH); atualizar `LAST_AMENDED_DATE`; preencher Sync Impact Report
 - [ ] T124 [P] Criar `OpenAiLiveSmoke.cs` em `tests/omniDesk.Api.Tests/Smoke/OpenAiLiveSmoke.cs` com `[Trait("openai-live", "true")]` cobrindo 1 cenário fim-a-fim contra OpenAI real (Assistants v2 com `gpt-4o`-mini para custo controlado) — ADR-006-001
 - [ ] T125 [P] Atualizar `src/omniDesk.Api/tests/omniDesk.Api.Tests/.runsettings` (ou criar) excluindo `openai-live=true` no filter padrão do CI
 - [ ] T126 Rodar `quickstart.md` integralmente (QS-1 a QS-8) em ambiente de dev local; capturar evidências em `quickstart-evidences.md` (mesmo padrão da Spec 005)
-- [ ] T127 [P] Atualizar `docs/DEPENDENCIES.md` marcando Spec 006 como pronta + descrevendo seus consumidores (Specs 005/007/008/010)
+- [X] T127 [P] Atualizar `docs/DEPENDENCIES.md` marcando Spec 006 como pronta + descrevendo seus consumidores (Specs 005/007/008/010)
 - [ ] T128 Verificar `cross-spec-pendencies.md` — todos os bloqueadores efetivos resolvidos (003-B, 003-C, 005-E); criar issues GitHub para os patches futuros não-bloqueantes (UI default_department_id; auto-distribuição de ticket de IA; badge "ticket de IA" na fila)
-- [ ] T129 [P] Atualizar `CLAUDE.md` SPECKIT block para `Status: implementado`
+- [X] T129 [P] Atualizar `CLAUDE.md` SPECKIT block para `Status: implementado`
 - [ ] T130 Code review interno + cleanup: remover endpoints `/api/internal/test-incoming` e `/api/internal/fault-injector` do build de produção (gated por `IHostEnvironment.IsDevelopment` — confirmar que não vazam)
 
 ---

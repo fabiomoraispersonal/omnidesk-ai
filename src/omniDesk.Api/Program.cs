@@ -19,6 +19,7 @@ using StackExchange.Redis;
 using omniDesk.Api.Features.Admin;
 using omniDesk.Api.Features.AgentRuntime;
 using omniDesk.Api.Features.AiAgents;
+using omniDesk.Api.Features.AiAgents.Playground;
 using omniDesk.Api.Features.AiAgents.Variables;
 using omniDesk.Api.Features.AiSettings;
 using omniDesk.Api.Features.AiSuggestions;
@@ -122,7 +123,10 @@ builder.Services.AddScoped<IncomingMessagePublisher>();
 builder.Services.AddScoped<OutgoingMessagePublisher>();
 builder.Services.AddScoped<IncomingMessageWorker>();
 builder.Services.AddScoped<OutgoingMessageWorker>();
+builder.Services.AddScoped<PlaygroundSessionStore>();
+builder.Services.AddScoped<PlaygroundCleanupJob>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.AiAgents.Validators.CreateAiAgentValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.AiSettings.Validators.UpdateAiSettingsValidator>();
 
 builder.Services.AddCors(options =>
 {
@@ -222,12 +226,20 @@ var agents = api.MapGroup("/agents")
                 .RequireAuthorization()
                 .AddEndpointFilter<ImpersonationAuditFilter>();
 AiAgentsEndpoints.Map(agents);
+agents.MapPlayground();
+
+// Spec 006 — AI Settings (Configurações Avançadas)
+var aiSettings = api.MapGroup("/ai-settings")
+                    .RequireAuthorization()
+                    .AddEndpointFilter<ImpersonationAuditFilter>();
+AiSettingsEndpoints.Map(aiSettings);
 
 // Spec 006 — Internal endpoints (Development only) — atalho para QS-2/QS-7
 if (app.Environment.IsDevelopment())
 {
     var internalAi = api.MapGroup("/internal");
     InternalTestEndpoint.Map(internalAi);
+    internalAi.MapFaultInjector();
 }
 
 // Spec 005 / US8 — Sugestão IA

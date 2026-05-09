@@ -1,7 +1,17 @@
 <section class="agents-list-page">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
   <header class="page-header">
-    <h1>Agentes de IA</h1>
-    <p class="muted">Configure o Orchestrator e seus sub-agentes especializados.</p>
+    <div class="header-text">
+      <h1>Agentes de IA</h1>
+      <p class="muted">Configure o Orchestrator e seus sub-agentes especializados.</p>
+    </div>
+    <p-button
+      icon="pi pi-plus"
+      label="Novo sub-agente"
+      (onClick)="newSubAgent()">
+    </p-button>
   </header>
 
   <div *ngIf="loading()" class="loading">
@@ -18,11 +28,7 @@
             [severity]="isOrchestrator(agent) ? 'info' : 'success'"
             [value]="isOrchestrator(agent) ? 'Orchestrator' : 'Sub-agente'">
           </p-tag>
-          <p-tag
-            *ngIf="!agent.is_active"
-            severity="secondary"
-            value="Inativo">
-          </p-tag>
+          <p-tag *ngIf="!agent.is_active" severity="secondary" value="Inativo"></p-tag>
         </div>
       </ng-template>
 
@@ -34,13 +40,25 @@
       <p class="muted">Modelo: {{ agent.model }}</p>
 
       <ng-template pTemplate="footer">
-        <p-button
-          icon="pi pi-pencil"
-          label="Editar"
-          severity="secondary"
-          [text]="true"
-          (onClick)="edit(agent)">
-        </p-button>
+        <div class="card-actions">
+          <p-button icon="pi pi-pencil" label="Editar" severity="secondary" [text]="true" (onClick)="edit(agent)"></p-button>
+          <p-button
+            *ngIf="!isOrchestrator(agent)"
+            [icon]="agent.is_active ? 'pi pi-pause' : 'pi pi-play'"
+            [label]="agent.is_active ? 'Desativar' : 'Ativar'"
+            severity="warning"
+            [text]="true"
+            (onClick)="toggleActive(agent, $event)">
+          </p-button>
+          <p-button
+            *ngIf="!isOrchestrator(agent)"
+            icon="pi pi-trash"
+            label="Excluir"
+            severity="danger"
+            [text]="true"
+            (onClick)="delete(agent, $event)">
+          </p-button>
+        </div>
       </ng-template>
     </p-card>
   </div>

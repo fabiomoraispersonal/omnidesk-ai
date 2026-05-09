@@ -1,21 +1,30 @@
-<section class="agent-edit-page" *ngIf="agent() as a">
+<section class="agent-edit-page" *ngIf="isCreate() || agent() as a">
   <p-toast></p-toast>
   <header class="page-header">
-    <h1>{{ isOrchestrator() ? 'Editar Orchestrator' : 'Editar Sub-agente' }}</h1>
-    <p class="muted">{{ a.name }}</p>
+    <h1>
+      {{ isCreate() ? 'Novo sub-agente'
+                    : (isOrchestrator() ? 'Editar Orchestrator' : 'Editar Sub-agente') }}
+    </h1>
+    <p class="muted" *ngIf="!isCreate() && agent()">{{ agent()!.name }}</p>
   </header>
 
   <p-card>
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="field">
         <label for="name">Nome</label>
-        <input pInputText id="name" formControlName="name" />
+        <input pInputText id="name" formControlName="name" maxlength="100" />
       </div>
 
       <div class="field" *ngIf="!isOrchestrator()">
         <label for="short_description">Descritivo curto</label>
         <input pInputText id="short_description" formControlName="short_description" maxlength="300" />
-        <small class="muted">Texto que orienta o Orchestrator a rotear para este agente.</small>
+        <small class="muted">Descreva em uma frase o que este agente faz e quando deve ser acionado pelo Orchestrator.</small>
+      </div>
+
+      <div class="field" *ngIf="!isOrchestrator() && isCreate()">
+        <label for="department_id">ID do departamento</label>
+        <input pInputText id="department_id" formControlName="department_id" />
+        <small class="muted">UUID do departamento. (UI integrada com /api/departments será adicionada em iteração seguinte.)</small>
       </div>
 
       <div class="field">
@@ -25,14 +34,29 @@
 
       <div class="field">
         <label for="prompt">Prompt</label>
-        <textarea pInputTextarea id="prompt" formControlName="prompt" rows="14" autoResize="true"></textarea>
-        <small class="muted">Variáveis suportadas: <code>{{ '{{company_name}}' }}</code>, <code>{{ '{{department_name}}' }}</code>, <code>{{ '{{attendant_name}}' }}</code>.</small>
+        <app-prompt-variables-helper (insert)="insertVariable($event)"></app-prompt-variables-helper>
+        <textarea #promptInput pInputTextarea id="prompt" formControlName="prompt" rows="14" autoResize="true"></textarea>
+      </div>
+
+      <div class="field" *ngIf="!isOrchestrator() && !isCreate()">
+        <label for="is_active">Ativo</label>
+        <p-inputSwitch id="is_active" formControlName="is_active"></p-inputSwitch>
       </div>
 
       <div class="actions">
         <p-button type="button" label="Cancelar" severity="secondary" [text]="true" (onClick)="cancel()"></p-button>
-        <p-button type="submit" label="Salvar" [loading]="saving()" [disabled]="form.invalid"></p-button>
+        <p-button type="submit"
+          [label]="isCreate() ? 'Criar' : 'Salvar'"
+          [loading]="saving()"
+          [disabled]="form.invalid">
+        </p-button>
       </div>
     </form>
   </p-card>
+
+  <app-playground-pane
+    *ngIf="!isCreate() && agent()"
+    [agentId]="agent()!.id"
+    [agentName]="agent()!.name">
+  </app-playground-pane>
 </section>

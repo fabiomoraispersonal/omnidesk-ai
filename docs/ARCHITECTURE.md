@@ -797,3 +797,18 @@ volumes:
 **Decisão:** WebSocket nativo do ASP.NET Core.
 **Motivo:** SignalR adiciona overhead e complexidade de protocolo. WebSocket nativo com Redis Pub/Sub é suficiente e mais performático para o caso de uso (mensagens de chat).
 **Trade-off:** Sem fallback automático para long-polling. Aceitável — browsers modernos suportam WebSocket universalmente.
+
+### ADR-006-001: Mock de OpenAI nos testes de integração (Spec 006)
+
+**Decisão:** `MockHttpMessageHandler` para o transport HTTP da OpenAI nos testes de integração + 1 smoke `[Trait("openai-live")]` rodado fora do CI principal.
+**Motivo:** Assistants v2 não tem sandbox/replay; Live em CI custa ~$4/PR e introduz flakiness por rate limits.
+**Trade-off:** Risco de drift contrato vs real, mitigado pelo smoke noturno e pelos `agent_activity_logs` (constituição §VI).
+**Arquivo:** [docs/adr/006-001-openai-mock-strategy.md](adr/006-001-openai-mock-strategy.md).
+
+### ADR-006-002: Detecção de frustração 100% via prompt (Spec 006)
+
+**Decisão:** Eliminar a heurística "3+ trocas sem resolução" e delegar 100% da detecção de frustração ao prompt do Orchestrator/sub-agentes. Manter apenas o gatilho hardcoded de palavras-chave.
+**Motivo:** Heurística gerava transbordos prematuros em conversas legítimas (ex.: cliente comparando 3 planos). LLM com prompt bem calibrado é muito mais preciso.
+**Trade-off:** Tenant que edite o prompt mal pode quebrar transbordo semântico — mitigado pela palavra-chave hardcoded como rede de segurança e por FR-017 (Orchestrator nunca pode deixar cliente sem resposta).
+**Constituição:** Princípio II amendado em PATCH 1.0.1 (2026-05-08).
+**Arquivo:** [docs/adr/006-002-frustration-detection-via-prompt.md](adr/006-002-frustration-detection-via-prompt.md).
