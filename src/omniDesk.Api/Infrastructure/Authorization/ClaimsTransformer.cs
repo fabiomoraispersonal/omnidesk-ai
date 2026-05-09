@@ -109,31 +109,23 @@ public class ClaimsTransformer : IClaimsTransformation
 
     private async Task<IReadOnlyList<Guid>> LoadDepartmentIdsAsync(Guid userId)
     {
-        // user_departments table is owned by Spec 04 (Departamentos). Until that lands,
-        // we attempt a defensive query and gracefully fall back to an empty list so the
-        // authorization framework remains operational.
+        // Spec 005 (research §R8): department membership lives in
+        // `tenant_{slug}.attendant_departments` JOIN `attendants` ON user_id.
+        // The DbContext's default schema is resolved at runtime by the tenant middleware,
+        // so an unqualified table name works. We query via EF for type safety.
         try
         {
-            var conn = _db.Database.GetDbConnection();
-            if (conn.State != System.Data.ConnectionState.Open)
-                await conn.OpenAsync();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText =
-                "SELECT department_id FROM public.user_departments WHERE user_id = @uid";
-            var p = cmd.CreateParameter();
-            p.ParameterName = "uid";
-            p.Value = userId;
-            cmd.Parameters.Add(p);
-            var result = new List<Guid>();
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                if (reader[0] is Guid g) result.Add(g);
-            }
-            return result;
+            var ids = await (
+                from att in _db.Attendants.AsNoTracking()
+                join ad in _db.AttendantDepartments.AsNoTracking() on att.Id equals ad.AttendantId
+                where att.UserId == userId && att.IsActive
+                select ad.DepartmentId
+            ).ToListAsync();
+            return ids;
         }
         catch
         {
+            // The tenant tables may not exist yet for tenants provisioned before Spec 005.
             return Array.Empty<Guid>();
         }
     }

@@ -1,3 +1,4 @@
+using FluentValidation;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -16,8 +17,16 @@ using omniDesk.Api.Infrastructure.Tenants;
 using Serilog;
 using StackExchange.Redis;
 using omniDesk.Api.Features.Admin;
+using omniDesk.Api.Features.AiSuggestions;
+using omniDesk.Api.Features.Attendants;
 using omniDesk.Api.Features.Auth;
+using omniDesk.Api.Features.CannedResponses;
+using omniDesk.Api.Features.Departments;
 using omniDesk.Api.Features.Me;
+using omniDesk.Api.Features.Distribution;
+using omniDesk.Api.Infrastructure.Distribution;
+using omniDesk.Api.Infrastructure.Presence;
+using omniDesk.Api.Infrastructure.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +55,42 @@ builder.Services.AddScoped<LastTenantAdminGuard>();
 builder.Services.AddScoped<DeactivateUserCommandHandler>();
 builder.Services.AddScoped<ReactivateUserCommandHandler>();
 AuthorizationPoliciesRegistration.Register(builder.Services);
+
+// Spec 005 — Departamentos e Atendentes (presença, lock, round-robin, WebSocket)
+builder.Services.AddSingleton<PresenceCache>();
+builder.Services.AddSingleton<PresenceLogger>();
+builder.Services.AddSingleton<TicketLock>();
+builder.Services.AddSingleton<RoundRobinCursorRedis>();
+builder.Services.AddSingleton<DepartmentEventBus>();
+builder.Services.AddSingleton<AttendantHubHandler>();
+builder.Services.AddScoped<EligibleAttendantsQuery>();
+builder.Services.AddScoped<TicketAssignmentService>();
+builder.Services.AddScoped<omniDesk.Api.Features.Distribution.Commands.TransferTicketCommandHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.Attendants.UpdateAttendantStatusService>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Departments.Validators.CreateDepartmentValidator>();
+
+// Spec 005 / US8 — Sugestão IA
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IAgentRuntime, FallbackAgentRuntime>();
+builder.Services.AddScoped<IOpenAiSuggestionClient, OpenAiSuggestionClient>();
+builder.Services.AddSingleton<AiSuggestionLogger>();
+builder.Services.AddScoped<SuggestReplyService>();
+// Sliding-window rate limit for suggestion calls (FR-040 / contracts/ai-suggestion-api.md).
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("ai-suggestion", httpContext =>
+    {
+        var key = httpContext.User.FindFirst("sub")?.Value ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+        return System.Threading.RateLimiting.RateLimitPartition.GetSlidingWindowLimiter(key, _ =>
+            new System.Threading.RateLimiting.SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueLimit = 0,
+            });
+    });
+});
 
 builder.Services.AddCors(options =>
 {
@@ -80,6 +125,12 @@ RecurringJob.AddOrUpdate<TenantMetricsCollectorJob>(
     job => job.RunAsync(CancellationToken.None),
     "*/5 * * * *");
 
+// Spec 005 / US5 — Presence timeout (FR-008/FR-009): online→away aos 15 min, away→offline aos 30 min.
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.Distribution.PresenceTimeoutJob>(
+    "presence-timeout-job",
+    job => job.RunAsync(CancellationToken.None),
+    "*/1 * * * *");
+
 await app.SeedDatabaseAsync();
 
 var api = app.MapGroup("/api");
@@ -103,6 +154,49 @@ var users = api.MapGroup("/users")
                .RequireAuthorization()
                .AddEndpointFilter<ImpersonationAuditFilter>();
 UserLifecycleEndpoints.Map(users);
+
+// Spec 005 — Departments
+var departments = api.MapGroup("/departments")
+                     .RequireAuthorization()
+                     .AddEndpointFilter<ImpersonationAuditFilter>();
+DepartmentsEndpoints.Map(departments);
+
+// Spec 005 — Attendants
+var attendants = api.MapGroup("/attendants")
+                    .RequireAuthorization()
+                    .AddEndpointFilter<ImpersonationAuditFilter>();
+AttendantsEndpoints.Map(attendants);
+
+// Spec 005 — Tickets (manual pickup, transfer) and internal assignment
+var tickets = api.MapGroup("/tickets")
+                 .RequireAuthorization()
+                 .AddEndpointFilter<ImpersonationAuditFilter>();
+PickupTicketEndpoint.Map(tickets);
+TransferTicketEndpoint.Map(tickets);
+
+var internalTickets = api.MapGroup("/internal/tickets")
+                         .RequireAuthorization()
+                         .AddEndpointFilter<ImpersonationAuditFilter>();
+AssignTicketEndpoint.Map(internalTickets);
+
+// Spec 005 — Canned responses
+var canned = api.MapGroup("/canned-responses")
+                .RequireAuthorization()
+                .AddEndpointFilter<ImpersonationAuditFilter>();
+CannedResponsesEndpoints.Map(canned);
+
+// Spec 005 / US8 — Sugestão IA
+var conversations = api.MapGroup("/conversations")
+                       .RequireAuthorization()
+                       .AddEndpointFilter<ImpersonationAuditFilter>();
+SuggestReplyEndpoint.Map(conversations);
+
+// Spec 005 — WebSocket native handler (research §R4)
+app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
+app.Map("/ws", async (HttpContext ctx, AttendantHubHandler hub, CancellationToken ct) =>
+{
+    await hub.HandleAsync(ctx, ct);
+}).RequireAuthorization();
 
 app.Run();
 

@@ -1,0 +1,50 @@
+<div class="attendant-list">
+  <header class="header">
+    <h1>Atendentes</h1>
+    <p-button label="Novo atendente" icon="pi pi-plus" (onClick)="newAttendant()"></p-button>
+  </header>
+
+  <p-table [value]="attendants()" [loading]="loading()" dataKey="id" styleClass="p-datatable-sm">
+    <ng-template pTemplate="header">
+      <tr>
+        <th></th>
+        <th>Nome</th>
+        <th>Departamentos</th>
+        <th>Status</th>
+        <th>Atendimentos ativos</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-a>
+      <tr>
+        <td>
+          @if (a.avatarUrl) {
+            <p-avatar [image]="a.avatarUrl" shape="circle" size="normal"></p-avatar>
+          } @else {
+            <p-avatar [label]="a.name.charAt(0)" shape="circle"></p-avatar>
+          }
+        </td>
+        <td>{{ a.name }}</td>
+        <td>
+          @for (id of a.departmentIds; track id; let last = $last) {
+            <span class="dept-pill">{{ id.substring(0, 8) }}</span>
+          }
+          @if (a.departmentIds.length === 0) {
+            <span class="muted">— sem departamentos</span>
+          }
+        </td>
+        <td>
+          <p-tag [value]="a.status ?? 'offline'" [severity]="statusSeverity(a.status)"></p-tag>
+        </td>
+        <td>{{ a.activeTicketCount }} / {{ a.maxSimultaneousChats }}</td>
+        <td class="actions">
+          <p-button icon="pi pi-pencil" severity="secondary" text (onClick)="edit(a.id)"></p-button>
+          <p-button icon="pi pi-times" severity="danger" text (onClick)="deactivate(a.id)"></p-button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="6" class="empty">Nenhum atendente cadastrado.</td></tr>
+    </ng-template>
+  </p-table>
+</div>

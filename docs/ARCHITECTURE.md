@@ -296,6 +296,40 @@ Cross-link com [contracts/authorization-policies.md](../specs/004-roles-permissi
 
 ---
 
+### 5.5 Departamentos e Atendentes (Spec 005)
+
+Spec 005 entrega a estrutura humana do CRM: departamentos com horário comercial e SLA, atendentes vinculados N:N a departamentos, presença em tempo real, distribuição automática de tickets, transferência manual, respostas pré-formadas e sugestão de IA. Reusa toda a infraestrutura das Specs 002–004.
+
+| Camada | Responsabilidade |
+|---|---|
+| `Domain/Departments`, `Domain/Attendants`, `Domain/CannedResponses`, `Domain/Tickets` (scaffold) | Entidades de domínio |
+| `Features/Departments`, `Features/Attendants`, `Features/CannedResponses` | CRUD endpoints + validators |
+| `Features/Distribution/TicketAssignmentService` | Round-robin atômico (Redis cursor) + lock (`SET NX EX`) + fan-out WebSocket |
+| `Features/Distribution/BusinessHoursEvaluator` | Disponibilidade do departamento + SLA com pause/resume |
+| `Features/Distribution/SlaCalculator` | Status `ok`/`warning`/`overdue`/`not_configured` por phase |
+| `Features/Distribution/PresenceTimeoutJob` | Hangfire `*/1 * * * *` — `online→away` (15 min), `away→offline` (30 min) |
+| `Features/Distribution/{Pickup,Transfer}TicketEndpoint` | Manual pickup + transferência entre attendant/dept |
+| `Features/AiSuggestions/SuggestReplyService` | Consome `IAgentRuntime` (Spec 002) + OpenAI; nunca envia sem aprovação humana |
+| `Features/AiSuggestions/AiSuggestionLogger` | Mongo `{slug}.ai_suggestion_logs` (FR-038, SC-007) |
+| `Infrastructure/Presence/{PresenceCache,PresenceLogger}` | Redis (TTL 5 min) + Mongo `{slug}.attendant_status_logs` |
+| `Infrastructure/Distribution/{TicketLock,RoundRobinCursorRedis}` | Primitivas atômicas |
+| `Infrastructure/WebSockets/{DepartmentEventBus,AttendantHubHandler}` | Pub/sub Redis + handler nativo (ADR-005, sem SignalR) |
+
+**Eventos WebSocket**: `attendant.status_changed`, `ticket.assigned`, `ticket.transferred`, `ticket.queued`. Canais: `{slug}:ws:tenant`, `{slug}:ws:dept:{id}`, `{slug}:ws:attendant:{id}`.
+
+**Garantias críticas**:
+
+- **SC-002**: 0 atribuições duplicadas em 50 pares concorrentes (`ConcurrentPickupTests`).
+- **SC-003**: round-robin com diff máximo de 1 ticket em 100 atribuições (`RoundRobinCursorTests`).
+- **SC-004**: status_changed entrega no painel em ≤ 1 s p95 (`WebSocketLatencyBenchmark`).
+- **SC-005**: timeout de presença detectado em ≤ 30 s do limite (`PresenceTimeoutJobTests`).
+- **SC-007**: 0 mensagens enviadas pelo fluxo de IA sem ação humana (`SuggestionAuditTests`).
+- **Performance**: assignment p95 ≤ 150 ms (`DistributionBenchmark`).
+
+Cross-link: [contracts/round-robin-distribution.md](../specs/005-departments-attendants/contracts/round-robin-distribution.md), [contracts/websocket-events.md](../specs/005-departments-attendants/contracts/websocket-events.md), [contracts/ai-suggestion-api.md](../specs/005-departments-attendants/contracts/ai-suggestion-api.md).
+
+---
+
 ## 6. Endpoints — Padrões Minimal API
 
 ### 6.1 Convenções de URL

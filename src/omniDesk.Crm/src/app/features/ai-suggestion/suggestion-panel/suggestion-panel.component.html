@@ -1,0 +1,48 @@
+<section class="suggestion-panel">
+  <p-toast></p-toast>
+
+  @if (!suggestion()) {
+    <p-button
+      icon="pi pi-sparkles"
+      label="Sugerir resposta com IA"
+      severity="secondary"
+      [loading]="loading()"
+      (onClick)="request()">
+    </p-button>
+  } @else {
+    <div class="suggestion-card">
+      <header>
+        <strong>Sugestão da IA</strong>
+        @if (suggestion()!.contextUsed.sub_agent_name) {
+          <small class="muted">(Sub-agente: {{ suggestion()!.contextUsed.sub_agent_name }})</small>
+        }
+      </header>
+
+      <textarea
+        pTextarea
+        rows="4"
+        [(ngModel)]="editableText"
+        (ngModelChange)="onEdit()"
+        aria-label="Texto sugerido — edite antes de enviar se necessário">
+      </textarea>
+
+      <small class="muted">
+        Você precisa aprovar antes de enviar. Nada é enviado ao cliente automaticamente.
+      </small>
+
+      <div class="actions">
+        <p-button
+          label="Descartar"
+          severity="secondary"
+          icon="pi pi-times"
+          (onClick)="discard()">
+        </p-button>
+        <p-button
+          [label]="hasEdited ? 'Editar e enviar' : 'Aprovar e enviar'"
+          icon="pi pi-send"
+          (onClick)="send()">
+        </p-button>
+      </div>
+    </div>
+  }
+</section>

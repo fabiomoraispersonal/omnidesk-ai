@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.AgentTemplates;
+using omniDesk.Api.Domain.Attendants;
+using omniDesk.Api.Domain.CannedResponses;
+using omniDesk.Api.Domain.Departments;
 using omniDesk.Api.Domain.InviteTokens;
 using omniDesk.Api.Domain.PasswordResetTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Tenants;
+using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Domain.TotpRecoveryCodes;
 using omniDesk.Api.Domain.Users;
 
@@ -19,6 +23,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<TenantContact> TenantContacts => Set<TenantContact>();
     public DbSet<AgentTemplate> AgentTemplates => Set<AgentTemplate>();
+
+    // Spec 005 — Departamentos e Atendentes (lives in tenant_{slug} schema; resolved at runtime).
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Attendant> Attendants => Set<Attendant>();
+    public DbSet<AttendantDepartment> AttendantDepartments => Set<AttendantDepartment>();
+    public DbSet<AttendantStatusEntry> AttendantStatuses => Set<AttendantStatusEntry>();
+    public DbSet<CannedResponse> CannedResponses => Set<CannedResponse>();
+    public DbSet<Ticket> Tickets => Set<Ticket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

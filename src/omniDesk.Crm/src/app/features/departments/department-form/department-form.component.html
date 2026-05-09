@@ -1,0 +1,67 @@
+<form class="department-form" [formGroup]="form" (ngSubmit)="save()">
+  <h1>{{ editing() ? 'Editar departamento' : 'Novo departamento' }}</h1>
+
+  @if (errorMessage()) {
+    <p class="error">{{ errorMessage() }}</p>
+  }
+
+  <label class="field">
+    <span>Nome *</span>
+    <input pInputText type="text" formControlName="name" maxlength="100" />
+    @if (form.controls.name.touched && form.controls.name.invalid) {
+      <small class="error">Nome obrigatório (2–100 caracteres).</small>
+    }
+  </label>
+
+  <label class="field">
+    <span>Descrição</span>
+    <textarea pInputText rows="2" formControlName="description"></textarea>
+  </label>
+
+  <label class="field">
+    <p-checkbox formControlName="enableBusinessHours" [binary]="true" inputId="bh"></p-checkbox>
+    <span for="bh">Definir horário comercial (caso contrário o departamento é tratado como 24/7)</span>
+  </label>
+
+  @if (form.controls.enableBusinessHours.value) {
+    <fieldset class="hours">
+      <legend>Horário</legend>
+      <label>
+        <span>Início</span>
+        <input pInputText type="time" formControlName="businessStart" />
+      </label>
+      <label>
+        <span>Fim</span>
+        <input pInputText type="time" formControlName="businessEnd" />
+      </label>
+
+      <div class="days">
+        @for (d of days; track d.value) {
+          <button type="button"
+                  class="day-chip"
+                  [class.active]="isDaySelected(d.value)"
+                  (click)="toggleDay(d.value)">
+            {{ d.label }}
+          </button>
+        }
+      </div>
+    </fieldset>
+  }
+
+  <fieldset class="sla">
+    <legend>SLA (opcional)</legend>
+    <label>
+      <span>Primeira resposta (min)</span>
+      <p-inputNumber formControlName="slaFirstResponse" [min]="1"></p-inputNumber>
+    </label>
+    <label>
+      <span>Resolução (min)</span>
+      <p-inputNumber formControlName="slaResolution" [min]="1"></p-inputNumber>
+    </label>
+  </fieldset>
+
+  <div class="actions">
+    <p-button label="Cancelar" severity="secondary" type="button" (onClick)="cancel()"></p-button>
+    <p-button label="Salvar" icon="pi pi-check" type="submit" [disabled]="form.invalid"></p-button>
+  </div>
+</form>
