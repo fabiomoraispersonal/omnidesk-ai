@@ -112,9 +112,9 @@ description: "Task list for Agentes de IA implementation"
 ### Tests for User Story 1 ⚠️
 
 - [X] T040 [P] [US1] Criar `AiAgentProvisioningTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/Provisioning/AiAgentProvisioningTests.cs` (Testcontainers Postgres + Mongo) verificando que após `TenantProvisioningJob.RunAsync`: existe 1 row `ai_agents` com `type=orchestrator`, `is_active=true`, `template_id` preenchido; `ai_settings` row com defaults; idempotente em re-execução (US1 cenário 1, FR-001/031)
-- [ ] T041 [P] [US1] Criar `ContextBuilderTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ContextBuilderTests.cs` cobrindo: respeita `context_window_messages`; histórico vazio gera mensagem sintética "[Início da conversa]"; substitui variáveis (FR-022/023, research §R8)
+- [X] T041 [P] [US1] Criar `ContextBuilderTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ContextBuilderTests.cs` cobrindo: respeita `context_window_messages`; histórico vazio gera mensagem sintética "[Início da conversa]"; substitui variáveis (FR-022/023, research §R8)
 - [X] T042 [P] [US1] Criar `PromptVariableSubstitutorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/PromptVariableSubstitutorTests.cs` cobrindo: `{{company_name}}`, `{{department_name}}`, `{{attendant_name}}` substituídos; variáveis ausentes viram string vazia; variáveis desconhecidas permanecem literais e logam warning (FR-012)
-- [ ] T043 [US1] Criar `IncomingMessageWorkerTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/IncomingMessageWorkerTests.cs` (Testcontainers Postgres+Redis+Mongo + MockHttpMessageHandler OpenAI) cobrindo: lock por conversa impede dupla execução; idempotência por `message_id`; criação de thread no primeiro contato; reuso do thread em mensagens subsequentes; produz 1 doc activity_log com `action=respond` (US1 cenário 2/5, FR-005/006, research §R3/R5/R6)
+- [X] T043 [US1] Criar `IncomingMessageWorkerTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/IncomingMessageWorkerTests.cs` (Testcontainers Postgres+Redis+Mongo + MockHttpMessageHandler OpenAI) cobrindo: lock por conversa impede dupla execução; idempotência por `message_id`; criação de thread no primeiro contato; reuso do thread em mensagens subsequentes; produz 1 doc activity_log com `action=respond` (US1 cenário 2/5, FR-005/006, research §R3/R5/R6)
 - [X] T044 [US1] Criar `AgentOrchestratorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentOrchestratorTests.cs` cobrindo o fluxo linear de `ProcessAsync`: Orchestrator único responde; sem sub-agentes ativos não tenta handoff; respeita `current_agent_id` (research §R3)
 - [ ] T045 [US1] Criar `AiAgentsEndpointsContractTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/AiAgentsEndpointsContractTests.cs` cobrindo: GET `/api/agents` retorna shape correto; GET `/api/agents/{id}` retorna prompt; PUT em Orchestrator aceita name/prompt/model; PUT rejeita `type` change (`CANNOT_CHANGE_TYPE`); DELETE em Orchestrator → 409 `CANNOT_DELETE_ORCHESTRATOR`; POST com `type=orchestrator` → 409 (contracts/agents-api.md)
 
@@ -158,8 +158,8 @@ description: "Task list for Agentes de IA implementation"
 - [X] T065 [P] [US2] Criar `HandoffKeywordDetectorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandoffKeywordDetectorTests.cs` cobrindo: cada palavra-chave; case-insensitive; com/sem acento (FR-013, US2 cenário 1)
 - [X] T066 [P] [US2] Criar `ToolCallDispatcherTransferToHumanTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ToolCallDispatcherTransferToHumanTests.cs` cobrindo: depto explícito; fallback para `default_department_id` quando agente é Orchestrator; fallback para `agent.department_id` quando sub-agente; nenhum disponível → erro de configuração (US2 cenário 3, FR-014/016)
 - [X] T067 [P] [US2] Criar `StubTicketCreationGatewayTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/AgentRuntime/StubTicketCreationGatewayTests.cs` (Testcontainers Postgres+Redis): cria ticket `status=queued`, `subject` truncado em 255, `sla_started_at` preenchido; insere snapshot em `ai_handoff_snapshots`; publica evento Redis `{slug}:ws:dept:{id}` (contracts/ticket-creation-gateway.md)
-- [ ] T068 [US2] Criar `HandedOffAutoReplyTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandedOffAutoReplyTests.cs` verificando: thread com `handed_off_to_human_at != null` recebe nova mensagem → IncomingMessageWorker enfileira auto-reply do sistema sem chamar OpenAI; **zero novos docs** em `agent_activity_logs` (FR-015, US2 cenário 4)
-- [ ] T069 [US2] Criar `AgentTransbordoMessageTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentTransbordoMessageTests.cs` verificando que após `transfer_to_human`, mensagem do agente "Vou transferir você para nossa equipe de [Departamento]. Aguarde um momento." chega à fila outgoing (FR-033, US2 cenário 2a)
+- [X] T068 [US2] Criar `HandedOffAutoReplyTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandedOffAutoReplyTests.cs` verificando: thread com `handed_off_to_human_at != null` recebe nova mensagem → IncomingMessageWorker enfileira auto-reply do sistema sem chamar OpenAI; **zero novos docs** em `agent_activity_logs` (FR-015, US2 cenário 4)
+- [X] T069 [US2] Criar `AgentTransbordoMessageTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentTransbordoMessageTests.cs` verificando que após `transfer_to_human`, mensagem do agente "Vou transferir você para nossa equipe de [Departamento]. Aguarde um momento." chega à fila outgoing (FR-033, US2 cenário 2a)
 
 ### Backend implementation US2
 
@@ -228,7 +228,7 @@ description: "Task list for Agentes de IA implementation"
 ### Tests for User Story 4 ⚠️
 
 - [ ] T098 [P] [US4] Criar `PlaygroundEndpointTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/PlaygroundEndpointTests.cs` (Testcontainers Postgres+Redis+Mongo + MockHttpMessageHandler) cobrindo: nova sessão cria thread temporário em Redis com TTL 1800s; sessão existente reusa thread; **zero rows** em `ai_threads`; **zero docs** em `agent_activity_logs`; tool calls retornam `{simulated: true}` (FR-026/027, SC-012, contracts/playground-api.md)
-- [ ] T099 [P] [US4] Criar `PlaygroundCleanupJobTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/PlaygroundCleanupJobTests.cs` cobrindo: chaves Redis expiradas têm thread OpenAI deletado via `threads.delete`
+- [X] T099 [P] [US4] Criar `PlaygroundCleanupJobTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/PlaygroundCleanupJobTests.cs` cobrindo: chaves Redis expiradas têm thread OpenAI deletado via `threads.delete`
 
 ### Backend implementation US4
 
@@ -255,7 +255,7 @@ description: "Task list for Agentes de IA implementation"
 ### Tests for User Story 5 ⚠️
 
 - [ ] T106 [P] [US5] Criar `AiSettingsEndpointsContractTests.cs` em `tests/omniDesk.Api.Tests/Features/AiSettings/AiSettingsEndpointsContractTests.cs` cobrindo: GET retorna shape; PUT respeita range [5,100]; PUT com modelo fora da allowlist global retorna 400; auth `tenant_admin` only (contracts/ai-settings-api.md, FR-022/024)
-- [ ] T107 [P] [US5] Criar `OpenAiCredentialsValidationTests.cs` em `tests/omniDesk.Api.Tests/Features/AiSettings/OpenAiCredentialsValidationTests.cs` — PUT `/openai-credentials` com chave válida → 200 + `key_preview`; chave inválida (mock 401) → 400 `OPENAI_KEY_INVALID`
+- [X] T107 [P] [US5] Criar `OpenAiCredentialsValidationTests.cs` em `tests/omniDesk.Api.Tests/Features/AiSettings/OpenAiCredentialsValidationTests.cs` — PUT `/openai-credentials` com chave válida → 200 + `key_preview`; chave inválida (mock 401) → 400 `OPENAI_KEY_INVALID`
 - [X] T108 [P] [US5] Criar `ContextWindowMessagesPropagationTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ContextWindowMessagesPropagationTests.cs` verificando que `ContextBuilder` lê `ai_settings.context_window_messages` e respeita o limite (FR-023, SC-006)
 
 ### Backend implementation US5

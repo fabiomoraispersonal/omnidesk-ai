@@ -11,6 +11,6 @@ public class OutgoingMessagePublisher
 
     public OutgoingMessagePublisher(IBackgroundJobClient jobs) => _jobs = jobs;
 
-    public string Enqueue(OutgoingDispatch dispatch)
+    public virtual string Enqueue(OutgoingDispatch dispatch)
         => _jobs.Enqueue<OutgoingMessageWorker>(w => w.DeliverAsync(dispatch, CancellationToken.None));
 }
