@@ -1,0 +1,65 @@
+<section class="agents-list-page">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <header class="page-header">
+    <div class="header-text">
+      <h1>Agentes de IA</h1>
+      <p class="muted">Configure o Orchestrator e seus sub-agentes especializados.</p>
+    </div>
+    <p-button
+      icon="pi pi-plus"
+      label="Novo sub-agente"
+      (onClick)="newSubAgent()">
+    </p-button>
+  </header>
+
+  <div *ngIf="loading()" class="loading">
+    <p-progressSpinner ariaLabel="Carregando" strokeWidth="4"></p-progressSpinner>
+  </div>
+
+  <div *ngIf="error()" class="error" role="alert">{{ error() }}</div>
+
+  <div *ngIf="!loading() && !error()" class="cards">
+    <p-card *ngFor="let agent of agents()" class="agent-card" [styleClass]="agent.is_active ? '' : 'inactive'">
+      <ng-template pTemplate="header">
+        <div class="badges">
+          <p-tag
+            [severity]="isOrchestrator(agent) ? 'info' : 'success'"
+            [value]="isOrchestrator(agent) ? 'Orchestrator' : 'Sub-agente'">
+          </p-tag>
+          <p-tag *ngIf="!agent.is_active" severity="secondary" value="Inativo"></p-tag>
+        </div>
+      </ng-template>
+
+      <h3>{{ agent.name }}</h3>
+      <p *ngIf="agent.short_description" class="muted">{{ agent.short_description }}</p>
+      <p *ngIf="agent.department_name">
+        Departamento: <strong>{{ agent.department_name }}</strong>
+      </p>
+      <p class="muted">Modelo: {{ agent.model }}</p>
+
+      <ng-template pTemplate="footer">
+        <div class="card-actions">
+          <p-button icon="pi pi-pencil" label="Editar" severity="secondary" [text]="true" (onClick)="edit(agent)"></p-button>
+          <p-button
+            *ngIf="!isOrchestrator(agent)"
+            [icon]="agent.is_active ? 'pi pi-pause' : 'pi pi-play'"
+            [label]="agent.is_active ? 'Desativar' : 'Ativar'"
+            severity="warning"
+            [text]="true"
+            (onClick)="toggleActive(agent, $event)">
+          </p-button>
+          <p-button
+            *ngIf="!isOrchestrator(agent)"
+            icon="pi pi-trash"
+            label="Excluir"
+            severity="danger"
+            [text]="true"
+            (onClick)="delete(agent, $event)">
+          </p-button>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+</section>

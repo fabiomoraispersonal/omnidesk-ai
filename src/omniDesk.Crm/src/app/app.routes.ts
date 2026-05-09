@@ -31,5 +31,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/access-suspended/access-suspended.component').then(m => m.AccessSuspendedComponent),
   },
+  {
+    path: 'configuracoes/agentes-de-ia',
+    loadChildren: () =>
+      import('./features/ai-agents/ai-agents.routes').then(m => m.aiAgentsRoutes),
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

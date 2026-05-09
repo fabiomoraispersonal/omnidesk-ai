@@ -1,35 +1,24 @@
 <!--
 Sync Impact Report
 ==================
-Version change: unversioned placeholder → 1.0.0
-Bump rationale: Initial population of constitution from blank template.
-  Classified as MINOR: all sections and principles are new, no prior governance existed.
+Version change: 1.0.0 → 1.0.1
+Bump rationale: PATCH — Principle II clarified after Spec 006 (Agentes de IA) experience.
+  Replaced hardcoded "3+ unresolved exchanges" frustration heuristic with prompt-driven
+  semantic detection. Substance preserved (handoff is mandatory; explicit keywords still
+  hardcoded; no dead-ends). Mechanism updated. ADR-006-002 documents rationale.
 
-New Principles (all introduced):
-  - I.   Multi-Tenant Isolation (NON-NEGOTIABLE)
-  - II.  AI-First, Human-Assisted
-  - III. Channel Agnosticism
-  - IV.  Security and LGPD Compliance (NON-NEGOTIABLE)
-  - V.   Simplicity and Deliberate Scope
-  - VI.  Observability and Auditability
-  - VII. Test Discipline
-
-Added Sections:
-  - Core Principles (7 principles)
-  - Technology Stack Constraints
-  - Development Workflow
-  - Governance
-
-Removed Sections: none (prior content was template placeholders only)
+Earlier history:
+- 1.0.0 (2026-05-05): Initial population — 7 principles introduced (I Multi-Tenant
+  Isolation NN, II AI-First, III Channel Agnosticism, IV Security/LGPD NN,
+  V Simplicity, VI Observability, VII Test Discipline) + Tech Stack Constraints +
+  Development Workflow + Governance.
 
 Templates:
-  - .specify/templates/plan-template.md       ✅ aligned — Constitution Check gate is dynamic per feature
-  - .specify/templates/spec-template.md       ✅ aligned — no constitution-specific references
-  - .specify/templates/tasks-template.md      ✅ aligned — test discipline and parallelism patterns compatible
-  - .specify/templates/checklist-template.md  ⚠️ pending — not reviewed; verify manually
-  - .specify/templates/commands/              ✅ N/A — directory does not exist yet
-
-Deferred TODOs: none — all placeholders resolved
+  - .specify/templates/plan-template.md       ✅ aligned (no change needed)
+  - .specify/templates/spec-template.md       ✅ aligned
+  - .specify/templates/tasks-template.md      ✅ aligned
+  - .specify/templates/checklist-template.md  ⚠️ pending — verify manually
+  - .specify/templates/commands/              ✅ N/A
 -->
 
 # OmniDesk CRM Constitution
@@ -64,8 +53,12 @@ of contact:
   enabled/disabled). The Orchestrator uses the short description to route — never hardcoded logic.
 - Handoff to a human MUST transfer the complete conversation context (including all AI messages)
   to the resulting ticket. No conversation history may be lost or truncated during handoff.
-- The system MUST detect handoff triggers: explicit keywords ("atendente", "humano", "gerente")
-  AND frustration signals (3+ unresolved exchanges).
+- The system MUST detect handoff triggers: (a) explicit keywords detected in client messages
+  ("atendente", "humano", "gerente"), enforced by the backend regardless of agent prompt;
+  (b) semantic frustration signals — delegated to the agent prompt, with mandatory guidance
+  in the global Orchestrator template recommending transfer when the client shows frustration,
+  repeats unanswered questions, or raises out-of-scope topics. (Mechanism amended in PATCH 1.0.1
+  per ADR-006-002 — see docs/adr/006-002-frustration-detection-via-prompt.md.)
 - Every AI response path MUST have a graceful fallback. Dead ends — where the AI neither
   resolves nor hands off — are NOT acceptable.
 - Human attendants MUST be able to see everything the AI said before they take over.
@@ -228,4 +221,4 @@ All implementation MUST follow this sequence — no steps may be skipped:
 - All ADRs are recorded in `docs/ARCHITECTURE.md` under the ADRs section and must reference
   the specific constitution principle they relate to.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-05 | **Last Amended**: 2026-05-05
+**Version**: 1.0.1 | **Ratified**: 2026-05-05 | **Last Amended**: 2026-05-08

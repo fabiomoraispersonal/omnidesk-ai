@@ -468,3 +468,11 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 **Background dispatch**:
 - Pesquisa ou análise (não modificação de arquivos)
 - Resultados não estão bloqueando o trabalho atual
+
+<!-- SPECKIT START -->
+## Active Spec
+
+**Spec 006 — Agentes de IA** — implementação completa (130/130 tasks). Plano em [specs/006-ai-agents/plan.md](specs/006-ai-agents/plan.md). Branch `006-ai-agents`. Status: pronto para validação local (build + `quickstart-evidences.md`).
+
+Segue: 5 follow-ups não-bloqueantes em [specs/006-ai-agents/follow-up-issues.md](specs/006-ai-agents/follow-up-issues.md). ISSUE-4 (SqlMigrationRunner) é HIGH e antecede release.
+<!-- SPECKIT END -->
