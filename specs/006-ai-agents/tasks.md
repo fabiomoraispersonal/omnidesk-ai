@@ -197,14 +197,14 @@ description: "Task list for Agentes de IA implementation"
 
 ### Backend implementation US3
 
-- [ ] T084 [US3] Criar `CreateAiAgentValidator.cs` em `src/omniDesk.Api/Features/AiAgents/Validators/CreateAiAgentValidator.cs` (FluentValidation) — data-model §6.1
-- [ ] T085 [US3] Criar `UpdateAiAgentValidator.cs` em `src/omniDesk.Api/Features/AiAgents/Validators/UpdateAiAgentValidator.cs` — bloqueia mudança de `type`; bloqueia desativação do Orchestrator; restringe campos permitidos no Orchestrator (data-model §6.2, FR-007)
-- [ ] T086 [US3] Estender `AiAgentsEndpoints` com `POST /api/agents` — apenas sub-agente; cria registro + lazy assistant; valida depto ativo
-- [ ] T087 [US3] Estender `AiAgentsEndpoints` com `PUT /api/agents/{id}` (sub-agente — campos completos); agendar update do Assistant na OpenAI quando prompt/modelo mudar
-- [ ] T088 [US3] Estender `AiAgentsEndpoints` com `PATCH /api/agents/{id}/toggle` e `DELETE /api/agents/{id}` (decide soft vs físico via `agent_activity_logs` count + `ai_threads.current_agent_id` count)
-- [ ] T089 [US3] Estender `AgentResolver` com método `ListActiveSubAgentsAsync(tenantSlug)` retornando `[{id, name, short_description}]` filtrando por `is_active=true AND deleted_at IS NULL AND department.is_active=true`
-- [ ] T090 [US3] Estender `ContextBuilder` para anexar `system message` listando sub-agentes ativos disponíveis (nome + descritivo curto) — Orchestrator usa para decidir handoff (research §R3 step 3)
-- [ ] T091 [US3] Estender `ToolCallDispatcher` com caso `handoff_to_agent`: valida agente destino ativo; resolve `'orchestrator'` shortcut; detecta loop (3 handoffs ao mesmo destino); UPDATE `ai_threads.current_agent_id`; submit_tool_outputs; **abre novo run** com Assistant do destino (research §R4)
+- [X] T084 [US3] Criar `CreateAiAgentValidator.cs` em `src/omniDesk.Api/Features/AiAgents/Validators/CreateAiAgentValidator.cs` (FluentValidation) — data-model §6.1
+- [X] T085 [US3] Criar `UpdateAiAgentValidator.cs` em `src/omniDesk.Api/Features/AiAgents/Validators/UpdateAiAgentValidator.cs` — bloqueia mudança de `type`; bloqueia desativação do Orchestrator; restringe campos permitidos no Orchestrator (data-model §6.2, FR-007)
+- [X] T086 [US3] Estender `AiAgentsEndpoints` com `POST /api/agents` — apenas sub-agente; cria registro + lazy assistant; valida depto ativo
+- [X] T087 [US3] Estender `AiAgentsEndpoints` com `PUT /api/agents/{id}` (sub-agente — campos completos); agendar update do Assistant na OpenAI quando prompt/modelo mudar
+- [X] T088 [US3] Estender `AiAgentsEndpoints` com `PATCH /api/agents/{id}/toggle` e `DELETE /api/agents/{id}` (decide soft vs físico via `agent_activity_logs` count + `ai_threads.current_agent_id` count)
+- [X] T089 [US3] Estender `AgentResolver` com método `ListActiveSubAgentsAsync(tenantSlug)` retornando `[{id, name, short_description}]` filtrando por `is_active=true AND deleted_at IS NULL AND department.is_active=true`
+- [X] T090 [US3] Estender `ContextBuilder` para anexar `system message` listando sub-agentes ativos disponíveis (nome + descritivo curto) — Orchestrator usa para decidir handoff (research §R3 step 3)
+- [X] T091 [US3] Estender `ToolCallDispatcher` com caso `handoff_to_agent`: valida agente destino ativo; resolve `'orchestrator'` shortcut; detecta loop (3 handoffs ao mesmo destino); UPDATE `ai_threads.current_agent_id`; submit_tool_outputs; **abre novo run** com Assistant do destino (research §R4)
 - [X] T092 [US3] Criar `AgentRuntime.cs` em `src/omniDesk.Api/Infrastructure/AiAgents/AgentRuntime.cs` implementando `IAgentRuntime` da Spec 005 com lógica real para `GetSubAgentForDepartmentAsync` (cross-spec §005-A); demais métodos retornam empty/null por enquanto (Spec 007 completa); registrar em DI substituindo `FallbackAgentRuntime`
 
 ### Frontend US3
@@ -288,9 +288,9 @@ description: "Task list for Agentes de IA implementation"
 
 ### Backend implementation US6
 
-- [ ] T118 [US6] Estender `AgentOrchestrator.ProcessAsync` com bloco try/catch envolvendo todo o fluxo OpenAI: ao capturar exceção, consulta `RetryPolicy.ShouldRetry(error)`; se sim → aguarda `Ai:RunRetryBackoffSeconds` e retenta uma vez; se não/após retry → loga `agent_activity_logs` com `action=api_error`, chama `ToolCallDispatcher.HandleApiFailure(threadId, currentAgentId)` que dispara transbordo automático com motivo "Falha técnica no agente de IA" + envia mensagem do sistema "Estamos com uma instabilidade técnica no momento. Vou transferir você para um de nossos atendentes." (FR-020, US6 cenário 1)
+- [X] T118 [US6] Estender `AgentOrchestrator.ProcessAsync` com bloco try/catch envolvendo todo o fluxo OpenAI: ao capturar exceção, consulta `RetryPolicy.ShouldRetry(error)`; se sim → aguarda `Ai:RunRetryBackoffSeconds` e retenta uma vez; se não/após retry → loga `agent_activity_logs` com `action=api_error`, chama `ToolCallDispatcher.HandleApiFailure(threadId, currentAgentId)` que dispara transbordo automático com motivo "Falha técnica no agente de IA" + envia mensagem do sistema "Estamos com uma instabilidade técnica no momento. Vou transferir você para um de nossos atendentes." (FR-020, US6 cenário 1)
 - [X] T119 [US6] Adicionar fault injection endpoint `POST /api/internal/fault-injector` em `src/omniDesk.Api/Features/AgentRuntime/InternalFaultInjector.cs` (gated por `IHostEnvironment.IsDevelopment` + DI flag `ASSISTANTS_API_FAULT_INJECTOR=true`) que faz `IAssistantsApi` retornar status code controlado nas próximas N chamadas — habilita QS-7
-- [ ] T120 [US6] Garantir que `ToolCallDispatcher.HandleApiFailure` resolve depto: sub-agente → `agent.department_id`; orchestrator → `tenants.default_department_id`; nenhum → fallback do T077
+- [X] T120 [US6] Garantir que `ToolCallDispatcher.HandleApiFailure` resolve depto: sub-agente → `agent.department_id`; orchestrator → `tenants.default_department_id`; nenhum → fallback do T077
 
 **Checkpoint US6**: QS-7 passa; SC-005 medido < 10s.
 
