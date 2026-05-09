@@ -23,6 +23,10 @@ public class Tenant
     // Spec 006 — FR-016: depto padrão para transbordo automático do Orchestrator (sem depto vinculado).
     public Guid? DefaultDepartmentId { get; set; }
 
+    // Spec 007 — FR-002: token público fixo do Live Chat Widget. UUID imutável, não-secreto,
+    // gerado no provisionamento; usado pelo widget JS embarcado em sites para autenticar requisições públicas.
+    public Guid WidgetToken { get; set; }
+
     public ICollection<TenantContact> Contacts { get; set; } = [];
 
     public string SchemaName => $"tenant_{Slug.Replace('-', '_')}";

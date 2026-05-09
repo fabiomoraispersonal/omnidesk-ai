@@ -472,7 +472,9 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 006 — Agentes de IA** — implementação completa (130/130 tasks). Plano em [specs/006-ai-agents/plan.md](specs/006-ai-agents/plan.md). Branch `006-ai-agents`. Status: pronto para validação local (build + `quickstart-evidences.md`).
+**Spec 007 — Live Chat (Widget)** — em planejamento. Plano em [specs/007-live-chat-widget/plan.md](specs/007-live-chat-widget/plan.md). Branch `007-live-chat-widget`. Pré-requisitos: Specs 002, 005, 006 (todas COMPLETE).
 
-Segue: 5 follow-ups não-bloqueantes em [specs/006-ai-agents/follow-up-issues.md](specs/006-ai-agents/follow-up-issues.md). ISSUE-4 (SqlMigrationRunner) é HIGH e antecede release.
+Substitui os stubs `ChannelStubGateway` e a tabela transitória `ai_threads` da Spec 006 com `LiveChatConversationGateway` + `tenant_{slug}.conversations`/`messages` reais. Entrega: widget vanilla TS (`src/omniDesk.Widget/`), backend (4 tabelas tenant-scoped + `public.tenants.widget_token`), CRM Angular (config + multi-conv inbox), 2 jobs Hangfire (abandonment/inactivity).
+
+Próximo passo: `/speckit-tasks` para gerar `tasks.md`.
 <!-- SPECKIT END -->

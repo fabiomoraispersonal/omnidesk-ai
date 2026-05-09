@@ -6,6 +6,7 @@ using omniDesk.Api.Domain.Attendants;
 using omniDesk.Api.Domain.CannedResponses;
 using omniDesk.Api.Domain.Departments;
 using omniDesk.Api.Domain.InviteTokens;
+using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Domain.PasswordResetTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Tenants;
@@ -39,6 +40,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AiAgent> AiAgents => Set<AiAgent>();
     public DbSet<AiSettingsEntity> AiSettings => Set<AiSettingsEntity>();
     public DbSet<AiThread> AiThreads => Set<AiThread>();
+
+    // Spec 007 — Live Chat Widget (tenant_{slug} schema; resolved at runtime).
+    public DbSet<WidgetConfig> WidgetConfigs => Set<WidgetConfig>();
+    public DbSet<Visitor> Visitors => Set<Visitor>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<Message> Messages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,0 +1,23 @@
+{
+  "name": "@omnidesk/widget",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OmniDesk Live Chat Widget — vanilla TypeScript + Web Components bundle injected on tenant sites.",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@types/node": "^20.14.0",
+    "esbuild": "^0.21.5",
+    "happy-dom": "^14.12.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}
