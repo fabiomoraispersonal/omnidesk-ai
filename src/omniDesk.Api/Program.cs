@@ -108,6 +108,12 @@ builder.Services.AddDataProtection();
 builder.Services.AddScoped<TenantContextHolder>();
 builder.Services.AddScoped<ITenantSlugAccessor>(sp => sp.GetRequiredService<TenantContextHolder>());
 builder.Services.AddScoped<IAssistantsApi, AssistantsApi>();
+// Spec 006 — DEV-only fault injector for QS-7 (Resilience). Production has no IFaultInjector
+// registered, so AssistantsApi sees null and skips the check.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IFaultInjector, RedisFaultInjector>();
+}
 builder.Services.AddScoped<OpenAiKeyResolver>();
 builder.Services.AddScoped<AgentActivityLogger>();
 builder.Services.AddScoped<RetryPolicy>();

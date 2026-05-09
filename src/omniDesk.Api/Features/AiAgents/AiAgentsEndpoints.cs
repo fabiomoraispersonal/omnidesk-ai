@@ -61,7 +61,7 @@ public static class AiAgentsEndpoints
         return Results.Ok(new { success = true, data, meta = new { total = agents.Count } });
     }
 
-    private static async Task<IResult> GetByIdAsync(Guid id, AppDbContext db, IConfiguration config, CancellationToken ct)
+    private static async Task<IResult> GetByIdAsync(Guid id, AppDbContext db, ICurrentUser currentUser, IConfiguration config, CancellationToken ct)
     {
         var a = await db.AiAgents.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
         if (a is null) return NotFound("AGENT_NOT_FOUND", "Agente não encontrado.");
@@ -70,7 +70,9 @@ public static class AiAgentsEndpoints
         if (a.DepartmentId is { } d)
             deptName = await db.Departments.AsNoTracking().Where(x => x.Id == d).Select(x => x.Name).FirstOrDefaultAsync(ct);
 
-        var aiSettings = await db.AiSettings.AsNoTracking().FirstOrDefaultAsync(s => s.TenantId != Guid.Empty, ct);
+        var aiSettings = currentUser.TenantId is { } tenantId
+            ? await db.AiSettings.AsNoTracking().FirstOrDefaultAsync(s => s.TenantId == tenantId, ct)
+            : null;
         var globalAllow = config.GetSection("Ai:GlobalAllowedModels").Get<string[]>() ?? Array.Empty<string>();
         var allowed = (aiSettings?.AvailableModels.Length > 0 ? aiSettings.AvailableModels : globalAllow);
 
@@ -104,7 +106,9 @@ public static class AiAgentsEndpoints
         if (!v.IsValid) return ValidationFailed(v);
 
         var globalAllow = config.GetSection("Ai:GlobalAllowedModels").Get<string[]>() ?? Array.Empty<string>();
-        var settings = await db.AiSettings.AsNoTracking().FirstOrDefaultAsync(ct);
+        var settings = currentUser.TenantId is { } tid
+            ? await db.AiSettings.AsNoTracking().FirstOrDefaultAsync(s => s.TenantId == tid, ct)
+            : null;
         var tenantAllow = settings?.AvailableModels ?? Array.Empty<string>();
         var allowed = (tenantAllow.Length > 0 ? tenantAllow : globalAllow);
         if (!allowed.Contains(req.Model))

@@ -18,11 +18,24 @@ public class AssistantsApi : IAssistantsApi
 
     private readonly IHttpClientFactory _httpFactory;
     private readonly ILogger<AssistantsApi> _logger;
+    private readonly IFaultInjector? _faultInjector;
 
-    public AssistantsApi(IHttpClientFactory httpFactory, ILogger<AssistantsApi> logger)
+    public AssistantsApi(IHttpClientFactory httpFactory, ILogger<AssistantsApi> logger,
+        IFaultInjector? faultInjector = null)
     {
         _httpFactory = httpFactory;
         _logger = logger;
+        _faultInjector = faultInjector;
+    }
+
+    private async Task ThrowIfInjectedAsync(CancellationToken ct)
+    {
+        if (_faultInjector is null) return;
+        var injected = await _faultInjector.ConsumeAsync(ct);
+        if (injected is { } code)
+        {
+            throw new OpenAiHttpException(code, "{\"error\":{\"message\":\"injected fault\"}}");
+        }
     }
 
     public async Task<string> EnsureAssistantAsync(AiAgent agent, OpenAiCredentials cred, CancellationToken ct)
@@ -109,6 +122,7 @@ public class AssistantsApi : IAssistantsApi
 
     public async Task<AssistantRun> CreateRunAsync(string threadId, string assistantId, string? instructionsOverride, OpenAiCredentials cred, CancellationToken ct)
     {
+        await ThrowIfInjectedAsync(ct);
         using var http = CreateClient(cred);
         var body = instructionsOverride is null
             ? (object)new { assistant_id = assistantId }
@@ -121,6 +135,7 @@ public class AssistantsApi : IAssistantsApi
 
     public async Task<AssistantRun> PollRunAsync(string threadId, string runId, TimeSpan timeout, OpenAiCredentials cred, CancellationToken ct)
     {
+        await ThrowIfInjectedAsync(ct);
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(timeout);
         var poll = TimeSpan.FromMilliseconds(500);
