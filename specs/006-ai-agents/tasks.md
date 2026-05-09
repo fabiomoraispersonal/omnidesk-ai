@@ -115,7 +115,7 @@ description: "Task list for Agentes de IA implementation"
 - [ ] T041 [P] [US1] Criar `ContextBuilderTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ContextBuilderTests.cs` cobrindo: respeita `context_window_messages`; histórico vazio gera mensagem sintética "[Início da conversa]"; substitui variáveis (FR-022/023, research §R8)
 - [X] T042 [P] [US1] Criar `PromptVariableSubstitutorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/PromptVariableSubstitutorTests.cs` cobrindo: `{{company_name}}`, `{{department_name}}`, `{{attendant_name}}` substituídos; variáveis ausentes viram string vazia; variáveis desconhecidas permanecem literais e logam warning (FR-012)
 - [ ] T043 [US1] Criar `IncomingMessageWorkerTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/IncomingMessageWorkerTests.cs` (Testcontainers Postgres+Redis+Mongo + MockHttpMessageHandler OpenAI) cobrindo: lock por conversa impede dupla execução; idempotência por `message_id`; criação de thread no primeiro contato; reuso do thread em mensagens subsequentes; produz 1 doc activity_log com `action=respond` (US1 cenário 2/5, FR-005/006, research §R3/R5/R6)
-- [ ] T044 [US1] Criar `AgentOrchestratorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentOrchestratorTests.cs` cobrindo o fluxo linear de `ProcessAsync`: Orchestrator único responde; sem sub-agentes ativos não tenta handoff; respeita `current_agent_id` (research §R3)
+- [X] T044 [US1] Criar `AgentOrchestratorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AgentOrchestratorTests.cs` cobrindo o fluxo linear de `ProcessAsync`: Orchestrator único responde; sem sub-agentes ativos não tenta handoff; respeita `current_agent_id` (research §R3)
 - [ ] T045 [US1] Criar `AiAgentsEndpointsContractTests.cs` em `tests/omniDesk.Api.Tests/Features/AiAgents/AiAgentsEndpointsContractTests.cs` cobrindo: GET `/api/agents` retorna shape correto; GET `/api/agents/{id}` retorna prompt; PUT em Orchestrator aceita name/prompt/model; PUT rejeita `type` change (`CANNOT_CHANGE_TYPE`); DELETE em Orchestrator → 409 `CANNOT_DELETE_ORCHESTRATOR`; POST com `type=orchestrator` → 409 (contracts/agents-api.md)
 
 ### Backend implementation
@@ -155,7 +155,7 @@ description: "Task list for Agentes de IA implementation"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T065 [P] [US2] Criar `HandoffKeywordDetectorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandoffKeywordDetectorTests.cs` cobrindo: cada palavra-chave; case-insensitive; com/sem acento (FR-013, US2 cenário 1)
+- [X] T065 [P] [US2] Criar `HandoffKeywordDetectorTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandoffKeywordDetectorTests.cs` cobrindo: cada palavra-chave; case-insensitive; com/sem acento (FR-013, US2 cenário 1)
 - [X] T066 [P] [US2] Criar `ToolCallDispatcherTransferToHumanTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/ToolCallDispatcherTransferToHumanTests.cs` cobrindo: depto explícito; fallback para `default_department_id` quando agente é Orchestrator; fallback para `agent.department_id` quando sub-agente; nenhum disponível → erro de configuração (US2 cenário 3, FR-014/016)
 - [X] T067 [P] [US2] Criar `StubTicketCreationGatewayTests.cs` em `tests/omniDesk.Api.Tests/Infrastructure/AgentRuntime/StubTicketCreationGatewayTests.cs` (Testcontainers Postgres+Redis): cria ticket `status=queued`, `subject` truncado em 255, `sla_started_at` preenchido; insere snapshot em `ai_handoff_snapshots`; publica evento Redis `{slug}:ws:dept:{id}` (contracts/ticket-creation-gateway.md)
 - [ ] T068 [US2] Criar `HandedOffAutoReplyTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/HandedOffAutoReplyTests.cs` verificando: thread com `handed_off_to_human_at != null` recebe nova mensagem → IncomingMessageWorker enfileira auto-reply do sistema sem chamar OpenAI; **zero novos docs** em `agent_activity_logs` (FR-015, US2 cenário 4)
@@ -282,9 +282,9 @@ description: "Task list for Agentes de IA implementation"
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T115 [P] [US6] Criar `AutoTransbordoOnApiFailureTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AutoTransbordoOnApiFailureTests.cs` (Testcontainers + MockHttpMessageHandler injectando falhas) cobrindo: 503 retry → 503 → transbordo automático com mensagem de instabilidade; tempo total <10s (SC-005); ticket criado em `tenants.default_department_id` quando agente é Orchestrator (FR-018/020/021, US6 cenário 1/2)
-- [ ] T116 [P] [US6] Criar `NoRetryOnAuthFailureTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/NoRetryOnAuthFailureTests.cs` cobrindo: 401 → sem retry → transbordo imediato; 403 → idem; sem cair para chave global (FR-019, US6 cenário 3)
-- [ ] T117 [P] [US6] Criar `SubAgentApiFailureRoutingTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/SubAgentApiFailureRoutingTests.cs` cobrindo: falha API durante run de sub-agente → ticket criado em `agent.department_id` (não em `default_department_id`) — US6 cenário 5
+- [X] T115 [P] [US6] Criar `AutoTransbordoOnApiFailureTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/AutoTransbordoOnApiFailureTests.cs` (Testcontainers + MockHttpMessageHandler injectando falhas) cobrindo: 503 retry → 503 → transbordo automático com mensagem de instabilidade; tempo total <10s (SC-005); ticket criado em `tenants.default_department_id` quando agente é Orchestrator (FR-018/020/021, US6 cenário 1/2)
+- [X] T116 [P] [US6] Criar `NoRetryOnAuthFailureTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/NoRetryOnAuthFailureTests.cs` cobrindo: 401 → sem retry → transbordo imediato; 403 → idem; sem cair para chave global (FR-019, US6 cenário 3)
+- [X] T117 [P] [US6] Criar `SubAgentApiFailureRoutingTests.cs` em `tests/omniDesk.Api.Tests/Features/AgentRuntime/SubAgentApiFailureRoutingTests.cs` cobrindo: falha API durante run de sub-agente → ticket criado em `agent.department_id` (não em `default_department_id`) — US6 cenário 5
 
 ### Backend implementation US6
 
@@ -309,7 +309,7 @@ description: "Task list for Agentes de IA implementation"
 - [X] T127 [P] Atualizar `docs/DEPENDENCIES.md` marcando Spec 006 como pronta + descrevendo seus consumidores (Specs 005/007/008/010)
 - [ ] T128 Verificar `cross-spec-pendencies.md` — todos os bloqueadores efetivos resolvidos (003-B, 003-C, 005-E); criar issues GitHub para os patches futuros não-bloqueantes (UI default_department_id; auto-distribuição de ticket de IA; badge "ticket de IA" na fila)
 - [X] T129 [P] Atualizar `CLAUDE.md` SPECKIT block para `Status: implementado`
-- [ ] T130 Code review interno + cleanup: remover endpoints `/api/internal/test-incoming` e `/api/internal/fault-injector` do build de produção (gated por `IHostEnvironment.IsDevelopment` — confirmar que não vazam)
+- [X] T130 Code review interno + cleanup: remover endpoints `/api/internal/test-incoming` e `/api/internal/fault-injector` do build de produção (gated por `IHostEnvironment.IsDevelopment` — confirmar que não vazam)
 
 ---
 
