@@ -29,7 +29,7 @@ public class PublicRateLimiterTests
     {
         const int limit = 5;
         await ResetCountersAsync();
-        await using var server = await BuildHostAsync(limit);
+        using var server = await BuildHostAsync(limit);
         var client = server.CreateClient();
         var anonymousId = Guid.NewGuid();
         client.DefaultRequestHeaders.Add("X-Anonymous-Id", anonymousId.ToString());
@@ -46,7 +46,7 @@ public class PublicRateLimiterTests
     {
         const int limit = 3;
         await ResetCountersAsync();
-        await using var server = await BuildHostAsync(limit);
+        using var server = await BuildHostAsync(limit);
         var client = server.CreateClient();
         var anonymousId = Guid.NewGuid();
         client.DefaultRequestHeaders.Add("X-Anonymous-Id", anonymousId.ToString());
@@ -64,7 +64,7 @@ public class PublicRateLimiterTests
     {
         const int limit = 2;
         await ResetCountersAsync();
-        await using var server = await BuildHostAsync(limit);
+        using var server = await BuildHostAsync(limit);
 
         var first = server.CreateClient();
         first.DefaultRequestHeaders.Add("X-Anonymous-Id", Guid.NewGuid().ToString());
@@ -81,7 +81,7 @@ public class PublicRateLimiterTests
     public async Task Missing_anonymous_id_returns_400()
     {
         await ResetCountersAsync();
-        await using var server = await BuildHostAsync(5);
+        using var server = await BuildHostAsync(5);
         var client = server.CreateClient();
 
         var response = await client.GetAsync("/protected");

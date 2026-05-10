@@ -5,6 +5,7 @@ using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Tests.Helpers;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace omniDesk.Api.Tests.Features.LiveChat.Public;
 

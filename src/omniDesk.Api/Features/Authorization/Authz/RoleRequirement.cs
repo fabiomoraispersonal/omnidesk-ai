@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace omniDesk.Api.Features.Authorization.Policies;
+namespace omniDesk.Api.Features.Authorization.Authz;
 
 public class RoleRequirement : IAuthorizationRequirement
 {

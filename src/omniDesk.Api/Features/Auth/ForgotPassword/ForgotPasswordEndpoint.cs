@@ -15,7 +15,7 @@ public static class ForgotPasswordEndpoint
     public static void Map(RouteGroupBuilder group)
     {
         group.MapPost("/forgot-password", HandleAsync)
-             .EnableRateLimiting(RateLimitingExtensions.AuthForgotPasswordPolicy)
+             .RequireRateLimiting(RateLimitingExtensions.AuthForgotPasswordPolicy)
              .WithName("ForgotPassword")
              .AllowAnonymous();
     }

@@ -16,6 +16,7 @@ using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Tests.Helpers;
 using StackExchange.Redis;
 using Xunit;
+using omniDesk.Api.Infrastructure.Queues;
 
 namespace omniDesk.Api.Tests.Features.AgentRuntime;
 

@@ -25,7 +25,7 @@ public class PresenceCache
         if (raw.IsNullOrEmpty) return null;
         try
         {
-            var dto = JsonSerializer.Deserialize<PresenceDto>(raw!);
+            var dto = JsonSerializer.Deserialize<PresenceDto>((string)raw!);
             return dto is null
                 ? null
                 : new PresenceSnapshot(

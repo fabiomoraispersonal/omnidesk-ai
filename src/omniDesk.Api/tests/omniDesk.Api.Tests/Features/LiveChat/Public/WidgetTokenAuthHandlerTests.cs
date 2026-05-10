@@ -33,7 +33,7 @@ public class WidgetTokenAuthHandlerTests
     [Fact]
     public async Task Valid_token_authenticates_and_exposes_tenant_claims()
     {
-        await using var server = await BuildHostAsync();
+        using var server = await BuildHostAsync();
         var client = server.CreateClient();
         client.DefaultRequestHeaders.Add("X-Widget-Token", _fx.TenantWidgetToken.ToString());
 
@@ -47,7 +47,7 @@ public class WidgetTokenAuthHandlerTests
     [Fact]
     public async Task Missing_token_returns_401()
     {
-        await using var server = await BuildHostAsync();
+        using var server = await BuildHostAsync();
         var client = server.CreateClient();
 
         var response = await client.GetAsync("/whoami");
@@ -57,7 +57,7 @@ public class WidgetTokenAuthHandlerTests
     [Fact]
     public async Task Invalid_token_returns_401()
     {
-        await using var server = await BuildHostAsync();
+        using var server = await BuildHostAsync();
         var client = server.CreateClient();
         client.DefaultRequestHeaders.Add("X-Widget-Token", Guid.NewGuid().ToString());
 
@@ -68,7 +68,7 @@ public class WidgetTokenAuthHandlerTests
     [Fact]
     public async Task Token_via_query_string_is_accepted()
     {
-        await using var server = await BuildHostAsync();
+        using var server = await BuildHostAsync();
         var client = server.CreateClient();
 
         var response = await client.GetAsync($"/whoami?token={_fx.TenantWidgetToken}");

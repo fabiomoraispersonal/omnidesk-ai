@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using omniDesk.Api.Tests.Helpers;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace omniDesk.Api.Tests.Features.Admin;
 

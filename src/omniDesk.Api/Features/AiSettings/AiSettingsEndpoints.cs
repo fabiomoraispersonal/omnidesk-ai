@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Features.AiSettings.Validators;
-using omniDesk.Api.Features.Authorization.Policies;
+using omniDesk.Api.Features.Authorization.Authz;
 using omniDesk.Api.Infrastructure.Authentication;
 using omniDesk.Api.Infrastructure.OpenAi;
 using omniDesk.Api.Infrastructure.Persistence;
 using AiSettingsEntity = omniDesk.Api.Domain.AiSettings.AiSettings;
+using omniDesk.Api.Domain.Authorization;
 
 namespace omniDesk.Api.Features.AiSettings;
 

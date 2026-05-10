@@ -30,7 +30,7 @@ public class OriginValidatorTests
     {
         await SetAllowedDomainsAsync(null);
 
-        await using var server = await BuildHostAsync();
+        using var server = await BuildHostAsync();
         var client = server.CreateClient();
         client.DefaultRequestHeaders.Add("Origin", "https://random.example.com");
 
@@ -43,7 +43,7 @@ public class OriginValidatorTests
     {
         await SetAllowedDomainsAsync(new[] { "www.clinica-test.com.br" });
 
-        await using var server = await BuildHostAsync();
+        using var server = await BuildHostAsync();
         var client = server.CreateClient();
         client.DefaultRequestHeaders.Add("Origin", "https://www.clinica-test.com.br");
 
@@ -56,7 +56,7 @@ public class OriginValidatorTests
     {
         await SetAllowedDomainsAsync(new[] { "www.clinica-test.com.br" });
 
-        await using var server = await BuildHostAsync();
+        using var server = await BuildHostAsync();
         var client = server.CreateClient();
         client.DefaultRequestHeaders.Add("Origin", "https://attacker.example.com");
 

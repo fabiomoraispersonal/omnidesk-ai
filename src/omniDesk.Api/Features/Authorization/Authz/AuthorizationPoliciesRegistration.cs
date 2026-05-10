@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using omniDesk.Api.Domain.Authorization;
 
-namespace omniDesk.Api.Features.Authorization.Policies;
+namespace omniDesk.Api.Features.Authorization.Authz;
 
 public static class AuthorizationPoliciesRegistration
 {

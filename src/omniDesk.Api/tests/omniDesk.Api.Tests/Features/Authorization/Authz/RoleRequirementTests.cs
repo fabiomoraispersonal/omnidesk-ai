@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using omniDesk.Api.Domain.Authorization;
-using omniDesk.Api.Features.Authorization.Policies;
+using omniDesk.Api.Features.Authorization.Authz;
 using Xunit;
 
 namespace omniDesk.Api.Tests.Features.Authorization;

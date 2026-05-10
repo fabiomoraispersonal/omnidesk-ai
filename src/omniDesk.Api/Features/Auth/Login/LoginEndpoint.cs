@@ -32,7 +32,7 @@ public static class LoginEndpoint
     public static void Map(RouteGroupBuilder group)
     {
         group.MapPost("/login", HandleAsync)
-             .EnableRateLimiting(RateLimitingExtensions.AuthLoginPolicy)
+             .RequireRateLimiting(RateLimitingExtensions.AuthLoginPolicy)
              .WithName("Login")
              .AllowAnonymous();
     }

@@ -8,6 +8,9 @@ using omniDesk.Api.Infrastructure.AiAgents;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Tests.Helpers;
 using Xunit;
+// Sibling test namespace `omniDesk.Api.Tests.Infrastructure.AgentRuntime` shadows the class
+// via parent-namespace lookup, so alias the production class under a non-conflicting name.
+using AgentRuntimeImpl = omniDesk.Api.Infrastructure.AiAgents.AgentRuntime;
 
 namespace omniDesk.Api.Tests.Infrastructure.AiAgents;
 
@@ -44,12 +47,12 @@ public class AgentRuntimeRealImplTests : IAsyncLifetime
     {
         var services = new ServiceCollection();
         services.AddSingleton<AppDbContext>(_db!);
-        services.AddScoped<IAgentRuntime, AgentRuntime>();   // produção registra a real
+        services.AddScoped<IAgentRuntime, AgentRuntimeImpl>();   // produção registra a real
 
         var provider = services.BuildServiceProvider();
         var resolved = provider.GetRequiredService<IAgentRuntime>();
 
-        Assert.IsType<AgentRuntime>(resolved);
+        Assert.IsType<AgentRuntimeImpl>(resolved);
         Assert.IsNotType<FallbackAgentRuntime>(resolved);
     }
 
@@ -59,7 +62,7 @@ public class AgentRuntimeRealImplTests : IAsyncLifetime
         var dept = await SeedDepartmentAsync();
         var agent = await SeedSubAgentAsync(dept.Id, "Vendas", "Você é vendas.", isActive: true);
 
-        var runtime = new AgentRuntime(_db!);
+        var runtime = new AgentRuntimeImpl(_db!);
         var ctx = await runtime.GetSubAgentForDepartmentAsync(dept.Id);
 
         Assert.NotNull(ctx);
@@ -77,7 +80,7 @@ public class AgentRuntimeRealImplTests : IAsyncLifetime
         var newer = await SeedSubAgentAsync(dept.Id, "Newer", "newer prompt",
             updatedAt: DateTimeOffset.UtcNow);
 
-        var runtime = new AgentRuntime(_db!);
+        var runtime = new AgentRuntimeImpl(_db!);
         var ctx = await runtime.GetSubAgentForDepartmentAsync(dept.Id);
 
         Assert.Equal(newer.Id, ctx!.Id);
@@ -89,7 +92,7 @@ public class AgentRuntimeRealImplTests : IAsyncLifetime
         var dept = await SeedDepartmentAsync();
         await SeedSubAgentAsync(dept.Id, "Inactive", "p", isActive: false);
 
-        var runtime = new AgentRuntime(_db!);
+        var runtime = new AgentRuntimeImpl(_db!);
         var ctx = await runtime.GetSubAgentForDepartmentAsync(dept.Id);
 
         Assert.Null(ctx);
@@ -100,7 +103,7 @@ public class AgentRuntimeRealImplTests : IAsyncLifetime
     {
         var dept = await SeedDepartmentAsync();
 
-        var runtime = new AgentRuntime(_db!);
+        var runtime = new AgentRuntimeImpl(_db!);
         var ctx = await runtime.GetSubAgentForDepartmentAsync(dept.Id);
 
         Assert.Null(ctx);
@@ -109,7 +112,7 @@ public class AgentRuntimeRealImplTests : IAsyncLifetime
     [Fact]
     public async Task GetRecentMessages_ReturnsEmpty_UntilSpec007()
     {
-        var runtime = new AgentRuntime(_db!);
+        var runtime = new AgentRuntimeImpl(_db!);
         var messages = await runtime.GetRecentMessagesAsync(Guid.NewGuid(), 10);
         Assert.Empty(messages);
     }
@@ -117,7 +120,7 @@ public class AgentRuntimeRealImplTests : IAsyncLifetime
     [Fact]
     public async Task GetClientName_ReturnsNull_UntilSpec007()
     {
-        var runtime = new AgentRuntime(_db!);
+        var runtime = new AgentRuntimeImpl(_db!);
         var name = await runtime.GetClientNameAsync(Guid.NewGuid());
         Assert.Null(name);
     }

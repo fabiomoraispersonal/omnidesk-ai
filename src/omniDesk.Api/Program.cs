@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Minio;
 using MongoDB.Driver;
+using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Features.Authorization.Impersonation;
-using omniDesk.Api.Features.Authorization.Policies;
+using omniDesk.Api.Features.Authorization.Authz;
 using omniDesk.Api.Features.Authorization.UserLifecycle;
 using omniDesk.Api.Infrastructure.Auth;
 using omniDesk.Api.Infrastructure.Authentication;
@@ -35,6 +36,7 @@ using omniDesk.Api.Features.Departments;
 using omniDesk.Api.Features.Me;
 using omniDesk.Api.Features.Distribution;
 using omniDesk.Api.Infrastructure.Distribution;
+using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Domain.LiveChat;
@@ -43,10 +45,13 @@ using omniDesk.Api.Infrastructure.LiveChat;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((ctx, lc) => lc
+// Spec 004 (FR-031) — enricher needs IHttpContextAccessor; resolve via DI.
+builder.Services.AddSingleton<ImpersonationAuditEnricher>();
+
+builder.Host.UseSerilog((ctx, services, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
     .Enrich.FromLogContext()
-    .Enrich.With<ImpersonationAuditEnricher>()
+    .Enrich.With(services.GetRequiredService<ImpersonationAuditEnricher>())
     .WriteTo.Console(outputTemplate:
         "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"));
 

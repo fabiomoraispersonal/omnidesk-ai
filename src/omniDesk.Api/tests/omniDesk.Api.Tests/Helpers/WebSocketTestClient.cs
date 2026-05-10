@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Mvc.Testing;
 
@@ -19,7 +20,7 @@ public sealed class WebSocketTestClient : IAsyncDisposable
     public static async Task<WebSocketTestClient> ConnectAsync<TProgram>(
         WebApplicationFactory<TProgram> factory,
         string path,
-        Action<HttpRequestMessage>? configureRequest = null,
+        Action<HttpRequest>? configureRequest = null,
         CancellationToken ct = default) where TProgram : class
     {
         var wsClient = factory.Server.CreateWebSocketClient();

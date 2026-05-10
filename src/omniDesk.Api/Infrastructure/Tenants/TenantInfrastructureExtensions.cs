@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.MemoryStorage;
+using Hangfire.Redis.StackExchange;
 using Minio;
 using MongoDB.Driver;
 using omniDesk.Api.Infrastructure.Jobs;
