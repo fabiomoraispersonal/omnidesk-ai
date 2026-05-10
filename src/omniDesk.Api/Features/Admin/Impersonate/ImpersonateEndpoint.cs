@@ -56,7 +56,8 @@ public static class ImpersonateEndpoint
                 }
             });
 
-        var crmBaseUrl = config["FRONTEND_CRM_BASE_URL"]
+        var crmBaseUrl = config["Frontend:CrmBaseUrl"]
+            ?? config["FRONTEND_CRM_BASE_URL"]
             ?? $"https://{slug}.omnideskcrm.com.br";
 
         var token = issuer.Issue(slug, tenant.Id);

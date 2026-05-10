@@ -478,3 +478,34 @@ Substitui os stubs `ChannelStubGateway` e a tabela transitória `ai_threads` da 
 
 Próximo passo: `/speckit-tasks` para gerar `tasks.md`.
 <!-- SPECKIT END -->
+
+## Configuração da API (.NET)
+
+**Não usamos `.env`** — a API consome configuração via `IConfiguration` na ordem padrão .NET:
+
+1. `appsettings.json` — defaults committados (sem segredos).
+2. `appsettings.{Environment}.json` — overrides por ambiente. `appsettings.Development.json` é committado com defaults locais.
+3. `Properties/launchSettings.json` — apenas `ASPNETCORE_ENVIRONMENT` e URL de bind para `dotnet run`.
+4. **User-secrets** (`dotnet user-secrets`) — segredos em dev (JWT keys, `OpenAI:ApiKey`, MinIO, SendGrid).
+5. **Variáveis de ambiente** — produção (host/container).
+
+### Setup local rápido
+
+```bash
+cd src/omniDesk.Api
+dotnet user-secrets init
+dotnet user-secrets set "Jwt:PrivateKeyPem" "$(cat dev-jwt-private.pem)"
+dotnet user-secrets set "Jwt:PublicKeyPem"  "$(cat dev-jwt-public.pem)"
+dotnet user-secrets set "OpenAI:ApiKey"     "sk-..."
+dotnet run
+```
+
+### Chaves novas (Spec 006)
+
+- `Cors:AllowedOrigins` (substitui `CORS_ALLOWED_ORIGINS`)
+- `Frontend:CrmBaseUrl` (substitui `FRONTEND_CRM_BASE_URL`)
+- `Ai:DefaultModel`, `Ai:RunTimeoutSeconds`, `Ai:RunMaxRetries`, `Ai:RunRetryBackoffSeconds`, `Ai:PlaygroundTtlSeconds`, `Ai:GlobalAllowedModels`
+
+### Compatibilidade
+
+Código existente que ainda lê `Environment.GetEnvironmentVariable("...")` (JWT, MinIO, SendGrid, MongoDB, Hangfire Redis) **continua funcionando** — vars exportadas no shell ou em user-secrets via mapeamento (`Foo__Bar` ↔ `Foo:Bar`) são honradas. Migração desses leitores para `IConfiguration` direto é cleanup futuro.

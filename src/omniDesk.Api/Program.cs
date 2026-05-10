@@ -193,7 +193,8 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var origins = builder.Configuration["CORS_ALLOWED_ORIGINS"]
+        var origins = builder.Configuration["Cors:AllowedOrigins"]
+            ?? builder.Configuration["CORS_ALLOWED_ORIGINS"]
             ?? "http://localhost:4200,http://localhost:4201";
 
         policy.WithOrigins(origins.Split(',', StringSplitOptions.RemoveEmptyEntries))
