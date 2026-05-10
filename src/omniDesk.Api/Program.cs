@@ -37,6 +37,9 @@ using omniDesk.Api.Features.Distribution;
 using omniDesk.Api.Infrastructure.Distribution;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
+using omniDesk.Api.Domain.LiveChat;
+using omniDesk.Api.Features.LiveChat.Public;
+using omniDesk.Api.Infrastructure.LiveChat;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,6 +136,26 @@ builder.Services.AddScoped<PlaygroundSessionStore>();
 builder.Services.AddScoped<PlaygroundCleanupJob>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.AiAgents.Validators.CreateAiAgentValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.AiSettings.Validators.UpdateAiSettingsValidator>();
+
+// Spec 007 — Live Chat (Widget): repositories, public auth scheme, request filters, WS broker
+builder.Services.AddScoped<IWidgetConfigRepository, WidgetConfigRepository>();
+builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<OriginValidator>();
+builder.Services.AddScoped<PublicRateLimiter>();
+builder.Services.AddSingleton<omniDesk.Api.Hubs.WidgetConnectionRegistry>();
+builder.Services.AddSingleton<omniDesk.Api.Hubs.WebSocketBroker>();
+builder.Services
+    .AddAuthentication()
+    .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
+        WidgetTokenAuthHandler.SchemeName, _ => { });
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(WidgetTokenAuthHandler.SchemeName, policy =>
+    {
+        policy.AddAuthenticationSchemes(WidgetTokenAuthHandler.SchemeName);
+        policy.RequireAuthenticatedUser();
+    });
 
 builder.Services.AddCors(options =>
 {

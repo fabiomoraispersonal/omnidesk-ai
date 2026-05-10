@@ -86,38 +86,38 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Repositórios — implementações EF
 
-- [ ] T033 [P] Criar `WidgetConfigRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/WidgetConfigRepository.cs` implementando `IWidgetConfigRepository`
-- [ ] T034 [P] Criar `VisitorRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/VisitorRepository.cs`
-- [ ] T035 [P] Criar `ConversationRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/ConversationRepository.cs`
-- [ ] T036 [P] Criar `MessageRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/MessageRepository.cs`
+- [X] T033 [P] Criar `WidgetConfigRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/WidgetConfigRepository.cs` implementando `IWidgetConfigRepository`
+- [X] T034 [P] Criar `VisitorRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/VisitorRepository.cs`
+- [X] T035 [P] Criar `ConversationRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/ConversationRepository.cs`
+- [X] T036 [P] Criar `MessageRepository.cs` em `src/omniDesk.Api/Infrastructure/LiveChat/MessageRepository.cs`
 
 ### Auth pública e Origin (widget)
 
-- [ ] T037 Criar `WidgetTokenAuthHandler.cs` em `src/omniDesk.Api/Features/LiveChat/Public/WidgetTokenAuthHandler.cs` — auth scheme custom `WidgetToken` que aceita `X-Widget-Token` header ou `?token=` query, resolve `public.tenants.widget_token → Tenant`, popula `ITenantContext` (research R3, contracts/widget-public-api.md)
-- [ ] T038 Criar `OriginValidator.cs` em `src/omniDesk.Api/Features/LiveChat/Public/OriginValidator.cs` — middleware/filter que lê `Origin` header, compara com `widget_config.allowed_domains` (lista vazia ⇒ pula), retorna 403 `ORIGIN_NOT_ALLOWED` quando bloqueado
-- [ ] T039 Criar `PublicRateLimiter.cs` em `src/omniDesk.Api/Features/LiveChat/Public/PublicRateLimiter.cs` — Redis `INCR {slug}:widget:rate:{anonymous_id}` com TTL 60s; default 30/min, configurável via `Widget:PublicRateLimitPerMinute`; aplica em todos os endpoints públicos exceto `/init`
-- [ ] T040 Registrar auth scheme `WidgetToken`, `OriginValidator` e `PublicRateLimiter` no pipeline em `src/omniDesk.Api/Program.cs` (após `TenantResolverMiddleware` para rotas que usam o handler custom)
+- [X] T037 Criar `WidgetTokenAuthHandler.cs` em `src/omniDesk.Api/Features/LiveChat/Public/WidgetTokenAuthHandler.cs` — auth scheme custom `WidgetToken` que aceita `X-Widget-Token` header ou `?token=` query, resolve `public.tenants.widget_token → Tenant`, popula `ITenantContext` (research R3, contracts/widget-public-api.md)
+- [X] T038 Criar `OriginValidator.cs` em `src/omniDesk.Api/Features/LiveChat/Public/OriginValidator.cs` — middleware/filter que lê `Origin` header, compara com `widget_config.allowed_domains` (lista vazia ⇒ pula), retorna 403 `ORIGIN_NOT_ALLOWED` quando bloqueado
+- [X] T039 Criar `PublicRateLimiter.cs` em `src/omniDesk.Api/Features/LiveChat/Public/PublicRateLimiter.cs` — Redis `INCR {slug}:widget:rate:{anonymous_id}` com TTL 60s; default 30/min, configurável via `Widget:PublicRateLimitPerMinute`; aplica em todos os endpoints públicos exceto `/init`
+- [X] T040 Registrar auth scheme `WidgetToken`, `OriginValidator` e `PublicRateLimiter` no pipeline em `src/omniDesk.Api/Program.cs` (após `TenantResolverMiddleware` para rotas que usam o handler custom)
 
 ### WebSocket infrastructure
 
-- [ ] T041 [P] Criar `WebSocketBroker.cs` em `src/omniDesk.Api/Hubs/WebSocketBroker.cs` — facade que assina/publica em Redis Pub/Sub e roteia mensagens para `WebSocket` ativos no node atual; trabalha sobre `IConnectionMultiplexer` já em uso
-- [ ] T042 [P] Criar `WidgetConnectionRegistry.cs` em `src/omniDesk.Api/Hubs/WidgetConnectionRegistry.cs` — `ConcurrentDictionary<string,WebSocket>` por canal + helpers para broadcast local antes de publicar no Redis
-- [ ] T043 Atualizar `src/omniDesk.Api/Program.cs` para `app.UseWebSockets()` (caso ainda não esteja) e registrar `WebSocketBroker` como singleton
+- [X] T041 [P] Criar `WebSocketBroker.cs` em `src/omniDesk.Api/Hubs/WebSocketBroker.cs` — facade que assina/publica em Redis Pub/Sub e roteia mensagens para `WebSocket` ativos no node atual; trabalha sobre `IConnectionMultiplexer` já em uso
+- [X] T042 [P] Criar `WidgetConnectionRegistry.cs` em `src/omniDesk.Api/Hubs/WidgetConnectionRegistry.cs` — `ConcurrentDictionary<string,WebSocket>` por canal + helpers para broadcast local antes de publicar no Redis
+- [X] T043 Atualizar `src/omniDesk.Api/Program.cs` para `app.UseWebSockets()` (caso ainda não esteja) e registrar `WebSocketBroker` como singleton
 
 ### Provisionamento
 
-- [ ] T044 Atualizar `src/omniDesk.Api/Features/TenantProvisioning/TenantProvisioningJob.cs` para: (a) gerar `widget_token = Guid.NewGuid()` ao criar tenant; (b) inserir 1 linha em `tenant_{slug}.widget_config` com defaults; (c) cobrir tenants existentes via backfill no startup (data-model §3.3)
+- [X] T044 Atualizar `src/omniDesk.Api/Features/TenantProvisioning/TenantProvisioningJob.cs` para: (a) gerar `widget_token = Guid.NewGuid()` ao criar tenant; (b) inserir 1 linha em `tenant_{slug}.widget_config` com defaults; (c) cobrir tenants existentes via backfill no startup (data-model §3.3)
 
 ### Tests da Foundational
 
-- [ ] T045 [P] Criar `LiveChatTestcontainerFixture.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Helpers/LiveChatTestcontainerFixture.cs` — colection fixture xUnit que sobe Postgres + Redis + Mongo + **MinIO** (`minio/minio:latest`) para testes desta spec
-- [ ] T046 [P] Criar `WidgetTestHelpers.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Helpers/WidgetTestHelpers.cs` com `SeedTenantWithWidgetConfigAsync(slug)`, `SeedVisitorAsync(slug, anonymousId)`, `SeedOpenConversationAsync(slug, visitorId)`, `MakePublicHttpClient(token, origin?, anonymousId?)`
-- [ ] T047 [P] Criar `WebSocketTestClient.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Helpers/WebSocketTestClient.cs` — cliente WS sobre `WebApplicationFactory.Server.CreateWebSocketClient()` para enviar/receber JSON e fazer assertions sobre eventos
-- [ ] T048 Test backend: `tests/Domain/LiveChat/ConversationStateTransitionsTests.cs` — valida transições válidas/proibidas (`open→resolved`, `open→abandoned`, transições ❌ `resolved→open`, `abandoned→resolved`) conforme data-model §4.1
-- [ ] T049 Test backend: `tests/Infrastructure/LiveChat/MigrationsSmokeTests.cs` — sobe Postgres + roda migrations + verifica que tabelas criadas, defaults aplicados, índices presentes (especialmente `ix_conversations_open_idle` parcial)
-- [ ] T050 Test backend: `tests/Features/LiveChat/Public/WidgetTokenAuthHandlerTests.cs` — token válido resolve tenant; token inválido → 401 `INVALID_WIDGET_TOKEN`
-- [ ] T051 Test backend: `tests/Features/LiveChat/Public/OriginValidatorTests.cs` — `allowed_domains=null` libera; lista preenchida bloqueia origens fora dela
-- [ ] T052 Test backend: `tests/Features/LiveChat/Public/PublicRateLimiterTests.cs` — 30 req → OK; 31ª → 429 `RATE_LIMIT_EXCEEDED`; conta isolada por `anonymous_id`
+- [X] T045 [P] Criar `LiveChatTestcontainerFixture.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Helpers/LiveChatTestcontainerFixture.cs` — colection fixture xUnit que sobe Postgres + Redis + Mongo + **MinIO** (`minio/minio:latest`) para testes desta spec
+- [X] T046 [P] Criar `WidgetTestHelpers.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Helpers/WidgetTestHelpers.cs` com `SeedTenantWithWidgetConfigAsync(slug)`, `SeedVisitorAsync(slug, anonymousId)`, `SeedOpenConversationAsync(slug, visitorId)`, `MakePublicHttpClient(token, origin?, anonymousId?)`
+- [X] T047 [P] Criar `WebSocketTestClient.cs` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Helpers/WebSocketTestClient.cs` — cliente WS sobre `WebApplicationFactory.Server.CreateWebSocketClient()` para enviar/receber JSON e fazer assertions sobre eventos
+- [X] T048 Test backend: `tests/Domain/LiveChat/ConversationStateTransitionsTests.cs` — valida transições válidas/proibidas (`open→resolved`, `open→abandoned`, transições ❌ `resolved→open`, `abandoned→resolved`) conforme data-model §4.1
+- [X] T049 Test backend: `tests/Infrastructure/LiveChat/MigrationsSmokeTests.cs` — sobe Postgres + roda migrations + verifica que tabelas criadas, defaults aplicados, índices presentes (especialmente `ix_conversations_open_idle` parcial)
+- [X] T050 Test backend: `tests/Features/LiveChat/Public/WidgetTokenAuthHandlerTests.cs` — token válido resolve tenant; token inválido → 401 `INVALID_WIDGET_TOKEN`
+- [X] T051 Test backend: `tests/Features/LiveChat/Public/OriginValidatorTests.cs` — `allowed_domains=null` libera; lista preenchida bloqueia origens fora dela
+- [X] T052 Test backend: `tests/Features/LiveChat/Public/PublicRateLimiterTests.cs` — 30 req → OK; 31ª → 429 `RATE_LIMIT_EXCEEDED`; conta isolada por `anonymous_id`
 
 **Checkpoint**: Foundation pronta — user stories podem começar em paralelo.
 
