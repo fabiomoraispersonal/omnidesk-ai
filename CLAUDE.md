@@ -13,7 +13,7 @@
 
 | App | Tecnologia | Domínio |
 |---|---|---|
-| `omniDesk.Api` | C# .NET 11 — Minimal API | `api.omnicare.ia.br` |
+| `omniDesk.Api` | C# .NET 10 — Minimal API | `api.omnicare.ia.br` |
 | `omniDesk.Admin` | Angular 21 — painel SaaS interno | `admin.omnicare.ia.br` |
 | `omniDesk.Crm` | Angular 21 — painel do tenant | `{slug}.omnicare.ia.br` |
 
@@ -25,9 +25,9 @@
 
 | Componente | Tecnologia |
 |---|---|
-| Runtime | .NET 11 |
+| Runtime | .NET 10 |
 | Estilo | Minimal API |
-| ORM | Entity Framework Core 9.x |
+| ORM | Entity Framework Core 10.x |
 | Validação | FluentValidation |
 | Auth | JWT Bearer + Refresh Token (httpOnly cookie) |
 | WebSocket | ASP.NET Core WebSockets nativo |
