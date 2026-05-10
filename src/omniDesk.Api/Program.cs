@@ -206,6 +206,13 @@ builder.Services.AddHttpClient<omniDesk.Api.Infrastructure.WhatsApp.WhatsAppMeta
     client.BaseAddress = new Uri(baseUrl);
     client.Timeout = TimeSpan.FromSeconds(omniDesk.Api.Infrastructure.WhatsApp.MetaApi.Defaults.SendTimeoutSeconds);
 });
+
+// Spec 008 US1 — webhook + adapters + job
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookTenantResolver>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookProcessorJob>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppIncomingAdapter>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppOutgoingAdapter>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -362,6 +369,9 @@ conversations.MapInboxConversationEndpoints();
 var widgetPublic = api.MapGroup("/public/widget");
 widgetPublic.MapWidgetPublicEndpoints();
 widgetPublic.MapWidgetUpload();
+
+// Spec 008 — Public WhatsApp webhook (HMAC validation; no user auth).
+omniDesk.Api.Features.WhatsApp.Webhook.WhatsAppWebhookEndpoints.MapWhatsAppWebhookEndpoints(app);
 
 // Spec 007 — CRM admin config surface (JWT auth).
 var widgetConfig = api.MapGroup("/widget/config")

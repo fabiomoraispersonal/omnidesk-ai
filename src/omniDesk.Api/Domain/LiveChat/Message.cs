@@ -18,6 +18,9 @@ public class Message
     public int? AttachmentSizeBytes { get; set; }
     public bool IsRead { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Spec 008 — Meta WhatsApp message ID (wamid.HBgL...). NULL para conversas live_chat.</summary>
+    public string? WaMessageId { get; set; }
 }
 
 public interface IMessageRepository

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Features.AgentRuntime;
+using omniDesk.Api.Features.WhatsApp.Adapters;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.LiveChat;
 using omniDesk.Api.Infrastructure.Persistence;
@@ -19,11 +20,16 @@ public class LiveChatConversationGateway : IConversationGateway
 {
     private readonly AppDbContext _db;
     private readonly LiveChatOutgoingAdapter _outgoing;
+    private readonly WhatsAppOutgoingAdapter _waOutgoing;
 
-    public LiveChatConversationGateway(AppDbContext db, LiveChatOutgoingAdapter outgoing)
+    public LiveChatConversationGateway(
+        AppDbContext db,
+        LiveChatOutgoingAdapter outgoing,
+        WhatsAppOutgoingAdapter waOutgoing)
     {
         _db = db;
         _outgoing = outgoing;
+        _waOutgoing = waOutgoing;
     }
 
     public async Task<AiThreadDto> GetOrCreateThreadAsync(
@@ -75,7 +81,20 @@ public class LiveChatConversationGateway : IConversationGateway
 
     public async Task EnqueueOutgoingAsync(Guid threadId, OutgoingMessage message, CancellationToken ct)
     {
-        // Persist + publish to widget WS channel + (optional) CRM channel.
+        // Spec 008 — Channel Agnosticism (Constitution §III): roteia por canal da conversa.
+        // LiveChat → WS widget; WhatsApp → Meta Graph API.
+        var channel = await _db.Conversations.AsNoTracking()
+            .Where(c => c.Id == threadId)
+            .Select(c => (ChannelType?)c.Channel)
+            .FirstOrDefaultAsync(ct);
+
+        if (channel is ChannelType.WhatsApp)
+        {
+            await _waOutgoing.DispatchAsync(threadId, message, ct);
+            return;
+        }
+
+        // Default: LiveChat (visible widget WS channel + optional CRM notify).
         await _outgoing.DispatchAsync(threadId, message, ct);
     }
 

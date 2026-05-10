@@ -98,7 +98,7 @@ public class StartConversationResumedContextTests : IAsyncLifetime
         var redis = StackExchange.Redis.ConnectionMultiplexer.Connect(_fx.RedisConnectionString);
         var outgoing = new LiveChatOutgoingAdapter(_db, redis, slug,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<LiveChatOutgoingAdapter>.Instance);
-        return new LiveChatConversationGateway(_db, outgoing);
+        return new LiveChatConversationGateway(_db, outgoing, waOutgoing: null!);
     }
 
     private async Task SeedMessageAsync(Guid convId, string sender, string contentType, string content, DateTimeOffset at)
