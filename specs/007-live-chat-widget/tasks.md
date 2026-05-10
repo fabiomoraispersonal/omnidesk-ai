@@ -131,15 +131,15 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Tests US1
 
-- [ ] T053 [P] [US1] Test contract `tests/Features/LiveChat/Public/WidgetInitEndpointTests.cs` — GET `/api/public/widget/init`: retorna config + `active_conversation=null` quando sem `X-Anonymous-Id`; retorna `disabled_message` quando `is_enabled=false`; rejeita Origin não permitida (contracts/widget-public-api.md §GET /init)
-- [ ] T054 [P] [US1] Test contract `tests/Features/LiveChat/Public/StartConversationEndpointTests.cs` — POST `/api/public/widget/conversations`: cria visitor + conversation `open` + LGPD; retorna 422 `LGPD_CONSENT_REQUIRED` quando `lgpd_consent=false`; idempotente em janela de 5s para mesmo `anonymous_id` (contracts/widget-public-api.md §POST /conversations)
-- [ ] T055 [P] [US1] Test contract `tests/Features/LiveChat/Public/GetMessagesEndpointTests.cs` — paginação `limit/before`, ordem cronológica ascendente, 403 quando conversa não pertence ao `anonymous_id`
-- [ ] T056 [P] [US1] Test integration `tests/Features/LiveChat/Adapters/LiveChatConversationGatewayTests.cs` — cobre todos os métodos da interface (contracts/conversation-gateway-impl.md §Testes); valida que substitui `ChannelStubGateway` no DI registration
-- [ ] T057 [P] [US1] Test integration `tests/Hubs/WidgetWebSocketEndpointTests.cs` — handshake feliz, replay com `since=`, close codes 4401/4403/4404/4422/4409; `message.send` persiste em `messages` e enfileira em `{slug}:incoming_messages`; idempotência `(conversation_id, client_message_id)`
-- [ ] T058 [P] [US1] Test integration `tests/Features/LiveChat/Adapters/IncomingPipelineE2ETests.cs` — visitante envia mensagem via WS → mensagem persiste → fila Hangfire dispara `IncomingMessageWorker` (mock OpenAI) → `OutgoingMessageWorker` publica em Redis → backend roteia para o WS do visitante (verificar via WebSocketTestClient)
-- [ ] T059 [P] [US1] Widget unit `src/omniDesk.Widget/tests/visitor-store.spec.ts` — `crypto.randomUUID` gera `anonymous_id` na primeira visita; persiste em `localStorage.omnidesk_visitor_id`; reusa em visitas subsequentes
-- [ ] T060 [P] [US1] Widget unit `src/omniDesk.Widget/tests/lgpd-consent.spec.ts` — botão de envio fica desabilitado até checkbox marcado; aceitar registra `lgpd_consent_at` no payload de POST /conversations
-- [ ] T061 [P] [US1] Widget unit `src/omniDesk.Widget/tests/ws-client.spec.ts` — backoff exponencial (1s, 2s, 4s, 8s, 16s, 30s) com jitter; replay com `since=<last_message_id>` ao reconectar; fila local de envios durante desconexão (research R6)
+- [X] T053 [P] [US1] Test contract `tests/Features/LiveChat/Public/WidgetInitEndpointTests.cs` — GET `/api/public/widget/init`: retorna config + `active_conversation=null` quando sem `X-Anonymous-Id`; retorna `disabled_message` quando `is_enabled=false`; rejeita Origin não permitida (contracts/widget-public-api.md §GET /init)
+- [X] T054 [P] [US1] Test contract `tests/Features/LiveChat/Public/StartConversationEndpointTests.cs` — POST `/api/public/widget/conversations`: cria visitor + conversation `open` + LGPD; retorna 422 `LGPD_CONSENT_REQUIRED` quando `lgpd_consent=false`; idempotente em janela de 5s para mesmo `anonymous_id` (contracts/widget-public-api.md §POST /conversations)
+- [X] T055 [P] [US1] Test contract `tests/Features/LiveChat/Public/GetMessagesEndpointTests.cs` — paginação `limit/before`, ordem cronológica ascendente, 403 quando conversa não pertence ao `anonymous_id`
+- [X] T056 [P] [US1] Test integration `tests/Features/LiveChat/Adapters/LiveChatConversationGatewayTests.cs` — cobre todos os métodos da interface (contracts/conversation-gateway-impl.md §Testes); valida que substitui `ChannelStubGateway` no DI registration
+- [~] T057 [P] [US1] Test integration `tests/Hubs/WidgetWebSocketEndpointTests.cs` — Skip placeholder; tracked in follow-up-issues
+- [~] T058 [P] [US1] Test integration `tests/Features/LiveChat/Adapters/IncomingPipelineE2ETests.cs` — Skip placeholder; tracked in follow-up-issues
+- [X] T059 [P] [US1] Widget unit `src/omniDesk.Widget/tests/visitor-store.spec.ts` — `crypto.randomUUID` gera `anonymous_id` na primeira visita; persiste em `localStorage.omnidesk_visitor_id`; reusa em visitas subsequentes
+- [X] T060 [P] [US1] Widget unit `src/omniDesk.Widget/tests/lgpd-consent.spec.ts` — botão de envio fica desabilitado até checkbox marcado; aceitar registra `lgpd_consent_at` no payload de POST /conversations
+- [X] T061 [P] [US1] Widget unit `src/omniDesk.Widget/tests/ws-client.spec.ts` — backoff exponencial (1s, 2s, 4s, 8s, 16s, 30s) com jitter; replay com `since=<last_message_id>` ao reconectar; fila local de envios durante desconexão (research R6)
 
 ### Backend — endpoints públicos
 
@@ -167,28 +167,28 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Widget bundle — entry e UI mínima
 
-- [ ] T077 [P] [US1] Criar `src/omniDesk.Widget/src/types.ts` com tipos `OmniDeskConfig`, `WidgetConfig`, `Conversation`, `Message`, `WsEvent`, `MessageSendPayload`
-- [ ] T078 [P] [US1] Criar `src/omniDesk.Widget/src/lib/crypto-uuid.ts` — `generateUuid()` que tenta `crypto.randomUUID()` e cai para polyfill RFC4122 v4 mínimo (Safari < 15.4)
-- [ ] T079 [P] [US1] Criar `src/omniDesk.Widget/src/lib/debounce.ts` — `debounce(fn, ms)` para `visitor.typing` (1s)
-- [ ] T080 [P] [US1] Criar `src/omniDesk.Widget/src/state/visitor-store.ts` — `getOrCreate()`, persiste em `localStorage.omnidesk_visitor_id`
-- [ ] T081 [P] [US1] Criar `src/omniDesk.Widget/src/state/conversation-store.ts` — `getActive()`, `setActive(id, status)`, `clear()`, persiste em `localStorage.omnidesk_conversation_id`
-- [ ] T082 [P] [US1] Criar `src/omniDesk.Widget/src/state/message-queue.ts` — fila in-memory com `enqueue`, `flush(send)`, `peek()` para mensagens digitadas durante desconexão
-- [ ] T083 [P] [US1] Criar `src/omniDesk.Widget/src/api/http-client.ts` — fetch wrapper que injeta `X-Widget-Token` + `X-Anonymous-Id`, parseia envelope `{success,data,error}`
-- [ ] T084 [P] [US1] Criar `src/omniDesk.Widget/src/api/ws-client.ts` — WebSocket com `connect(url)`, `send(event)`, reconexão com backoff exponencial (research R6), eventos `onMessage`, `onClose`, `onOpen`; replay automático com `since=<last_message_id>`
-- [ ] T085 [P] [US1] Criar `src/omniDesk.Widget/src/ui/styles.ts` — exports `getStyles(primaryColor): string` retornando CSS template literal com tokens (cor primária, dark/light, bolhas, animações slide-up)
-- [ ] T086 [US1] Criar `src/omniDesk.Widget/src/ui/launcher.ts` — Web Component `<omnidesk-launcher>` com botão flutuante, badge não-lidas, posicionamento (`bottom_right`/`bottom_left`)
-- [ ] T087 [US1] Criar `src/omniDesk.Widget/src/ui/lgpd-consent.ts` — Web Component `<omnidesk-lgpd>` com checkbox + texto + link política; emite event `consent-granted`
-- [ ] T088 [US1] Criar `src/omniDesk.Widget/src/ui/message-list.ts` — Web Component `<omnidesk-message-list>` com auto-scroll, alinhamento por `sender_type`, indicador "digitando…", placeholder vazio com `welcome_message`
-- [ ] T089 [US1] Criar `src/omniDesk.Widget/src/ui/input-area.ts` — Web Component `<omnidesk-input>` com textarea, botão enviar (desabilitado até LGPD aceito), evento `send-message`
-- [ ] T090 [US1] Criar `src/omniDesk.Widget/src/ui/panel.ts` — Web Component `<omnidesk-panel>` que orquestra header (cor primária, nome empresa), `omnidesk-message-list`, `omnidesk-input`, banner de desconexão; lazy-load de `/init` apenas no primeiro `open()`
-- [ ] T091 [US1] Criar `src/omniDesk.Widget/src/widget.ts` (entry) — define `customElements.define('omnidesk-widget', class extends HTMLElement {...})`, attach Shadow DOM `closed`, lê `window.OmniDeskConfig`, instancia launcher + panel; expõe `window.OmniDesk = { open, close, setUser }`
-- [ ] T092 [US1] Criar `src/omniDesk.Widget/public/loader.js` (~1KB) — verifica `window.OmniDeskConfig.token`, injeta `<script type="module" src="${CDN}/widget.<hash>.js">` (URL preenchida em build)
-- [ ] T093 [US1] Configurar `src/omniDesk.Widget/esbuild.config.mjs` para gerar `dist/widget.<hash>.js` (ESM, minify, sourcemap externo) + `dist/loader.js` cópia processada de `public/loader.js` com placeholder substituído
-- [ ] T094 [US1] Adicionar script npm `build` em `src/omniDesk.Widget/package.json` que roda esbuild + emite `dist/manifest.json` (mapeia hash → nome para deploy CDN)
+- [X] T077 [P] [US1] Criar `src/omniDesk.Widget/src/types.ts` com tipos `OmniDeskConfig`, `WidgetConfig`, `Conversation`, `Message`, `WsEvent`, `MessageSendPayload`
+- [X] T078 [P] [US1] Criar `src/omniDesk.Widget/src/lib/crypto-uuid.ts` — `generateUuid()` que tenta `crypto.randomUUID()` e cai para polyfill RFC4122 v4 mínimo (Safari < 15.4)
+- [X] T079 [P] [US1] Criar `src/omniDesk.Widget/src/lib/debounce.ts` — `debounce(fn, ms)` para `visitor.typing` (1s)
+- [X] T080 [P] [US1] Criar `src/omniDesk.Widget/src/state/visitor-store.ts` — `getOrCreate()`, persiste em `localStorage.omnidesk_visitor_id`
+- [X] T081 [P] [US1] Criar `src/omniDesk.Widget/src/state/conversation-store.ts` — `getActive()`, `setActive(id, status)`, `clear()`, persiste em `localStorage.omnidesk_conversation_id`
+- [X] T082 [P] [US1] Criar `src/omniDesk.Widget/src/state/message-queue.ts` — fila in-memory com `enqueue`, `flush(send)`, `peek()` para mensagens digitadas durante desconexão
+- [X] T083 [P] [US1] Criar `src/omniDesk.Widget/src/api/http-client.ts` — fetch wrapper que injeta `X-Widget-Token` + `X-Anonymous-Id`, parseia envelope `{success,data,error}`
+- [X] T084 [P] [US1] Criar `src/omniDesk.Widget/src/api/ws-client.ts` — WebSocket com `connect(url)`, `send(event)`, reconexão com backoff exponencial (research R6), eventos `onMessage`, `onClose`, `onOpen`; replay automático com `since=<last_message_id>`
+- [X] T085 [P] [US1] Criar `src/omniDesk.Widget/src/ui/styles.ts` — exports `getStyles(primaryColor): string` retornando CSS template literal com tokens (cor primária, dark/light, bolhas, animações slide-up)
+- [X] T086 [US1] Criar `src/omniDesk.Widget/src/ui/launcher.ts` — Web Component `<omnidesk-launcher>` com botão flutuante, badge não-lidas, posicionamento (`bottom_right`/`bottom_left`)
+- [X] T087 [US1] Criar `src/omniDesk.Widget/src/ui/lgpd-consent.ts` — Web Component `<omnidesk-lgpd>` com checkbox + texto + link política; emite event `consent-granted`
+- [X] T088 [US1] Criar `src/omniDesk.Widget/src/ui/message-list.ts` — Web Component `<omnidesk-message-list>` com auto-scroll, alinhamento por `sender_type`, indicador "digitando…", placeholder vazio com `welcome_message`
+- [X] T089 [US1] Criar `src/omniDesk.Widget/src/ui/input-area.ts` — Web Component `<omnidesk-input>` com textarea, botão enviar (desabilitado até LGPD aceito), evento `send-message`
+- [X] T090 [US1] Criar `src/omniDesk.Widget/src/ui/panel.ts` — Web Component `<omnidesk-panel>` que orquestra header (cor primária, nome empresa), `omnidesk-message-list`, `omnidesk-input`, banner de desconexão; lazy-load de `/init` apenas no primeiro `open()`
+- [X] T091 [US1] Criar `src/omniDesk.Widget/src/widget.ts` (entry) — define `customElements.define('omnidesk-widget', class extends HTMLElement {...})`, attach Shadow DOM `closed`, lê `window.OmniDeskConfig`, instancia launcher + panel; expõe `window.OmniDesk = { open, close, setUser }`
+- [X] T092 [US1] Criar `src/omniDesk.Widget/public/loader.js` (~1KB) — verifica `window.OmniDeskConfig.token`, injeta `<script type="module" src="${CDN}/widget.<hash>.js">` (URL preenchida em build)
+- [X] T093 [US1] Configurar `src/omniDesk.Widget/esbuild.config.mjs` para gerar `dist/widget.<hash>.js` (ESM, minify, sourcemap externo) + `dist/loader.js` cópia processada de `public/loader.js` com placeholder substituído
+- [X] T094 [US1] Adicionar script npm `build` em `src/omniDesk.Widget/package.json` que roda esbuild + emite `dist/manifest.json` (mapeia hash → nome para deploy CDN)
 
 ### Tenant bootstrap dev
 
-- [ ] T095 [US1] Criar `src/omniDesk.Widget/public/dev-test.html` (servida via `npm run dev`) — página local com snippet de instalação apontando para `http://localhost:5173/widget/v1/loader.js` para suportar QS-1 manual
+- [X] T095 [US1] Criar `src/omniDesk.Widget/public/dev-test.html` (servida via `npm run dev`) — página local com snippet de instalação apontando para `http://localhost:5173/widget/v1/loader.js` para suportar QS-1 manual
 
 **Checkpoint**: User Story 1 funcional — visitante conversa com IA via widget instalado em página HTML.
 

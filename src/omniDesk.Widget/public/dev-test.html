@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OmniDesk Widget — dev test page</title>
+    <style>
+      body { font-family: 'Manrope', system-ui, sans-serif; background: #F4F1EC; color: #2F2F2F;
+             max-width: 720px; margin: 48px auto; padding: 0 16px; line-height: 1.55; }
+      code, pre { background: #fff; padding: 2px 6px; border-radius: 4px; }
+      pre { padding: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>OmniDesk Widget — Dev Test</h1>
+    <p>Página local para validar QS-1 (instalação + envio de primeira mensagem) durante o desenvolvimento.</p>
+    <p>Ajuste <code>OmniDeskConfig.token</code> abaixo para apontar ao tenant de teste e rode <code>npm run dev</code> em <code>src/omniDesk.Widget</code> para servir os assets em <code>http://localhost:5173</code>.</p>
+    <h2>Snippet de instalação</h2>
+    <pre>&lt;script&gt;
+  window.OmniDeskConfig = {
+    token: '00000000-0000-0000-0000-000000000000',
+    apiBaseUrl: 'http://localhost:5000'
+  };
+&lt;/script&gt;
+&lt;script src="http://localhost:5173/widget/v1/loader.js"&gt;&lt;/script&gt;</pre>
+
+    <p>Após carregar, um botão flutuante aparecerá no canto inferior. Clique para abrir, marque o checkbox LGPD e envie uma mensagem.</p>
+
+    <script>
+      window.OmniDeskConfig = {
+        token: '00000000-0000-0000-0000-000000000000',
+        apiBaseUrl: 'http://localhost:5000',
+      };
+    </script>
+    <script src="/widget/v1/loader.js"></script>
+  </body>
+</html>
