@@ -472,9 +472,9 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 007 — Live Chat (Widget)** — em planejamento. Plano em [specs/007-live-chat-widget/plan.md](specs/007-live-chat-widget/plan.md). Branch `007-live-chat-widget`. Pré-requisitos: Specs 002, 005, 006 (todas COMPLETE).
+**Spec 008 — WhatsApp** — plano completo. Plano em [specs/008-whatsapp-channel/plan.md](specs/008-whatsapp-channel/plan.md). Branch `008-whatsapp-channel`. Pré-requisitos: Specs 002, 003, 004, 006, 007 (todas COMPLETE).
 
-Substitui os stubs `ChannelStubGateway` e a tabela transitória `ai_threads` da Spec 006 com `LiveChatConversationGateway` + `tenant_{slug}.conversations`/`messages` reais. Entrega: widget vanilla TS (`src/omniDesk.Widget/`), backend (4 tabelas tenant-scoped + `public.tenants.widget_token`), CRM Angular (config + multi-conv inbox), 2 jobs Hangfire (abandonment/inactivity).
+Segundo adapter de canal (após Live Chat 007), implementa Princípio §III Channel Agnosticism. Reusa 100% do pipeline conversacional (`IncomingMessageWorker`/`OutgoingMessageWorker` da 006, `messages`/`visitors`/`conversations` da 007, `/ws/crm` da 007). Entrega: 2 tabelas tenant-scoped (`whatsapp_config` 1:1, `whatsapp_templates`) + 2 colunas em `conversations` (`wa_contact_phone`, `wa_session_expires_at`); 1 collection MongoDB (`{slug}_wa_message_statuses`); webhook público com HMAC-SHA256 + verify_token; 4 jobs Hangfire (webhook async, session expiring, token revoked, template poller, media download); CRM Angular (config + templates + ícones de delivery + banner de janela 24h); AES-256-GCM próprio para access_token e app_secret; zero NuGet novo.
 
 Próximo passo: `/speckit-tasks` para gerar `tasks.md`.
 <!-- SPECKIT END -->
