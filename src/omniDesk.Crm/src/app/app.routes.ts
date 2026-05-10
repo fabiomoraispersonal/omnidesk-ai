@@ -36,5 +36,12 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/ai-agents/ai-agents.routes').then(m => m.aiAgentsRoutes),
   },
+  {
+    path: 'configuracoes/live-chat',
+    loadComponent: () =>
+      import('./features/live-chat-config/live-chat-config.component').then(
+        (m) => m.LiveChatConfigComponent,
+      ),
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

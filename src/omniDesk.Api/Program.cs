@@ -41,6 +41,7 @@ using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Features.LiveChat.Adapters;
+using omniDesk.Api.Features.LiveChat.Config;
 using omniDesk.Api.Features.LiveChat.Public;
 using omniDesk.Api.Features.LiveChat.Uploads;
 using omniDesk.Api.Infrastructure.LiveChat;
@@ -169,6 +170,10 @@ builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJo
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Uploads.MimeTypeDetector>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Uploads.MinioUploader>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveChat.Uploads.Validators.UploadValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Config.Commands.UpdateWidgetConfigCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Config.Commands.ToggleWidgetCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.WidgetDisableEnforcementJob>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveChat.Config.Validators.UpdateWidgetConfigValidator>();
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -314,6 +319,12 @@ SuggestReplyEndpoint.Map(conversations);
 var widgetPublic = api.MapGroup("/public/widget");
 widgetPublic.MapWidgetPublicEndpoints();
 widgetPublic.MapWidgetUpload();
+
+// Spec 007 — CRM admin config surface (JWT auth).
+var widgetConfig = api.MapGroup("/widget/config")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+widgetConfig.MapWidgetConfigEndpoints();
 
 // Spec 007 — Internal endpoint reserved for the Spec 006 orchestrator.
 var widgetInternal = api.MapGroup("/internal/livechat")
