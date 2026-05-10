@@ -42,6 +42,7 @@ using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Features.LiveChat.Adapters;
 using omniDesk.Api.Features.LiveChat.Config;
+using omniDesk.Api.Features.WhatsApp.Config;
 using omniDesk.Api.Features.LiveChat.Inbox;
 using omniDesk.Api.Features.LiveChat.Public;
 using omniDesk.Api.Features.LiveChat.Uploads;
@@ -213,6 +214,12 @@ builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookProce
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppIncomingAdapter>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppOutgoingAdapter>();
 builder.Services.AddSingleton(TimeProvider.System);
+
+// Spec 008 US2 — CRM config (queries + commands + validator)
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Queries.GetWhatsAppConfigQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Commands.UpdateWhatsAppConfigCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Commands.ToggleWhatsAppChannelCommand>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.WhatsApp.Config.Validators.UpdateWhatsAppConfigValidator>();
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -372,6 +379,12 @@ widgetPublic.MapWidgetUpload();
 
 // Spec 008 — Public WhatsApp webhook (HMAC validation; no user auth).
 omniDesk.Api.Features.WhatsApp.Webhook.WhatsAppWebhookEndpoints.MapWhatsAppWebhookEndpoints(app);
+
+// Spec 008 US2 — CRM config (JWT auth + RBAC policies).
+var whatsappConfig = api.MapGroup("/whatsapp/config")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+whatsappConfig.MapWhatsAppConfigEndpoints();
 
 // Spec 007 — CRM admin config surface (JWT auth).
 var widgetConfig = api.MapGroup("/widget/config")
