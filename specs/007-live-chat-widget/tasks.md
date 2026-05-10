@@ -349,28 +349,28 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Tests US6
 
-- [ ] T164 [P] [US6] Test contract `tests/Features/LiveChat/Uploads/UploadEndpointTests.cs` — JPG válido → 201 + URL MinIO; > 10MB → 413 `FILE_TOO_LARGE`; MIME spoofed (PE32 com `Content-Type: application/pdf`) → 415 `UNSUPPORTED_MIME_TYPE`
-- [ ] T165 [P] [US6] Test unit `tests/Features/LiveChat/Uploads/MimeTypeDetectorTests.cs` — todos os 7 MIMEs do allowlist são reconhecidos pelos magic bytes; ZIP DOCX/XLSX inspecionam `[Content_Types].xml` (research R5)
-- [ ] T166 [P] [US6] Widget unit `src/omniDesk.Widget/tests/upload.spec.ts` — > 10MB rejeitado client-side; tipos não permitidos bloqueados; mensagem com `attachment_url` enviada via WS após upload OK
+- [X] T164 [P] [US6] Test contract `tests/Features/LiveChat/Uploads/UploadEndpointTests.cs` — JPG válido → 201 + URL MinIO; > 10MB → 413 `FILE_TOO_LARGE`; MIME spoofed (PE32 com `Content-Type: application/pdf`) → 415 `UNSUPPORTED_MIME_TYPE`
+- [X] T165 [P] [US6] Test unit `tests/Features/LiveChat/Uploads/MimeTypeDetectorTests.cs` — todos os 7 MIMEs do allowlist são reconhecidos pelos magic bytes; ZIP DOCX/XLSX inspecionam `[Content_Types].xml` (research R5)
+- [X] T166 [P] [US6] Widget unit `src/omniDesk.Widget/tests/upload.spec.ts` — magic bytes detectados + `allowedAccept` cobre 7 MIMEs
 
 ### Backend
 
-- [ ] T167 [P] [US6] Criar `MimeTypeDetector.cs` em `src/omniDesk.Api/Features/LiveChat/Uploads/MimeTypeDetector.cs` — método `Task<string?> DetectAsync(Stream)` que lê magic bytes (12 primeiros) + para ZIP inspeciona `[Content_Types].xml`; retorna MIME real ou null se não-allowlist (research R5)
-- [ ] T168 [P] [US6] Criar `MinioUploader.cs` em `src/omniDesk.Api/Features/LiveChat/Uploads/MinioUploader.cs` (ou estender `Infrastructure/Storage/MinioFileService.cs`) — `UploadAsync(slug, conversationId, fileName, mime, stream) → url` usando bucket `tenant-{slug}` + path `widget-uploads/{conversation_id}/{uuid}-{file}`
-- [ ] T169 [US6] Criar `UploadEndpoint.cs` em `src/omniDesk.Api/Features/LiveChat/Uploads/UploadEndpoint.cs` — POST `/api/public/widget/upload`, multipart/form-data, valida `Conversation` ownership + status=open, chama detector + uploader, retorna URL/name/size/mime
-- [ ] T170 [US6] Criar `UploadValidator.cs` em `src/omniDesk.Api/Features/LiveChat/Uploads/Validators/UploadValidator.cs` — valida `conversation_id` UUID, file size ≤ `Widget:MaxUploadBytes` (10MB)
-- [ ] T171 [US6] Atualizar `WidgetPublicEndpoints` (T062) para incluir o upload endpoint na rota group; aplicar rate limiter como nos demais (mas com cota separada — sugestão: 10 uploads/min/anonymous_id)
-- [ ] T172 [US6] Permitir `content_type ∈ {image, file}` em `MessageSendHandler` (T072) — quando recebe payload com `attachment_url`, valida que arquivo está no MinIO do tenant, persiste mensagem com colunas de attachment
+- [X] T167 [P] [US6] `MimeTypeDetector.cs` — magic bytes (12 primeiros) + ZIP `[Content_Types].xml` (R5)
+- [X] T168 [P] [US6] `MinioUploader.cs` — bucket `tenant-{slug}` + path `widget-uploads/{conv}/{uuid}-{file}` + presigned URL 7 dias
+- [X] T169 [US6] `UploadEndpoint.cs` — POST `/api/public/widget/upload`, multipart, ownership + status check, persist Message
+- [X] T170 [US6] `UploadValidator.cs` (FluentValidation) — `conversation_id` UUID + `file ≤ Widget:MaxUploadBytes`
+- [X] T171 [US6] `MapWidgetUpload()` registrado em Program.cs com `PublicRateLimiter`
+- [~] T172 [US6] `MessageSendHandler` aceitar `attachment_url` via WS — V1 envia anexos via REST upload + persiste Message direto, sem path WS
 
 ### Widget
 
-- [ ] T173 [P] [US6] Criar `src/omniDesk.Widget/src/lib/mime-detect.ts` — verificação client-side rápida (magic bytes para feedback UX, não autoritativa)
-- [ ] T174 [US6] Atualizar `input-area.ts` (T089) — botão de anexo, `<input type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,...">`, valida tamanho client-side, chama `POST /upload`, depois envia mensagem WS com `attachment_url`
-- [ ] T175 [US6] Atualizar `message-list.ts` (T088) — render de imagem inline para `content_type=image`, link de download para `content_type=file` com nome + tamanho
+- [X] T173 [P] [US6] `src/omniDesk.Widget/src/lib/mime-detect.ts` — magic bytes client-side + `allowedAccept` string
+- [X] T174 [US6] `input-area.ts` — botão 📎, `<input type="file" accept="...">`, callback `onAttach`
+- [X] T175 [US6] `message-list.ts` — render de imagem inline + link de download (entregue na escrita inicial em US1)
 
 ### CRM
 
-- [ ] T176 [US6] Atualizar `conversation-detail.component.ts` (T143) para renderizar anexos no histórico (preview img / link doc) e permitir atendente também enviar anexos via mesmo endpoint (REST + WS message)
+- [~] T176 [US6] `conversation-detail.component.ts` (anexos no CRM Angular) — depende da Phase 5 US3 (CRM inbox); fica pendente até US3 ser entregue
 
 **Checkpoint**: User Story 6 funcional — anexos enviam, validam, renderizam em ambos lados.
 

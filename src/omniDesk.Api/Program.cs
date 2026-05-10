@@ -42,6 +42,7 @@ using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Features.LiveChat.Adapters;
 using omniDesk.Api.Features.LiveChat.Public;
+using omniDesk.Api.Features.LiveChat.Uploads;
 using omniDesk.Api.Infrastructure.LiveChat;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -165,6 +166,9 @@ builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.MessagesReplayHandler>();
 builder.Services.AddScoped<omniDesk.Api.Hubs.WidgetWebSocketEndpoint>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.AbandonmentSweepJob>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJob>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Uploads.MimeTypeDetector>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Uploads.MinioUploader>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveChat.Uploads.Validators.UploadValidator>();
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -309,6 +313,7 @@ SuggestReplyEndpoint.Map(conversations);
 // Spec 007 — Public widget surface (auth via WidgetToken scheme)
 var widgetPublic = api.MapGroup("/public/widget");
 widgetPublic.MapWidgetPublicEndpoints();
+widgetPublic.MapWidgetUpload();
 
 // Spec 007 — Internal endpoint reserved for the Spec 006 orchestrator.
 var widgetInternal = api.MapGroup("/internal/livechat")

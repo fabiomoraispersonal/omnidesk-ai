@@ -11,6 +11,7 @@ export interface PanelCallbacks {
   onTyping: () => void;
   onConsentGranted: () => void;
   onClose: () => void;
+  onAttach?: (file: File) => void;
 }
 
 export interface PanelHandle {
@@ -48,6 +49,7 @@ export function createPanel(callbacks: PanelCallbacks): PanelHandle {
   const inputArea: InputAreaHandle = createInputArea('Digite uma mensagem…', {
     onSend: callbacks.onSend,
     onTyping: callbacks.onTyping,
+    ...(callbacks.onAttach ? { onAttach: callbacks.onAttach } : {}),
   });
 
   let lgpdSlot: HTMLElement | null = null;

@@ -37,6 +37,7 @@ class OmniDeskWidget extends HTMLElement {
   private panel = createPanel({
     onSend: (text) => this.handleSend(text),
     onTyping: () => this.handleTyping(),
+    onAttach: (file) => this.handleAttach(file),
     onConsentGranted: () => { this.hasConsent = true; },
     onClose: () => this.panel.setOpen(false),
   });
@@ -195,6 +196,66 @@ class OmniDeskWidget extends HTMLElement {
   private readonly handleTyping = debounce(() => {
     this.ws?.send({ type: 'visitor.typing' });
   }, 1_000);
+
+  private async handleAttach(file: File): Promise<void> {
+    if (!this.http || !this.conversationId) {
+      console.warn('[OmniDesk] attach attempted before conversation started');
+      return;
+    }
+    const cfg = window.OmniDeskConfig;
+    if (!cfg) return;
+    const apiBase = cfg.apiBaseUrl ?? __DEFAULT_API_BASE_URL__;
+    const visitorId = visitorStore.getOrCreate();
+
+    if (file.size > 10 * 1024 * 1024) {
+      console.warn('[OmniDesk] file exceeds 10MB; aborting upload.');
+      return;
+    }
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('conversationId', this.conversationId);
+
+    try {
+      const response = await fetch(`${apiBase.replace(/\/$/, '')}/api/public/widget/upload`, {
+        method: 'POST',
+        body: form,
+        headers: {
+          'X-Widget-Token': cfg.token,
+          'X-Anonymous-Id': visitorId,
+        },
+        credentials: 'omit',
+      });
+      if (!response.ok) {
+        console.warn('[OmniDesk] upload failed', response.status, await response.text());
+        return;
+      }
+      const body = (await response.json()) as {
+        success: true;
+        data: {
+          attachment_url: string;
+          attachment_name: string;
+          attachment_size_bytes: number;
+          mime: string;
+          content_type: 'image' | 'file';
+        };
+      };
+      // Echo locally so the visitor sees the attachment immediately. The CRM side
+      // gets it via the persisted message + the existing WS pipeline.
+      this.panel.appendMessage({
+        id: `local-${Date.now()}`,
+        sender_type: 'visitor',
+        content_type: body.data.content_type,
+        content: body.data.attachment_name,
+        attachment_url: body.data.attachment_url,
+        attachment_name: body.data.attachment_name,
+        attachment_size_bytes: body.data.attachment_size_bytes,
+        created_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn('[OmniDesk] upload error', err);
+    }
+  }
 
   private async connectWs(init: InitResponse): Promise<void> {
     if (this.ws || !this.conversationId) return;
