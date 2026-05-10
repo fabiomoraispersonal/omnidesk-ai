@@ -56,6 +56,21 @@ builder.Host.UseSerilog((ctx, services, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
     .Enrich.FromLogContext()
     .Enrich.With(services.GetRequiredService<ImpersonationAuditEnricher>())
+    // Spec 008 FR-034 — segredos WhatsApp NUNCA em texto plano em logs.
+    .Destructure.ByTransforming<omniDesk.Api.Domain.WhatsApp.WhatsAppConfig>(c => new
+    {
+        c.TenantId,
+        c.IsEnabled,
+        c.PhoneNumber,
+        c.DisplayName,
+        c.WabaId,
+        c.PhoneNumberId,
+        AccessTokenCiphertext = c.HasAccessToken ? "***" : null,
+        AppSecretCiphertext   = c.HasAppSecret   ? "***" : null,
+        WebhookVerifyTokenSet = !string.IsNullOrEmpty(c.WebhookVerifyToken),
+        c.BusinessHoursEnabled,
+        c.UpdatedAt,
+    })
     .WriteTo.Console(outputTemplate:
         "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"));
 
@@ -183,6 +198,14 @@ builder.Services.AddScoped<omniDesk.Api.Hubs.CrmWebSocketEndpoint>();
 builder.Services.AddScoped<omniDesk.Api.Domain.WhatsApp.IWhatsAppConfigRepository, omniDesk.Api.Infrastructure.WhatsApp.WhatsAppConfigRepository>();
 builder.Services.AddScoped<omniDesk.Api.Domain.WhatsApp.IWhatsAppTemplateRepository, omniDesk.Api.Infrastructure.WhatsApp.WhatsAppTemplateRepository>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.WhatsApp.IWaMessageStatusesRepository, omniDesk.Api.Infrastructure.WhatsApp.WaMessageStatusesRepository>();
+builder.Services.AddSingleton<omniDesk.Api.Features.WhatsApp.Webhook.MetaWebhookSignatureValidator>();
+builder.Services.AddHttpClient<omniDesk.Api.Infrastructure.WhatsApp.WhatsAppMetaClient>(client =>
+{
+    var baseUrl = builder.Configuration["WhatsApp:GraphApiBaseUrl"] ?? "https://graph.facebook.com/v19.0";
+    if (!baseUrl.EndsWith('/')) baseUrl += "/";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(omniDesk.Api.Infrastructure.WhatsApp.MetaApi.Defaults.SendTimeoutSeconds);
+});
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -215,6 +238,13 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseCors();
+
+// Spec 008 — captura raw body APENAS na rota de webhook WhatsApp para HMAC-SHA256
+// (deve rodar antes de Authentication/Authorization para que o handler tenha o byte[]).
+app.UseWhen(
+    ctx => ctx.Request.Path.StartsWithSegments("/api/public/whatsapp/webhook", StringComparison.OrdinalIgnoreCase),
+    branch => branch.UseMiddleware<omniDesk.Api.Features.WhatsApp.Webhook.RawBodyCaptureMiddleware>());
+
 app.UseAuthentication();
 app.UseAuthorization();
 // Spec 004 (R7) — capture authorization denials with PT-BR body and Warning log.
