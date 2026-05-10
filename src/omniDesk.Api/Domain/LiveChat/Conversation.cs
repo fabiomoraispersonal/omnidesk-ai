@@ -37,6 +37,7 @@ public interface IConversationRepository
     Task<Conversation?> GetLastResolvedByVisitorAsync(Guid visitorId, ChannelType channel, CancellationToken ct);
     Task<Conversation> CreateAsync(Conversation conversation, CancellationToken ct);
     Task MarkResolvedAsync(Guid id, EndedBy endedBy, CancellationToken ct);
+    Task MarkResolvedByAiAsync(Guid id, CancellationToken ct);
     Task MarkAbandonedAsync(Guid id, CancellationToken ct);
     Task SetAgentAsync(Guid id, Guid? agentId, CancellationToken ct);
     Task SetAttendantAsync(Guid id, Guid? attendantId, CancellationToken ct);

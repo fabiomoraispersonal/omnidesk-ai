@@ -325,17 +325,17 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Tests US5
 
-- [ ] T156 [P] [US5] Test integration `tests/Features/LiveChat/Jobs/AbandonmentSweepJobTests.cs` — sobe 3 conversas IA (1 ativa, 2 inativas há 9h), roda job, verifica que apenas as 2 inativas viraram `abandoned`; conversa em humano não é afetada
-- [ ] T157 [P] [US5] Test integration `tests/Features/LiveChat/Jobs/InactivitySweepJobTests.cs` — análogo para humano com 25h; verificar `ended_by=system_inactivity` + evento `conversation.resolved` publicado; conversa em IA não é afetada
-- [ ] T158 [P] [US5] Test integration `tests/Features/LiveChat/Adapters/AiAgentEndsConversationTests.cs` — Orchestrator (Spec 006) chama tool de encerramento → `LiveChatConversationGateway` aplica `status=resolved, ended_by=ai_agent`; widget recebe evento
+- [X] T156 [P] [US5] Test integration `tests/Features/LiveChat/Jobs/AbandonmentSweepJobTests.cs` — sobe 3 conversas IA (1 ativa, 2 inativas há 9h), roda job, verifica que apenas as 2 inativas viraram `abandoned`; conversa em humano não é afetada
+- [X] T157 [P] [US5] Test integration `tests/Features/LiveChat/Jobs/InactivitySweepJobTests.cs` — análogo para humano com 25h; verificar `ended_by=system_inactivity` + evento `conversation.resolved` publicado; conversa em IA não é afetada
+- [X] T158 [P] [US5] Test integration `tests/Features/LiveChat/Adapters/AiAgentEndsConversationTests.cs` — Orchestrator (Spec 006) chama tool de encerramento → `LiveChatConversationGateway` aplica `status=resolved, ended_by=ai_agent`; widget recebe evento
 
 ### Backend
 
-- [ ] T159 [US5] Criar `AbandonmentSweepJob.cs` em `src/omniDesk.Api/Features/LiveChat/Jobs/AbandonmentSweepJob.cs` — Hangfire scheduled `0 * * * *` (a cada hora); para cada tenant, UPDATE conversations SET status='abandoned' WHERE status='open' AND attendant_id IS NULL AND last_message_at < NOW() - widget_config.abandonment_timeout_hours * INTERVAL '1 hour' (research R9)
-- [ ] T160 [US5] Criar `InactivitySweepJob.cs` em `src/omniDesk.Api/Features/LiveChat/Jobs/InactivitySweepJob.cs` — análogo para `attendant_id IS NOT NULL`, marca `ended_by=system_inactivity`, INSERT message system, publica evento Redis para cada conversa
-- [ ] T161 [US5] Registrar ambos os jobs no `Hangfire.RecurringJob` em `src/omniDesk.Api/Program.cs` (após `app.UseHangfireDashboard`)
-- [ ] T162 [US5] (Integração com Spec 006) Adicionar handler em `IncomingMessageWorker` ou `ToolCallDispatcher` (Spec 006) para uma tool `end_conversation` opcional do Orchestrator: quando chamada, `LiveChatConversationGateway.MarkResolvedByAiAsync(convId)` aplica status=resolved, ended_by=ai_agent — **se a Spec 006 não tem tool, deixar como follow-up: orchestrator hoje envia mensagem mas não encerra.** Decisão: V1 da Spec 007 cobre apenas **timeouts automáticos**; encerramento natural via IA fica como follow-up issue na Spec 006 (criar issue em `specs/007-live-chat-widget/follow-up-issues.md`)
-- [ ] T163 [US5] Adicionar método `MarkResolvedByAiAsync` em `IConversationRepository` + impl + chamada via API interna `POST /api/internal/conversations/{id}/end` (consumida só pela Spec 006 quando ela ganhar a tool — preparado, não cabeado)
+- [X] T159 [US5] Criar `AbandonmentSweepJob.cs` em `src/omniDesk.Api/Features/LiveChat/Jobs/AbandonmentSweepJob.cs` — Hangfire scheduled `0 * * * *` (a cada hora); para cada tenant, UPDATE conversations SET status='abandoned' WHERE status='open' AND attendant_id IS NULL AND last_message_at < NOW() - widget_config.abandonment_timeout_hours * INTERVAL '1 hour' (research R9)
+- [X] T160 [US5] Criar `InactivitySweepJob.cs` em `src/omniDesk.Api/Features/LiveChat/Jobs/InactivitySweepJob.cs` — análogo para `attendant_id IS NOT NULL`, marca `ended_by=system_inactivity`, INSERT message system, publica evento Redis para cada conversa
+- [X] T161 [US5] Registrar ambos os jobs no `Hangfire.RecurringJob` em `src/omniDesk.Api/Program.cs` (após `app.UseHangfireDashboard`)
+- [~] T162 [US5] (Integração com Spec 006) Deferred to follow-up — Spec 006 orchestrator não tem tool `end_conversation`; V1 cobre apenas timeouts automáticos
+- [X] T163 [US5] `MarkResolvedByAiAsync` em `IConversationRepository` + impl + endpoint interno `POST /api/internal/livechat/conversations/{id}/end` (preparado, não cabeado pela 006)
 
 **Checkpoint**: User Story 5 funcional — sweeps periódicos funcionam, hooks para encerramento natural por IA preparados.
 

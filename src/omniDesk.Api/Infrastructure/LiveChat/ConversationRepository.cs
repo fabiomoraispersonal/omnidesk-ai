@@ -54,6 +54,9 @@ public class ConversationRepository(AppDbContext db) : IConversationRepository
         await db.SaveChangesAsync(ct);
     }
 
+    public Task MarkResolvedByAiAsync(Guid id, CancellationToken ct)
+        => MarkResolvedAsync(id, EndedBy.AiAgent, ct);
+
     public async Task MarkAbandonedAsync(Guid id, CancellationToken ct)
     {
         var conversation = await db.Conversations.FirstOrDefaultAsync(c => c.Id == id, ct)

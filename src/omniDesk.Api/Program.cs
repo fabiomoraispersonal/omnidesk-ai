@@ -40,6 +40,7 @@ using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Domain.LiveChat;
+using omniDesk.Api.Features.LiveChat.Adapters;
 using omniDesk.Api.Features.LiveChat.Public;
 using omniDesk.Api.Infrastructure.LiveChat;
 
@@ -162,6 +163,8 @@ builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.VisitorTypingHandler>();
 builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.MessagesReadHandler>();
 builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.MessagesReplayHandler>();
 builder.Services.AddScoped<omniDesk.Api.Hubs.WidgetWebSocketEndpoint>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.AbandonmentSweepJob>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJob>();
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -211,6 +214,16 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Features.Distribution.PresenceTimeoutJob>(
     "presence-timeout-job",
     job => job.RunAsync(CancellationToken.None),
     "*/1 * * * *");
+
+// Spec 007 / US5 — Lifecycle sweeps (FR-022/FR-023). Runs hourly per research §R9.
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.LiveChat.Jobs.AbandonmentSweepJob>(
+    "live-chat-abandonment-sweep",
+    job => job.RunAsync(CancellationToken.None),
+    "0 * * * *");
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJob>(
+    "live-chat-inactivity-sweep",
+    job => job.RunAsync(CancellationToken.None),
+    "0 * * * *");
 
 await app.SeedDatabaseAsync();
 
@@ -296,6 +309,11 @@ SuggestReplyEndpoint.Map(conversations);
 // Spec 007 — Public widget surface (auth via WidgetToken scheme)
 var widgetPublic = api.MapGroup("/public/widget");
 widgetPublic.MapWidgetPublicEndpoints();
+
+// Spec 007 — Internal endpoint reserved for the Spec 006 orchestrator.
+var widgetInternal = api.MapGroup("/internal/livechat")
+    .RequireAuthorization();
+widgetInternal.MapInternalEndConversation();
 
 // Spec 005 — WebSocket native handler (research §R4)
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
