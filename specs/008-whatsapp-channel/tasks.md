@@ -253,13 +253,13 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Implementation for User Story 4
 
-- [ ] T093 [US4] Estender `WhatsAppOutgoingAdapter` (T056/T082) com branch para `MessageType=Template`: build payload Meta (contracts/whatsapp-meta-graph.md §2), `metaClient.SendTemplateAsync(...)`, mesma lógica de status update
-- [ ] T094 [US4] Estender `SendWhatsAppMessageCommand` (T083) para suportar envio de template: aceita `template_id` + `template_variables` (dict `{"1":"João","2":"10/06/2026",...}`); valida que template está `status=approved`; valida que `variable_count` casa com payload; cria `messages` com `metadata.wa_template_id` + `metadata.wa_template_variables` + `metadata.wa_template_name`
-- [ ] T095 [US4] Criar `WaSessionExpiringNotifierJob.cs` em `src/omniDesk.Api/Features/WhatsApp/Jobs/WaSessionExpiringNotifierJob.cs` com Cron `*/5 * * * *`. Para cada tenant em `public.tenants`: query `conversations WHERE channel='whatsapp' AND status='open' AND wa_session_expires_at IS NOT NULL`. Para cada conv:
+- [X] T093 [US4] Estender `WhatsAppOutgoingAdapter` (T056/T082) com branch para `MessageType=Template`: build payload Meta (contracts/whatsapp-meta-graph.md §2), `metaClient.SendTemplateAsync(...)`, mesma lógica de status update
+- [X] T094 [US4] Estender `SendWhatsAppMessageCommand` (T083) para suportar envio de template: aceita `template_id` + `template_variables` (dict `{"1":"João","2":"10/06/2026",...}`); valida que template está `status=approved`; valida que `variable_count` casa com payload; cria `messages` com `metadata.wa_template_id` + `metadata.wa_template_variables` + `metadata.wa_template_name`
+- [X] T095 [US4] Criar `WaSessionExpiringNotifierJob.cs` em `src/omniDesk.Api/Features/WhatsApp/Jobs/WaSessionExpiringNotifierJob.cs` com Cron `*/5 * * * *`. Para cada tenant em `public.tenants`: query `conversations WHERE channel='whatsapp' AND status='open' AND wa_session_expires_at IS NOT NULL`. Para cada conv:
     - Se `now < wa_session_expires_at <= now+1h` e flag `{slug}:wa:expiring_emitted:{conv_id}` ausente → emit WS `wa.session_expiring`, set flag TTL 1h.
     - Se `wa_session_expires_at < now` e flag `{slug}:wa:expired_emitted:{conv_id}` ausente → emit WS `wa.session_expired`, set flag TTL 24h. **Adicionalmente**: se conversa estava em IA (`current_ai_agent_id IS NOT NULL` da Spec 006), interromper IA + abrir/atualizar ticket + emit `chat.handoff_required` (FR-017)
-- [ ] T096 [US4] Registrar `WaSessionExpiringNotifierJob` no Hangfire scheduler em `src/omniDesk.Api/Program.cs`: `RecurringJob.AddOrUpdate<WaSessionExpiringNotifierJob>("wa-session-expiring", j => j.RunAsync(default), "*/5 * * * *")`
-- [ ] T097 [US4] Estender `WhatsAppIncomingAdapter.HandleMessagesAsync` (T054) — após atualizar `wa_session_expires_at` para now+24h, deletar flags Redis `{slug}:wa:expiring_emitted:{conv_id}` e `{slug}:wa:expired_emitted:{conv_id}` (reabrir janela limpa)
+- [X] T096 [US4] Registrar `WaSessionExpiringNotifierJob` no Hangfire scheduler em `src/omniDesk.Api/Program.cs`: `RecurringJob.AddOrUpdate<WaSessionExpiringNotifierJob>("wa-session-expiring", j => j.RunAsync(default), "*/5 * * * *")`
+- [X] T097 [US4] Estender `WhatsAppIncomingAdapter.HandleMessagesAsync` (T054) — após atualizar `wa_session_expires_at` para now+24h, deletar flags Redis `{slug}:wa:expiring_emitted:{conv_id}` e `{slug}:wa:expired_emitted:{conv_id}` (reabrir janela limpa)
 
 ### Frontend CRM
 

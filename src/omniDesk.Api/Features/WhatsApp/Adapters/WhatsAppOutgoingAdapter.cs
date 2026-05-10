@@ -190,6 +190,137 @@ public sealed class WhatsAppOutgoingAdapter
         }
     }
 
+    /// <summary>
+    /// Spec 008 US4 — envio de mensagem-template. Diferente de <see cref="DispatchAsync"/>
+    /// que vem do <see cref="OutgoingMessage"/> agnóstico, esta API é WhatsApp-específica
+    /// (templates são feature exclusiva do canal). Chamada pelo
+    /// <c>SendWhatsAppMessageCommand</c> quando o atendente seleciona um template aprovado.
+    ///
+    /// Janela 24h NÃO bloqueia templates (FR-014). FR-016 já bloqueia AI quando
+    /// chamado por este caminho — caller passa sender_type=Attendant.
+    /// </summary>
+    public async Task DispatchTemplateAsync(
+        Guid conversationId,
+        WhatsAppTemplate template,
+        IReadOnlyDictionary<string, string> variables,
+        Guid? attendantId,
+        CancellationToken ct)
+    {
+        var conv = await _db.Conversations.FirstOrDefaultAsync(c => c.Id == conversationId, ct)
+            ?? throw new InvalidOperationException($"Conversation {conversationId} not found.");
+
+        if (string.IsNullOrEmpty(conv.WaContactPhone))
+            throw new InvalidOperationException(
+                $"Conversation {conversationId} is whatsapp but has no wa_contact_phone.");
+
+        if (template.Status != Domain.WhatsApp.TemplateStatus.Approved)
+            throw new InvalidOperationException(
+                $"Template {template.Id} is in status {template.Status}; only Approved is allowed.");
+
+        var config = await _db.WhatsAppConfigs.FirstOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException("No whatsapp_config row for current tenant.");
+
+        if (!config.IsEnabled) return;
+
+        if (string.IsNullOrEmpty(config.PhoneNumberId) || string.IsNullOrEmpty(config.AccessTokenCiphertext))
+            throw new InvalidOperationException("WhatsApp config incomplete.");
+
+        // Guards — Template é sempre allowed pela janela; mas AiAgent não pode enviar template.
+        _outgoingGuard.Validate(MessageSenderType.Attendant, WaOutboundMessageType.Template);
+        _windowGuard.Validate(conv, WaOutboundMessageType.Template);
+
+        // Build content render (apenas para exibição local — Meta usa parameters).
+        var renderedContent = RenderTemplate(template.BodyTemplate, variables);
+
+        var message = new Message
+        {
+            Id = Guid.NewGuid(),
+            ConversationId = conv.Id,
+            SenderType = MessageSenderType.Attendant,
+            SenderId = attendantId,
+            ContentType = MessageContentType.Text,
+            Content = renderedContent,
+            CreatedAt = _clock.GetUtcNow(),
+        };
+        _db.Messages.Add(message);
+        await _db.SaveChangesAsync(ct);
+
+        string accessToken;
+        try
+        {
+            accessToken = _aes.Decrypt(config.AccessTokenCiphertext);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to decrypt access_token for tenant {Slug}.", _slug.Slug);
+            await BroadcastFailedAsync(conv, message, "TOKEN_DECRYPT_FAILED", ex.Message, ct);
+            return;
+        }
+
+        // Build template payload — parâmetros na ordem do template (chaves "1", "2", "3"…).
+        var parameters = new List<TemplateSendParameter>();
+        for (var i = 1; i <= template.VariableCount; i++)
+        {
+            var key = i.ToString();
+            if (!variables.TryGetValue(key, out var value))
+                throw new InvalidOperationException($"Template variable {{{{{key}}}}} missing.");
+            parameters.Add(new TemplateSendParameter("text", value));
+        }
+
+        var payload = new TemplateSendPayload(
+            TemplateName: template.Name,
+            Language: template.Language,
+            Parameters: parameters);
+
+        try
+        {
+            var resp = await _meta.SendTemplateAsync(
+                config.PhoneNumberId, accessToken, conv.WaContactPhone, payload, ct);
+
+            message.WaMessageId = resp.MessageId;
+            await _db.SaveChangesAsync(ct);
+
+            await _statusRepo.InsertAsync(_slug.Slug, new WaMessageStatusEntry(
+                MessageId:      message.Id,
+                WaMessageId:    resp.MessageId,
+                ConversationId: conv.Id,
+                Status:         WaMessageStatus.Sent,
+                ErrorCode:      null,
+                ErrorMessage:   null,
+                RecipientId:    conv.WaContactPhone,
+                Timestamp:      _clock.GetUtcNow()), ct);
+
+            await BroadcastStatusAsync(conv, message, resp.MessageId, "sent", null, null, ct);
+
+            _logger.LogDebug(
+                "WhatsApp template sent: tenant={Slug} conv={Conv} template={Tpl} message={Msg}",
+                _slug.Slug, conv.Id, template.Name, message.Id);
+        }
+        catch (MetaApiException ex)
+        {
+            _logger.LogWarning(
+                "Meta API rejected template send: tenant={Slug} code={Code} message={Message}",
+                _slug.Slug, ex.Code, ex.Message);
+
+            await BroadcastFailedAsync(conv, message, ex.Code.ToString(), ex.Message, ct);
+
+            if (ex.IsTokenRevoked || ex.HttpStatusCode == 401)
+            {
+                _jobs.Enqueue<WaTokenRevokedDetectorJob>(j =>
+                    j.RunAsync(_slug.Slug, message.Id, CancellationToken.None));
+            }
+        }
+    }
+
+    /// <summary>Substitui <c>{{1}}, {{2}}…</c> pelos valores das variáveis para exibição local.</summary>
+    private static string RenderTemplate(string body, IReadOnlyDictionary<string, string> variables)
+    {
+        var result = body;
+        foreach (var kv in variables)
+            result = result.Replace("{{" + kv.Key + "}}", kv.Value);
+        return result;
+    }
+
     private async Task BroadcastStatusAsync(
         Conversation conv,
         Message message,

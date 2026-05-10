@@ -227,6 +227,9 @@ builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.WaOutgoingGuard>(
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.Commands.SendWhatsAppMessageCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaTokenRevokedDetectorJob>();
 
+// Spec 008 US4 — Session window sweep job
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaSessionExpiringNotifierJob>();
+
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -294,6 +297,12 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJob>
     "live-chat-inactivity-sweep",
     job => job.RunAsync(CancellationToken.None),
     "0 * * * *");
+
+// Spec 008 US4 — emite wa.session_expiring / wa.session_expired via WS (cron */5min).
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.WhatsApp.Jobs.WaSessionExpiringNotifierJob>(
+    "wa-session-expiring-notifier",
+    job => job.RunAsync(CancellationToken.None),
+    "*/5 * * * *");
 
 await app.SeedDatabaseAsync();
 
