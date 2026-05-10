@@ -143,27 +143,27 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Backend — endpoints públicos
 
-- [ ] T062 [US1] Criar `WidgetPublicEndpoints.cs` em `src/omniDesk.Api/Features/LiveChat/Public/WidgetPublicEndpoints.cs` — group map para `/api/public/widget` com routes `init`, `conversations`, `conversations/{id}/messages` (sem upload — vai em US6)
-- [ ] T063 [US1] Implementar GET `/api/public/widget/init` em `WidgetPublicEndpoints` — query `IWidgetConfigRepository.GetByTenant`, opcionalmente busca conversa `open` por `anonymous_id` via `IConversationRepository.GetActiveByVisitorAsync`, retorna shape do contract
-- [ ] T064 [US1] Implementar POST `/api/public/widget/conversations` em `WidgetPublicEndpoints` + `StartConversationCommand` em `Features/LiveChat/Public/Commands/` — valida LGPD, idempotência via Redis (5s key), cria/reutiliza `Visitor`, persiste `Conversation` com `metadata` (page_url etc + ip_partial extraído do `HttpContext.Connection.RemoteIpAddress`)
-- [ ] T065 [US1] Implementar GET `/api/public/widget/conversations/{id}/messages` em `WidgetPublicEndpoints` — paginação reversa com cursor `before`, retorna em ordem ASC
-- [ ] T066 [P] [US1] Criar `Validators/StartConversationValidator.cs` em `src/omniDesk.Api/Features/LiveChat/Public/Validators/StartConversationValidator.cs` (FluentValidation) — `lgpd_consent=true`, `anonymous_id` UUID válido, `metadata.page_url` https URL
+- [X] T062 [US1] Criar `WidgetPublicEndpoints.cs` em `src/omniDesk.Api/Features/LiveChat/Public/WidgetPublicEndpoints.cs` — group map para `/api/public/widget` com routes `init`, `conversations`, `conversations/{id}/messages` (sem upload — vai em US6)
+- [X] T063 [US1] Implementar GET `/api/public/widget/init` em `WidgetPublicEndpoints` — query `IWidgetConfigRepository.GetByTenant`, opcionalmente busca conversa `open` por `anonymous_id` via `IConversationRepository.GetActiveByVisitorAsync`, retorna shape do contract
+- [X] T064 [US1] Implementar POST `/api/public/widget/conversations` em `WidgetPublicEndpoints` + `StartConversationCommand` em `Features/LiveChat/Public/Commands/` — valida LGPD, idempotência via Redis (5s key), cria/reutiliza `Visitor`, persiste `Conversation` com `metadata` (page_url etc + ip_partial extraído do `HttpContext.Connection.RemoteIpAddress`)
+- [X] T065 [US1] Implementar GET `/api/public/widget/conversations/{id}/messages` em `WidgetPublicEndpoints` — paginação reversa com cursor `before`, retorna em ordem ASC
+- [X] T066 [P] [US1] Criar `Validators/StartConversationValidator.cs` em `src/omniDesk.Api/Features/LiveChat/Public/Validators/StartConversationValidator.cs` (FluentValidation) — `lgpd_consent=true`, `anonymous_id` UUID válido, `metadata.page_url` https URL
 
 ### Backend — adapters (substituem stubs da Spec 006)
 
-- [ ] T067 [US1] Criar `LiveChatConversationGateway.cs` em `src/omniDesk.Api/Features/LiveChat/Adapters/LiveChatConversationGateway.cs` implementando `IConversationGateway` (contracts/conversation-gateway-impl.md §Implementação)
-- [ ] T068 [US1] Criar `LiveChatIncomingAdapter.cs` em `src/omniDesk.Api/Features/LiveChat/Adapters/LiveChatIncomingAdapter.cs` — método `EnqueueAsync(conversationId, message)` que persiste em `messages`, atualiza `last_message_at`, e enfileira `IncomingMessage` na fila Hangfire `{slug}:incoming_messages` (Spec 006) **somente quando** `attendant_id IS NULL`
-- [ ] T069 [US1] Criar `LiveChatOutgoingAdapter.cs` em `src/omniDesk.Api/Features/LiveChat/Adapters/LiveChatOutgoingAdapter.cs` — Hangfire worker que consome `{slug}:outgoing_messages` (já criado pela Spec 006), persiste em `messages`, publica `message.new` em `{slug}:conv:{conversation_id}` e (se houver atendente atribuído) `chat.message_received` em `{slug}:crm:user:{attendant_id}`
-- [ ] T070 [US1] Modificar `src/omniDesk.Api/Program.cs` para substituir `services.AddScoped<IConversationGateway, ChannelStubGateway>()` por `services.AddScoped<IConversationGateway, LiveChatConversationGateway>()` (contracts/conversation-gateway-impl.md §Registrado em DI)
+- [X] T067 [US1] Criar `LiveChatConversationGateway.cs` em `src/omniDesk.Api/Features/LiveChat/Adapters/LiveChatConversationGateway.cs` implementando `IConversationGateway` (contracts/conversation-gateway-impl.md §Implementação)
+- [X] T068 [US1] Criar `LiveChatIncomingAdapter.cs` em `src/omniDesk.Api/Features/LiveChat/Adapters/LiveChatIncomingAdapter.cs` — método `EnqueueAsync(conversationId, message)` que persiste em `messages`, atualiza `last_message_at`, e enfileira `IncomingMessage` na fila Hangfire `{slug}:incoming_messages` (Spec 006) **somente quando** `attendant_id IS NULL`
+- [X] T069 [US1] Criar `LiveChatOutgoingAdapter.cs` em `src/omniDesk.Api/Features/LiveChat/Adapters/LiveChatOutgoingAdapter.cs` — Hangfire worker que consome `{slug}:outgoing_messages` (já criado pela Spec 006), persiste em `messages`, publica `message.new` em `{slug}:conv:{conversation_id}` e (se houver atendente atribuído) `chat.message_received` em `{slug}:crm:user:{attendant_id}`
+- [X] T070 [US1] Modificar `src/omniDesk.Api/Program.cs` para substituir `services.AddScoped<IConversationGateway, ChannelStubGateway>()` por `services.AddScoped<IConversationGateway, LiveChatConversationGateway>()` (contracts/conversation-gateway-impl.md §Registrado em DI)
 
 ### Backend — WebSocket do widget
 
-- [ ] T071 [US1] Criar `WidgetWebSocketEndpoint.cs` em `src/omniDesk.Api/Hubs/WidgetWebSocketEndpoint.cs` — endpoint `/ws/widget/{conversation_id}`, valida token+Origin+ownership+LGPD no handshake; assina canal Redis; loop de eventos
-- [ ] T072 [US1] Implementar handler `MessageSendHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/MessageSendHandler.cs` — recebe `message.send`, deduplica por `(conversation_id, client_message_id)`, valida `status=open`, chama `LiveChatIncomingAdapter.EnqueueAsync`
-- [ ] T073 [US1] Implementar handler `VisitorTypingHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/VisitorTypingHandler.cs` — debounce no widget já garante 1s; backend apenas publica `chat.visitor_typing` no canal CRM (filtra para nada quando sem atendente)
-- [ ] T074 [US1] Implementar handler `MessagesReadHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/MessagesReadHandler.cs` — UPDATE `messages SET is_read=true WHERE conversation_id=? AND is_read=false`
-- [ ] T075 [US1] Implementar `MessagesReplayHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/MessagesReplayHandler.cs` — recebe `messages.replay {since_message_id}`, retorna sequência de `message.new` para mensagens posteriores ao ID
-- [ ] T076 [US1] Heartbeat: `WidgetWebSocketEndpoint` envia `{type: "ping"}` a cada 30s, fecha com 4408 `IDLE_TIMEOUT` se não receber `pong` em 60s
+- [X] T071 [US1] Criar `WidgetWebSocketEndpoint.cs` em `src/omniDesk.Api/Hubs/WidgetWebSocketEndpoint.cs` — endpoint `/ws/widget/{conversation_id}`, valida token+Origin+ownership+LGPD no handshake; assina canal Redis; loop de eventos
+- [X] T072 [US1] Implementar handler `MessageSendHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/MessageSendHandler.cs` — recebe `message.send`, deduplica por `(conversation_id, client_message_id)`, valida `status=open`, chama `LiveChatIncomingAdapter.EnqueueAsync`
+- [X] T073 [US1] Implementar handler `VisitorTypingHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/VisitorTypingHandler.cs` — debounce no widget já garante 1s; backend apenas publica `chat.visitor_typing` no canal CRM (filtra para nada quando sem atendente)
+- [X] T074 [US1] Implementar handler `MessagesReadHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/MessagesReadHandler.cs` — UPDATE `messages SET is_read=true WHERE conversation_id=? AND is_read=false`
+- [X] T075 [US1] Implementar `MessagesReplayHandler.cs` em `src/omniDesk.Api/Hubs/Handlers/MessagesReplayHandler.cs` — recebe `messages.replay {since_message_id}`, retorna sequência de `message.new` para mensagens posteriores ao ID
+- [X] T076 [US1] Heartbeat: `WidgetWebSocketEndpoint` envia `{type: "ping"}` a cada 30s, fecha com 4408 `IDLE_TIMEOUT` se não receber `pong` em 60s
 
 ### Widget bundle — entry e UI mínima
 
