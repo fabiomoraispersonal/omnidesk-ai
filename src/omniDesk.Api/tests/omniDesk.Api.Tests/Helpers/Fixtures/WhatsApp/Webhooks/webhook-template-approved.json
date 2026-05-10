@@ -1,0 +1,20 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_TEST",
+      "changes": [
+        {
+          "value": {
+            "event": "APPROVED",
+            "message_template_id": 1234567890123456,
+            "message_template_name": "lembrete_consulta_clinicaabc",
+            "message_template_language": "pt_BR",
+            "reason": null
+          },
+          "field": "message_template_status_update"
+        }
+      ]
+    }
+  ]
+}

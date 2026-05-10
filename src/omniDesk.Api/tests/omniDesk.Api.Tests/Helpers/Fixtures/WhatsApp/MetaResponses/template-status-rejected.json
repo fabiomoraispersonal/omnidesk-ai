@@ -1,0 +1,13 @@
+{
+  "data": [
+    {
+      "name": "promocao_clinicaabc",
+      "language": "pt_BR",
+      "status": "REJECTED",
+      "id": "1234567890123457",
+      "category": "UTILITY",
+      "rejected_reason": "TAG_CONTENT_MISMATCH"
+    }
+  ],
+  "paging": { "cursors": { "before": "MAZDZD", "after": "MAZDZD" } }
+}

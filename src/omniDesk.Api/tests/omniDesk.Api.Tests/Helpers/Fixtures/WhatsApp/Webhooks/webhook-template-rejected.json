@@ -1,0 +1,20 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_TEST",
+      "changes": [
+        {
+          "value": {
+            "event": "REJECTED",
+            "message_template_id": 1234567890123457,
+            "message_template_name": "promocao_clinicaabc",
+            "message_template_language": "pt_BR",
+            "reason": "TAG_CONTENT_MISMATCH: O texto contém termos promocionais incompatíveis com a categoria UTILITY."
+          },
+          "field": "message_template_status_update"
+        }
+      ]
+    }
+  ]
+}

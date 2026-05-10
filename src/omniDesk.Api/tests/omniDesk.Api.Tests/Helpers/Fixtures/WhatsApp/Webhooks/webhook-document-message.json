@@ -1,0 +1,40 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_TEST",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "5511999999999",
+              "phone_number_id": "123456789012345"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Carlos Mendes" },
+                "wa_id": "5511966665555"
+              }
+            ],
+            "messages": [
+              {
+                "from": "5511966665555",
+                "id": "wamid.HBgLNTUxMTk2NjY2NTU1NRUCABIYIERPQ1VNRU5URE9DVU1FTlREb2N1bWVudA",
+                "timestamp": "1717418600",
+                "type": "document",
+                "document": {
+                  "id": "media_id_doc_001",
+                  "mime_type": "application/pdf",
+                  "sha256": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+                  "filename": "exame-sangue.pdf"
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
