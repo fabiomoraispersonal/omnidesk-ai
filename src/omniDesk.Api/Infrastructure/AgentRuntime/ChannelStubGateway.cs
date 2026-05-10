@@ -109,6 +109,12 @@ public class ChannelStubGateway : IConversationGateway
         return t is null ? null : Map(t);
     }
 
+    // Spec 007 FR-017 — stub returns empty: the ai_threads-only world has no visitor concept.
+    // Real continuity context lives in LiveChatConversationGateway.
+    public Task<IReadOnlyList<ConversationMessage>> GetResumedContextAsync(
+        Guid visitorId, int limit, CancellationToken ct)
+        => Task.FromResult<IReadOnlyList<ConversationMessage>>(Array.Empty<ConversationMessage>());
+
     private static AiThreadDto Map(AiThread t)
         => new(t.Id, t.ExternalConversationRef, t.OpenAiThreadId, t.CurrentAgentId, t.HandedOffToHumanAt);
 }

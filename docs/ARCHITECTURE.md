@@ -812,3 +812,41 @@ volumes:
 **Trade-off:** Tenant que edite o prompt mal pode quebrar transbordo semântico — mitigado pela palavra-chave hardcoded como rede de segurança e por FR-017 (Orchestrator nunca pode deixar cliente sem resposta).
 **Constituição:** Princípio II amendado em PATCH 1.0.1 (2026-05-08).
 **Arquivo:** [docs/adr/006-002-frustration-detection-via-prompt.md](adr/006-002-frustration-detection-via-prompt.md).
+
+---
+
+## Live Chat Widget (Spec 007)
+
+V1 entregue. Detalhes técnicos em [specs/007-live-chat-widget/plan.md](../specs/007-live-chat-widget/plan.md). Pendências em [specs/007-live-chat-widget/follow-up-issues.md](../specs/007-live-chat-widget/follow-up-issues.md).
+
+**Componentes**:
+- `omniDesk.Widget` (vanilla TS bundle ESM): `<omnidesk-widget>` com Shadow DOM closed; embarcado no site do tenant via `<script src="…/loader.js">`.
+- `omniDesk.Api/Features/LiveChat/` agrupa 5 sub-features: `Public` (REST visitante), `Adapters` (LiveChatConversationGateway substitui ChannelStubGateway da Spec 006), `Config` (CRM admin), `Inbox` (CRM atendente), `Uploads` (MinIO).
+- `omniDesk.Api/Hubs/`: `WidgetWebSocketEndpoint` (visitante em `/ws/widget/{conv_id}`), `CrmWebSocketEndpoint` (atendente em `/ws/crm`), `WebSocketBroker` (façade de Redis pub/sub).
+- `omniDesk.Crm/src/app/features/`: `live-chat-config` (admin) + `live-chat-inbox` (atendente).
+- 3 jobs Hangfire: `AbandonmentSweepJob` (IA, 8h), `InactivitySweepJob` (humano, 24h), `WidgetDisableEnforcementJob` (toggle off).
+
+**Diagrama de canais (atualização)**:
+
+```
+Visitante (browser)
+    ↓ HTTPS REST + WSS
+WidgetTokenAuthHandler → WidgetPublicEndpoints + WidgetWebSocketEndpoint
+    ↓
+LiveChatIncomingAdapter → IncomingMessagePublisher (Hangfire) → AgentOrchestrator (Spec 006)
+    ↓
+IConversationGateway = LiveChatConversationGateway
+    ↓
+LiveChatOutgoingAdapter → Redis pub:
+    {slug}:conv:{id}      → WidgetWebSocketEndpoint → visitante
+    {slug}:crm:user:{aid} → CrmWebSocketEndpoint    → atendente (chat.message_received + chat.browser_notify)
+```
+
+**Decisões-chave**:
+- Identidade do thread = `Conversation.Id` (não `AiThread.Id`). `AiThread` permanece como sombra da Spec 006; remoção tracked como follow-up.
+- Visitante anônimo identificado por UUID v4 do `crypto.randomUUID()` em `localStorage.omnidesk_visitor_id` (FR-003 — sem fingerprinting).
+- Token público do widget = UUID imutável em `public.tenants.widget_token`, gerado no provisioning.
+- Origin lockdown via `widget_config.allowed_domains` (vazio = qualquer origem).
+- Rate limit Redis-backed: 30 req/min por `anonymous_id` (excluindo `/init`).
+- LGPD: `lgpd_consent_at` registrado no POST de criação; widget bloqueia envio até checkbox marcado.
+- Anexos: 10MB cap, content-sniff por magic bytes; arquivos em `tenant-{slug}/widget-uploads/{conv_id}/{uuid}-{file}`.

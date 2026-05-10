@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.AiAgents;
-using omniDesk.Api.Domain.AiThreads;
 using omniDesk.Api.Features.AiAgents.Variables;
 using omniDesk.Api.Infrastructure.ActivityLogs;
 using omniDesk.Api.Infrastructure.AgentRuntime;
@@ -90,9 +89,9 @@ public class AgentOrchestrator
             return;
         }
 
-        // 4. Resolve current agent (orchestrator if null/inactive).
-        var threadEntity = await _db.AiThreads.FirstAsync(t => t.Id == thread.Id, ct);
-        var currentAgent = await _agentResolver.ResolveCurrentAgentAsync(threadEntity, ct);
+        // 4. Resolve current agent (orchestrator if null/inactive). Spec 007: read CurrentAgentId
+        // off the AiThreadDto directly so we don't depend on the underlying entity (AiThread vs Conversation).
+        var currentAgent = await _agentResolver.ResolveCurrentAgentAsync(thread.CurrentAgentId, ct);
         if (currentAgent is null)
         {
             _logger.LogError("No active orchestrator found for tenant {Tenant}.", message.TenantSlug);
@@ -111,13 +110,12 @@ public class AgentOrchestrator
         await _assistantsApi.AppendUserMessageAsync(thread.OpenAiThreadId, contentToSend, credentials, ct);
 
         // 7. Run loop with retry policy. Wraps the OpenAI conversation including any tool dispatch.
-        await RunLoopAsync(message, thread, threadEntity, currentAgent, credentials, ct);
+        await RunLoopAsync(message, thread, currentAgent, credentials, ct);
     }
 
     private async Task RunLoopAsync(
         IncomingMessage message,
         AiThreadDto thread,
-        AiThread threadEntity,
         AiAgent currentAgent,
         OpenAiCredentials credentials,
         CancellationToken ct)

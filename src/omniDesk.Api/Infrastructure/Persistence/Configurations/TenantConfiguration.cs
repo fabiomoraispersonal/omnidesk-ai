@@ -33,6 +33,10 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         // Spec 006 — FR-016
         builder.Property(t => t.DefaultDepartmentId).HasColumnName("default_department_id");
 
+        // Spec 007 — FR-002
+        builder.Property(t => t.WidgetToken).HasColumnName("widget_token").IsRequired();
+        builder.HasIndex(t => t.WidgetToken).IsUnique().HasDatabaseName("ux_tenants_widget_token");
+
         builder.Ignore(t => t.SchemaName);
         builder.Ignore(t => t.BucketName);
         builder.Ignore(t => t.MongoDatabaseName);

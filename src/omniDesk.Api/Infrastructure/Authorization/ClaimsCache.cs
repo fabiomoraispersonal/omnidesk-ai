@@ -25,7 +25,7 @@ public class ClaimsCache
         if (raw.IsNullOrEmpty) return null;
         try
         {
-            return JsonSerializer.Deserialize<CachedClaims>(raw!);
+            return JsonSerializer.Deserialize<CachedClaims>((string)raw!);
         }
         catch (JsonException)
         {

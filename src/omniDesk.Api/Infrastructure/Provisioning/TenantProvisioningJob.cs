@@ -33,6 +33,14 @@ public class TenantProvisioningJob(
 
         try
         {
+            // Defensive: pre-007 tenants may have an empty WidgetToken if created before the
+            // backfill migration ran. Generate one so the public widget endpoints can resolve them.
+            if (tenant.WidgetToken == Guid.Empty)
+            {
+                tenant.WidgetToken = Guid.NewGuid();
+                await db.SaveChangesAsync(ct);
+            }
+
             // Step 1: Postgres schema + migrations
             await schemaProvisioner.ProvisionSchemaAsync(tenant.Slug, ct);
 
@@ -41,6 +49,9 @@ public class TenantProvisioningJob(
 
             // Step 2b: Initialize ai_settings row for tenant (Spec 006)
             await ProvisionAiSettingsAsync(tenant, ct);
+
+            // Step 2c: Initialize widget_config row for tenant (Spec 007 — defaults per FR-027)
+            await ProvisionWidgetConfigAsync(tenant, ct);
 
             // Step 3: MinIO bucket
             await minioProvisioner.CreateBucketAsync(tenant.Slug, ct);
@@ -144,6 +155,22 @@ public class TenantProvisioningJob(
             SELECT gen_random_uuid(), '{tenant.Id}', 20, ARRAY[]::text[], now()
             WHERE NOT EXISTS (
                 SELECT 1 FROM "{schemaName}".ai_settings WHERE tenant_id = '{tenant.Id}'
+            )
+            """, ct);
+    }
+
+    private async Task ProvisionWidgetConfigAsync(Tenant tenant, CancellationToken ct)
+    {
+        var schemaName = tenant.SchemaName;
+        await db.Database.ExecuteSqlRawAsync($"""
+            INSERT INTO "{schemaName}".widget_config
+                (tenant_id, is_enabled, primary_color, launcher_icon, company_name,
+                 welcome_message, position, require_identification,
+                 abandonment_timeout_hours, inactivity_close_hours, updated_at)
+            SELECT '{tenant.Id}', true, '#2563EB', 'chat', '{EscapeSql(tenant.NomeFantasia ?? tenant.RazaoSocial)}',
+                   'Olá! Como posso ajudar?', 'bottom_right', false, 8, 24, now()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "{schemaName}".widget_config WHERE tenant_id = '{tenant.Id}'
             )
             """, ct);
     }

@@ -95,6 +95,9 @@ public class TenantSchemaFixture : IAsyncLifetime
         // 2. Spec 006 — public.tenants gains default_department_id.
         await ExecAsync(conn, ReadIfExists(migrationsDir, "Add_DefaultDepartmentId_To_Tenants.sql"));
 
+        // 2b. Spec 007 — public.tenants gains widget_token (public, immutable, non-secret).
+        await ExecAsync(conn, ReadIfExists(migrationsDir, "Add_WidgetToken_To_Tenants.sql"));
+
         // 3. Tenant schema.
         await ExecAsync(conn, $@"CREATE SCHEMA IF NOT EXISTS ""{TenantSchema}""");
 
@@ -105,6 +108,7 @@ public class TenantSchemaFixture : IAsyncLifetime
             "Add_Tickets_Scaffold.sql",
             "Add_AiAgents_AiSettings.sql",
             "Add_Ai_Handoff_Snapshots.sql",
+            "Add_LiveChat_Tables.sql",
         };
         foreach (var name in tenantMigrations)
         {

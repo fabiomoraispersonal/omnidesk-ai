@@ -110,7 +110,7 @@ public class SuggestReplyService
             null);
     }
 
-    internal static IReadOnlyList<(string role, string content)> BuildPrompt(
+    public static IReadOnlyList<(string role, string content)> BuildPrompt(
         SubAgentContext? subAgent,
         IReadOnlyList<ConversationMessage> messages)
     {

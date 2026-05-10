@@ -126,6 +126,8 @@ public static class TenantsEndpoints
             OpenAiApiKeyEnc = !string.IsNullOrEmpty(req.OpenAiApiKey) ? aes.Encrypt(req.OpenAiApiKey) : null,
             OpenAiOrganization = req.OpenAiOrganization,
             OpenAiProject = req.OpenAiProject,
+            // Spec 007 FR-002 — public widget token, generated once at tenant creation.
+            WidgetToken = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };

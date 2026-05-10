@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using omniDesk.Api.Domain.Users;
 using omniDesk.Api.Tests.Helpers;
 using Xunit;
+using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace omniDesk.Api.Tests.Features.Auth;
 

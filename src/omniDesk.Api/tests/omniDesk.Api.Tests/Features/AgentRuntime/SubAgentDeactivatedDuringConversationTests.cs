@@ -49,7 +49,7 @@ public class SubAgentDeactivatedDuringConversationTests : IAsyncLifetime
 
         // Conversation initially has the sub-agent in control.
         var resolverBefore = new AgentResolver(_db!);
-        var current = await resolverBefore.ResolveCurrentAgentAsync(thread, CancellationToken.None);
+        var current = await resolverBefore.ResolveCurrentAgentAsync(thread.CurrentAgentId, CancellationToken.None);
         Assert.Equal(sub.Id, current!.Id);
 
         // Deactivate the sub-agent.
@@ -58,7 +58,7 @@ public class SubAgentDeactivatedDuringConversationTests : IAsyncLifetime
 
         // Next resolution falls back to orchestrator (FR-032).
         var resolver = new AgentResolver(_db);
-        var afterDeactivation = await resolver.ResolveCurrentAgentAsync(thread, CancellationToken.None);
+        var afterDeactivation = await resolver.ResolveCurrentAgentAsync(thread.CurrentAgentId, CancellationToken.None);
         Assert.NotNull(afterDeactivation);
         Assert.Equal(AgentType.Orchestrator, afterDeactivation.Type);
         Assert.Equal(orchestrator.Id, afterDeactivation.Id);
@@ -77,7 +77,7 @@ public class SubAgentDeactivatedDuringConversationTests : IAsyncLifetime
         await _db!.SaveChangesAsync();
 
         var resolver = new AgentResolver(_db);
-        var current = await resolver.ResolveCurrentAgentAsync(thread, CancellationToken.None);
+        var current = await resolver.ResolveCurrentAgentAsync(thread.CurrentAgentId, CancellationToken.None);
 
         Assert.Equal(orchestrator.Id, current!.Id);
     }
@@ -89,7 +89,7 @@ public class SubAgentDeactivatedDuringConversationTests : IAsyncLifetime
         var thread = await SeedThreadAsync(currentAgentId: null);
 
         var resolver = new AgentResolver(_db!);
-        var current = await resolver.ResolveCurrentAgentAsync(thread, CancellationToken.None);
+        var current = await resolver.ResolveCurrentAgentAsync(thread.CurrentAgentId, CancellationToken.None);
 
         Assert.Equal(orchestrator.Id, current!.Id);
     }

@@ -23,6 +23,15 @@ public interface IConversationGateway
     Task<bool> IsHandedOffAsync(Guid threadId, CancellationToken ct);
 
     Task<AiThreadDto?> GetByExternalRefAsync(string externalConversationRef, CancellationToken ct);
+
+    /// <summary>
+    /// Spec 007 FR-017 — when a visitor returns and starts a new conversation, returns up to
+    /// <paramref name="limit"/> messages from their most-recently-resolved conversation
+    /// (chronological order, system_event filtered). Used to seed continuity context into
+    /// the new OpenAI thread on first run. Returns empty when there's no prior conversation.
+    /// </summary>
+    Task<IReadOnlyList<ConversationMessage>> GetResumedContextAsync(
+        Guid visitorId, int limit, CancellationToken ct);
 }
 
 public record AiThreadDto(

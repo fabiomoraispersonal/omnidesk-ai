@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using omniDesk.Api.Domain.Users;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Security;
+using System.Net.Http.Json;
 
 namespace omniDesk.Api.Tests.Helpers;
 

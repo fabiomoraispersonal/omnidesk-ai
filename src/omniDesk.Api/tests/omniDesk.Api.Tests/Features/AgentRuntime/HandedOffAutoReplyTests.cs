@@ -12,6 +12,7 @@ using omniDesk.Api.Infrastructure.ActivityLogs;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.OpenAi;
 using omniDesk.Api.Infrastructure.Persistence;
+using omniDesk.Api.Infrastructure.Queues;
 using omniDesk.Api.Tests.Helpers;
 using StackExchange.Redis;
 using Xunit;

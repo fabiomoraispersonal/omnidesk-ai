@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.AiAgents;
 using omniDesk.Api.Features.AiAgents.Validators;
-using omniDesk.Api.Features.Authorization.Policies;
+using omniDesk.Api.Features.Authorization.Authz;
 using omniDesk.Api.Infrastructure.Authentication;
 using omniDesk.Api.Infrastructure.Persistence;
+using omniDesk.Api.Domain.Authorization;
 
 namespace omniDesk.Api.Features.AiAgents;
 

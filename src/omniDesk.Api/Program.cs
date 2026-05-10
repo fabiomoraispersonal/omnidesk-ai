@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Minio;
 using MongoDB.Driver;
+using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Features.Authorization.Impersonation;
-using omniDesk.Api.Features.Authorization.Policies;
+using omniDesk.Api.Features.Authorization.Authz;
 using omniDesk.Api.Features.Authorization.UserLifecycle;
 using omniDesk.Api.Infrastructure.Auth;
 using omniDesk.Api.Infrastructure.Authentication;
@@ -35,15 +36,26 @@ using omniDesk.Api.Features.Departments;
 using omniDesk.Api.Features.Me;
 using omniDesk.Api.Features.Distribution;
 using omniDesk.Api.Infrastructure.Distribution;
+using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
+using omniDesk.Api.Domain.LiveChat;
+using omniDesk.Api.Features.LiveChat.Adapters;
+using omniDesk.Api.Features.LiveChat.Config;
+using omniDesk.Api.Features.LiveChat.Inbox;
+using omniDesk.Api.Features.LiveChat.Public;
+using omniDesk.Api.Features.LiveChat.Uploads;
+using omniDesk.Api.Infrastructure.LiveChat;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((ctx, lc) => lc
+// Spec 004 (FR-031) — enricher needs IHttpContextAccessor; resolve via DI.
+builder.Services.AddSingleton<ImpersonationAuditEnricher>();
+
+builder.Host.UseSerilog((ctx, services, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
     .Enrich.FromLogContext()
-    .Enrich.With<ImpersonationAuditEnricher>()
+    .Enrich.With(services.GetRequiredService<ImpersonationAuditEnricher>())
     .WriteTo.Console(outputTemplate:
         "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"));
 
@@ -123,7 +135,11 @@ builder.Services.AddScoped<ContextBuilder>();
 builder.Services.AddScoped<AgentResolver>();
 builder.Services.AddScoped<ToolCallDispatcher>();
 builder.Services.AddScoped<AgentOrchestrator>();
-builder.Services.AddScoped<IConversationGateway, ChannelStubGateway>();
+// Spec 007 — replaces ChannelStubGateway. ChannelStubGateway remains in code as a
+// fallback for tests that don't involve real conversations (per contracts/conversation-gateway-impl.md).
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Adapters.LiveChatOutgoingAdapter>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Adapters.LiveChatIncomingAdapter>();
+builder.Services.AddScoped<IConversationGateway, omniDesk.Api.Features.LiveChat.Adapters.LiveChatConversationGateway>();
 builder.Services.AddScoped<ITicketCreationGateway, StubTicketCreationGateway>();
 builder.Services.AddScoped<IncomingMessagePublisher>();
 builder.Services.AddScoped<OutgoingMessagePublisher>();
@@ -133,6 +149,45 @@ builder.Services.AddScoped<PlaygroundSessionStore>();
 builder.Services.AddScoped<PlaygroundCleanupJob>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.AiAgents.Validators.CreateAiAgentValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.AiSettings.Validators.UpdateAiSettingsValidator>();
+
+// Spec 007 — Live Chat (Widget): repositories, public auth scheme, request filters, WS broker
+builder.Services.AddScoped<IWidgetConfigRepository, WidgetConfigRepository>();
+builder.Services.AddScoped<IVisitorRepository, VisitorRepository>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<OriginValidator>();
+builder.Services.AddScoped<PublicRateLimiter>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Public.Commands.StartConversationCommand>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveChat.Public.Validators.StartConversationValidator>();
+builder.Services.AddSingleton<omniDesk.Api.Hubs.WidgetConnectionRegistry>();
+builder.Services.AddSingleton<omniDesk.Api.Hubs.WebSocketBroker>();
+builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.MessageSendHandler>();
+builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.VisitorTypingHandler>();
+builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.MessagesReadHandler>();
+builder.Services.AddScoped<omniDesk.Api.Hubs.Handlers.MessagesReplayHandler>();
+builder.Services.AddScoped<omniDesk.Api.Hubs.WidgetWebSocketEndpoint>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.AbandonmentSweepJob>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJob>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Uploads.MimeTypeDetector>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Uploads.MinioUploader>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveChat.Uploads.Validators.UploadValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Config.Commands.UpdateWidgetConfigCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Config.Commands.ToggleWidgetCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.WidgetDisableEnforcementJob>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveChat.Config.Validators.UpdateWidgetConfigValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.SendAttendantMessageCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.ResolveConversationCommand>();
+builder.Services.AddScoped<omniDesk.Api.Hubs.CrmWebSocketEndpoint>();
+builder.Services
+    .AddAuthentication()
+    .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
+        WidgetTokenAuthHandler.SchemeName, _ => { });
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(WidgetTokenAuthHandler.SchemeName, policy =>
+    {
+        policy.AddAuthenticationSchemes(WidgetTokenAuthHandler.SchemeName);
+        policy.RequireAuthenticatedUser();
+    });
 
 builder.Services.AddCors(options =>
 {
@@ -172,6 +227,16 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Features.Distribution.PresenceTimeoutJob>(
     "presence-timeout-job",
     job => job.RunAsync(CancellationToken.None),
     "*/1 * * * *");
+
+// Spec 007 / US5 — Lifecycle sweeps (FR-022/FR-023). Runs hourly per research §R9.
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.LiveChat.Jobs.AbandonmentSweepJob>(
+    "live-chat-abandonment-sweep",
+    job => job.RunAsync(CancellationToken.None),
+    "0 * * * *");
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJob>(
+    "live-chat-inactivity-sweep",
+    job => job.RunAsync(CancellationToken.None),
+    "0 * * * *");
 
 await app.SeedDatabaseAsync();
 
@@ -254,12 +319,47 @@ var conversations = api.MapGroup("/conversations")
                        .AddEndpointFilter<ImpersonationAuditFilter>();
 SuggestReplyEndpoint.Map(conversations);
 
+// Spec 007 US3 — attendant inbox surface (list, history, send, resolve).
+conversations.MapInboxConversationEndpoints();
+
+// Spec 007 — Public widget surface (auth via WidgetToken scheme)
+var widgetPublic = api.MapGroup("/public/widget");
+widgetPublic.MapWidgetPublicEndpoints();
+widgetPublic.MapWidgetUpload();
+
+// Spec 007 — CRM admin config surface (JWT auth).
+var widgetConfig = api.MapGroup("/widget/config")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+widgetConfig.MapWidgetConfigEndpoints();
+
+// Spec 007 — Internal endpoint reserved for the Spec 006 orchestrator.
+var widgetInternal = api.MapGroup("/internal/livechat")
+    .RequireAuthorization();
+widgetInternal.MapInternalEndConversation();
+
 // Spec 005 — WebSocket native handler (research §R4)
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
 app.Map("/ws", async (HttpContext ctx, AttendantHubHandler hub, CancellationToken ct) =>
 {
     await hub.HandleAsync(ctx, ct);
 }).RequireAuthorization();
+
+// Spec 007 — visitor widget WebSocket. Auth via WidgetToken scheme (?token= query).
+app.Map("/ws/widget/{conversation_id:guid}",
+    async (HttpContext ctx, Guid conversation_id, omniDesk.Api.Hubs.WidgetWebSocketEndpoint endpoint, CancellationToken ct) =>
+    {
+        await endpoint.HandleAsync(ctx, conversation_id, ct);
+    })
+    .RequireAuthorization(omniDesk.Api.Features.LiveChat.Public.WidgetTokenAuthHandler.SchemeName);
+
+// Spec 007 US3 — attendant CRM WebSocket. Standard JWT auth.
+app.Map("/ws/crm",
+    async (HttpContext ctx, omniDesk.Api.Hubs.CrmWebSocketEndpoint endpoint, CancellationToken ct) =>
+    {
+        await endpoint.HandleAsync(ctx, ct);
+    })
+    .RequireAuthorization();
 
 app.Run();
 

@@ -38,7 +38,7 @@ public class PresenceTimeoutJob
 
     private async Task ProcessTransitions(
         DateTimeOffset nowUtc,
-        AttendanceStatus from,
+        AttendanceStatus fromStatus,
         AttendanceStatus to,
         TimeSpan threshold,
         CancellationToken ct)
@@ -48,7 +48,7 @@ public class PresenceTimeoutJob
         var candidates = await (
             from s in _db.AttendantStatuses.AsNoTracking()
             join a in _db.Attendants.AsNoTracking() on s.AttendantId equals a.Id
-            where s.Status == from && a.IsActive
+            where s.Status == fromStatus && a.IsActive
                   && (s.LastHeartbeatAt == null || s.LastHeartbeatAt < cutoff)
                   && s.ChangedAt < cutoff
             select new { AttendantId = s.AttendantId, a.UserId }
@@ -79,11 +79,11 @@ public class PresenceTimeoutJob
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "PresenceTimeoutJob failed for {AttendantId} {From}→{To}",
-                    c.AttendantId, from, to);
+                    c.AttendantId, fromStatus, to);
             }
         }
 
         _logger.LogInformation("PresenceTimeoutJob processed {Count} {From}→{To} transitions",
-            candidates.Count, from, to);
+            candidates.Count, fromStatus, to);
     }
 }

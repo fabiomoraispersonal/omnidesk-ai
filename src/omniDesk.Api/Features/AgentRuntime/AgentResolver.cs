@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.AiAgents;
-using omniDesk.Api.Domain.AiThreads;
 using omniDesk.Api.Infrastructure.Persistence;
 
 namespace omniDesk.Api.Features.AgentRuntime;
@@ -11,9 +10,11 @@ public class AgentResolver
 
     public AgentResolver(AppDbContext db) => _db = db;
 
-    public async Task<AiAgent?> ResolveCurrentAgentAsync(AiThread thread, CancellationToken ct)
+    // Spec 007 — accepts the agent id directly so callers can come from either AiThread (Spec 006)
+    // or Conversation (Spec 007 channel-agnostic) without a hard binding to either entity.
+    public async Task<AiAgent?> ResolveCurrentAgentAsync(Guid? currentAgentId, CancellationToken ct)
     {
-        if (thread.CurrentAgentId is { } id)
+        if (currentAgentId is { } id)
         {
             var current = await _db.AiAgents.AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == id && a.IsActive, ct);

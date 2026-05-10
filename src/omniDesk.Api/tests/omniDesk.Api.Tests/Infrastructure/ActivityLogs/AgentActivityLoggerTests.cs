@@ -4,6 +4,7 @@ using omniDesk.Api.Domain.AiAgents;
 using omniDesk.Api.Infrastructure.ActivityLogs;
 using Testcontainers.MongoDb;
 using Xunit;
+using MongoDB.Bson;
 
 namespace omniDesk.Api.Tests.Infrastructure.ActivityLogs;
 
