@@ -69,21 +69,21 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Domínio — entidades + repositórios
 
-- [ ] T023 [P] Criar entidade `WhatsAppConfig.cs` em `src/omniDesk.Api/Domain/WhatsApp/WhatsAppConfig.cs` (data-model §1.1) + `IWhatsAppConfigRepository.cs` interface (`GetByTenantIdAsync`, `GetByTenantSlugAsync`, `UpdateAsync`, `ToggleEnabledAsync`)
-- [ ] T024 [P] Criar entidade `WhatsAppTemplate.cs` em `src/omniDesk.Api/Domain/WhatsApp/WhatsAppTemplate.cs` (data-model §1.2) + `IWhatsAppTemplateRepository.cs` interface (`ListAsync(filter)`, `GetByIdAsync`, `GetByNameAsync`, `GetByMetaIdAsync`, `CreateAsync`, `UpdateAsync`, `SoftDeleteAsync`)
+- [X] T023 [P] Criar entidade `WhatsAppConfig.cs` em `src/omniDesk.Api/Domain/WhatsApp/WhatsAppConfig.cs` (data-model §1.1) + `IWhatsAppConfigRepository.cs` interface (`GetByTenantIdAsync`, `GetByTenantSlugAsync`, `UpdateAsync`, `ToggleEnabledAsync`)
+- [X] T024 [P] Criar entidade `WhatsAppTemplate.cs` em `src/omniDesk.Api/Domain/WhatsApp/WhatsAppTemplate.cs` (data-model §1.2) + `IWhatsAppTemplateRepository.cs` interface (`ListAsync(filter)`, `GetByIdAsync`, `GetByNameAsync`, `GetByMetaIdAsync`, `CreateAsync`, `UpdateAsync`, `SoftDeleteAsync`)
 
 ### EF Core configurations
 
-- [ ] T025 [P] Criar `WhatsAppConfigConfiguration.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppConfigConfiguration.cs` mapeando colunas + check E.164 + PK `tenant_id`
-- [ ] T026 [P] Criar `WhatsAppTemplateConfiguration.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppTemplateConfiguration.cs` mapeando enums via converter, array `variable_labels` via PostgreSQL text[], unique parcial via `HasFilter("deleted_at IS NULL")`
-- [ ] T027 Modificar `src/omniDesk.Api/Domain/LiveChat/Conversation.cs` (Spec 007) para adicionar propriedades `WaContactPhone (string?)` e `WaSessionExpiresAt (DateTimeOffset?)` + atualizar `ConversationConfiguration.cs` da Spec 007 para mapear as duas colunas (sem alterar comportamento existente — campos opcionais)
-- [ ] T028 Atualizar `src/omniDesk.Api/Infrastructure/Persistence/AppDbContext.cs` (DbContext único do projeto — `TenantDbContext` é stripped, usado apenas pelo `TenantSchemaProvisioner`) adicionando `public DbSet<WhatsAppConfig> WhatsAppConfigs => Set<WhatsAppConfig>();` e `public DbSet<WhatsAppTemplate> WhatsAppTemplates => Set<WhatsAppTemplate>();` na seção dedicada à Spec 008 (`// Spec 008 — WhatsApp (tenant_{slug} schema; resolved at runtime).`). EF configurations (T025/T026) são auto-aplicadas via `ApplyConfigurationsFromAssembly` já presente no `OnModelCreating`
+- [X] T025 [P] Criar `WhatsAppConfigConfiguration.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppConfigConfiguration.cs` mapeando colunas + check E.164 + PK `tenant_id`
+- [X] T026 [P] Criar `WhatsAppTemplateConfiguration.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppTemplateConfiguration.cs` mapeando enums via converter, array `variable_labels` via PostgreSQL text[], unique parcial via `HasFilter("deleted_at IS NULL")`
+- [X] T027 Modificar `src/omniDesk.Api/Domain/LiveChat/Conversation.cs` (Spec 007) para adicionar propriedades `WaContactPhone (string?)` e `WaSessionExpiresAt (DateTimeOffset?)` + atualizar `ConversationConfiguration.cs` da Spec 007 para mapear as duas colunas (sem alterar comportamento existente — campos opcionais)
+- [X] T028 Atualizar `src/omniDesk.Api/Infrastructure/Persistence/AppDbContext.cs` (DbContext único do projeto — `TenantDbContext` é stripped, usado apenas pelo `TenantSchemaProvisioner`) adicionando `public DbSet<WhatsAppConfig> WhatsAppConfigs => Set<WhatsAppConfig>();` e `public DbSet<WhatsAppTemplate> WhatsAppTemplates => Set<WhatsAppTemplate>();` na seção dedicada à Spec 008 (`// Spec 008 — WhatsApp (tenant_{slug} schema; resolved at runtime).`). EF configurations (T025/T026) são auto-aplicadas via `ApplyConfigurationsFromAssembly` já presente no `OnModelCreating`
 
 ### Repositórios — implementações EF
 
-- [ ] T029 [P] Criar `WhatsAppConfigRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppConfigRepository.cs` implementando `IWhatsAppConfigRepository`. Método `GetByTenantSlugAsync` faz lookup `public.tenants` → set schema → query `whatsapp_config`
-- [ ] T030 [P] Criar `WhatsAppTemplateRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppTemplateRepository.cs` implementando `IWhatsAppTemplateRepository`. Filtros: status, type, paginação
-- [ ] T031 [P] Criar `WaMessageStatusesRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WaMessageStatusesRepository.cs` (MongoDB) — collection `{tenant_slug}_wa_message_statuses` com `InsertAsync`, `ListByMessageAsync`, índice unique `wa_message_id` criado em ensure-indexes startup hook
+- [X] T029 [P] Criar `WhatsAppConfigRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppConfigRepository.cs` implementando `IWhatsAppConfigRepository`. Método `GetByTenantSlugAsync` faz lookup `public.tenants` → set schema → query `whatsapp_config`
+- [X] T030 [P] Criar `WhatsAppTemplateRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppTemplateRepository.cs` implementando `IWhatsAppTemplateRepository`. Filtros: status, type, paginação
+- [X] T031 [P] Criar `WaMessageStatusesRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WaMessageStatusesRepository.cs` (MongoDB) — collection `{tenant_slug}_wa_message_statuses` com `InsertAsync`, `ListByMessageAsync`, índice unique `wa_message_id` criado em ensure-indexes startup hook
 
 ### Criptografia AES-256-GCM (research R3 — REUSO)
 

@@ -26,8 +26,18 @@ public class Conversation
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    // Spec 008 — WhatsApp-specific (NULL para conversas live_chat).
+    /// <summary>Número WhatsApp do cliente (E.164). Apenas em <c>Channel = WhatsApp</c>.</summary>
+    public string? WaContactPhone { get; set; }
+
+    /// <summary>Momento em que a janela de 24h da Meta expira (UTC). Atualizado a cada
+    /// mensagem recebida do cliente. Apenas em <c>Channel = WhatsApp</c>.</summary>
+    public DateTimeOffset? WaSessionExpiresAt { get; set; }
+
     public bool IsHandedOffToHuman => AttendantId is not null;
     public bool IsActive => Status == ConversationStatus.Open;
+    public bool IsWhatsAppSessionActive(TimeProvider clock) =>
+        WaSessionExpiresAt.HasValue && WaSessionExpiresAt.Value > clock.GetUtcNow();
 }
 
 public interface IConversationRepository

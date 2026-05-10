@@ -178,6 +178,11 @@ builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveC
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.SendAttendantMessageCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.ResolveConversationCommand>();
 builder.Services.AddScoped<omniDesk.Api.Hubs.CrmWebSocketEndpoint>();
+
+// Spec 008 — WhatsApp: repositories
+builder.Services.AddScoped<omniDesk.Api.Domain.WhatsApp.IWhatsAppConfigRepository, omniDesk.Api.Infrastructure.WhatsApp.WhatsAppConfigRepository>();
+builder.Services.AddScoped<omniDesk.Api.Domain.WhatsApp.IWhatsAppTemplateRepository, omniDesk.Api.Infrastructure.WhatsApp.WhatsAppTemplateRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.WhatsApp.IWaMessageStatusesRepository, omniDesk.Api.Infrastructure.WhatsApp.WaMessageStatusesRepository>();
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(

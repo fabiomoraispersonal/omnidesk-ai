@@ -13,6 +13,7 @@ using omniDesk.Api.Domain.Tenants;
 using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Domain.TotpRecoveryCodes;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Domain.WhatsApp;
 using AiSettingsEntity = omniDesk.Api.Domain.AiSettings.AiSettings;
 
 namespace omniDesk.Api.Infrastructure.Persistence;
@@ -46,6 +47,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Visitor> Visitors => Set<Visitor>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
+
+    // Spec 008 — WhatsApp (tenant_{slug} schema; resolved at runtime).
+    public DbSet<WhatsAppConfig> WhatsAppConfigs => Set<WhatsAppConfig>();
+    public DbSet<WhatsAppTemplate> WhatsAppTemplates => Set<WhatsAppTemplate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
