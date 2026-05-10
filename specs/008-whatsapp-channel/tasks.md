@@ -53,19 +53,19 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Domínio — enums + value objects (sem magic strings — princípio VII)
 
-- [ ] T010 [P] Criar `TemplateStatus.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateStatus.cs` com enum `Draft`, `PendingMeta`, `Approved`, `Rejected` + helper `ToSnake()` (`draft`, `pending_meta`, `approved`, `rejected`)
-- [ ] T011 [P] Criar `TemplateType.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateType.cs` com enum `AppointmentReminder`, `AppointmentConfirmation`, `AppointmentCancellation`, `FollowUp`, `Custom` + helper `ToSnake()`
-- [ ] T012 [P] Criar `TemplateCategory.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateCategory.cs` com enum `Utility` (V1 fixo)
-- [ ] T013 [P] Criar `WaMessageStatus.cs` em `src/omniDesk.Api/Domain/WhatsApp/WaMessageStatus.cs` com enum `Sent`, `Delivered`, `Read`, `Failed` + `ToSnake()`
-- [ ] T014 [P] Criar `WaSupportedMessageType.cs` em `src/omniDesk.Api/Domain/WhatsApp/WaSupportedMessageType.cs` com enum `Text`, `Image`, `Document`, `Audio`
-- [ ] T015 [P] Criar `WaUnsupportedTypes.cs` em `src/omniDesk.Api/Domain/WhatsApp/WaUnsupportedTypes.cs` com `static IReadOnlySet<string> All = { "video","sticker","location","contacts","reaction","interactive" }`
-- [ ] T016 [P] Criar `PredefinedTemplate.cs` em `src/omniDesk.Api/Domain/WhatsApp/PredefinedTemplate.cs` (record `(string DefaultBody, string[] VariableLabels, int VariableCount)`)
-- [ ] T017 [P] Criar `PredefinedTemplates.cs` em `src/omniDesk.Api/Domain/WhatsApp/PredefinedTemplates.cs` static factory mapeando os 5 tipos (research R7) — `appointment_reminder` (3 vars), `appointment_confirmation` (3 vars), `appointment_cancellation` (2 vars), `follow_up` (1 var), `custom` (0 vars)
-- [ ] T018 [P] Criar `TemplateNameGenerator.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateNameGenerator.cs` com método `Generate(TemplateType type, string slug, string? customSuffix)` retornando snake_case (ex: `lembrete_consulta_clinicaabc`, `custom_primeira_consulta_clinicaabc`)
-- [ ] T019 [P] Criar `TemplateStateMachine.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateStateMachine.cs` com `static bool CanEdit/CanDelete/CanSubmit(TemplateStatus s)` (data-model §1.2)
-- [ ] T020 [P] Criar `WhatsAppCrmEvents.cs` em `src/omniDesk.Api/Hubs/Events/WhatsAppCrmEvents.cs` com constantes `WaMessageStatus`, `WaSessionExpiring`, `WaSessionExpired` (contracts/whatsapp-websocket-events.md)
-- [ ] T021 [P] Criar `MetaApi.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/MetaApi.cs` com const: paths (`Messages = "/{0}/messages"`, `MessageTemplates = "/{0}/message_templates"`, `Media = "/{0}"`, `Me = "/me"`), headers (`HubSignature256 = "X-Hub-Signature-256"`), hub params (`HubMode = "hub.mode"`, `HubVerifyToken = "hub.verify_token"`, `HubChallenge = "hub.challenge"`, `HubModeSubscribe = "subscribe"`), error codes Meta (`TokenRevoked = 190`, `OutsideWindow = 131047`, `RecipientNotOptedIn = 131026`)
-- [ ] T022 [P] Criar `RedisKeys.cs` adições em `src/omniDesk.Api/Infrastructure/WhatsApp/RedisKeys.cs` com helpers `WaDedup(slug, waMessageId)`, `WaExpiringEmitted(slug, convId)`, `WaExpiredEmitted(slug, convId)`, `WaConfigCache(slug)`, `WaWebhookRateLimit(slug)`
+- [X] T010 [P] Criar `TemplateStatus.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateStatus.cs` com enum `Draft`, `PendingMeta`, `Approved`, `Rejected` + helper `ToSnake()` (`draft`, `pending_meta`, `approved`, `rejected`)
+- [X] T011 [P] Criar `TemplateType.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateType.cs` com enum `AppointmentReminder`, `AppointmentConfirmation`, `AppointmentCancellation`, `FollowUp`, `Custom` + helper `ToSnake()`
+- [X] T012 [P] Criar `TemplateCategory.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateCategory.cs` com enum `Utility` (V1 fixo)
+- [X] T013 [P] Criar `WaMessageStatus.cs` em `src/omniDesk.Api/Domain/WhatsApp/WaMessageStatus.cs` com enum `Sent`, `Delivered`, `Read`, `Failed` + `ToSnake()`
+- [X] T014 [P] Criar `WaSupportedMessageType.cs` em `src/omniDesk.Api/Domain/WhatsApp/WaSupportedMessageType.cs` com enum `Text`, `Image`, `Document`, `Audio`
+- [X] T015 [P] Criar `WaUnsupportedTypes.cs` em `src/omniDesk.Api/Domain/WhatsApp/WaUnsupportedTypes.cs` com `static IReadOnlySet<string> All = { "video","sticker","location","contacts","reaction","interactive" }`
+- [X] T016 [P] Criar `PredefinedTemplate.cs` em `src/omniDesk.Api/Domain/WhatsApp/PredefinedTemplate.cs` (record `(string DefaultBody, string[] VariableLabels, int VariableCount)`)
+- [X] T017 [P] Criar `PredefinedTemplates.cs` em `src/omniDesk.Api/Domain/WhatsApp/PredefinedTemplates.cs` static factory mapeando os 5 tipos (research R7) — `appointment_reminder` (3 vars), `appointment_confirmation` (3 vars), `appointment_cancellation` (2 vars), `follow_up` (1 var), `custom` (0 vars)
+- [X] T018 [P] Criar `TemplateNameGenerator.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateNameGenerator.cs` com método `Generate(TemplateType type, string slug, string? customSuffix)` retornando snake_case (ex: `lembrete_consulta_clinicaabc`, `custom_primeira_consulta_clinicaabc`)
+- [X] T019 [P] Criar `TemplateStateMachine.cs` em `src/omniDesk.Api/Domain/WhatsApp/TemplateStateMachine.cs` com `static bool CanEdit/CanDelete/CanSubmit(TemplateStatus s)` (data-model §1.2)
+- [X] T020 [P] Criar `WhatsAppCrmEvents.cs` em `src/omniDesk.Api/Hubs/Events/WhatsAppCrmEvents.cs` com constantes `WaMessageStatus`, `WaSessionExpiring`, `WaSessionExpired` (contracts/whatsapp-websocket-events.md)
+- [X] T021 [P] Criar `MetaApi.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/MetaApi.cs` com const: paths (`Messages = "/{0}/messages"`, `MessageTemplates = "/{0}/message_templates"`, `Media = "/{0}"`, `Me = "/me"`), headers (`HubSignature256 = "X-Hub-Signature-256"`), hub params (`HubMode = "hub.mode"`, `HubVerifyToken = "hub.verify_token"`, `HubChallenge = "hub.challenge"`, `HubModeSubscribe = "subscribe"`), error codes Meta (`TokenRevoked = 190`, `OutsideWindow = 131047`, `RecipientNotOptedIn = 131026`)
+- [X] T022 [P] Criar `RedisKeys.cs` adições em `src/omniDesk.Api/Infrastructure/WhatsApp/RedisKeys.cs` com helpers `WaDedup(slug, waMessageId)`, `WaExpiringEmitted(slug, convId)`, `WaExpiredEmitted(slug, convId)`, `WaConfigCache(slug)`, `WaWebhookRateLimit(slug)`
 
 ### Domínio — entidades + repositórios
 
