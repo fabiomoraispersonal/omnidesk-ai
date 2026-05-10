@@ -92,18 +92,53 @@ class OmniDeskWidget extends HTMLElement {
       const style = this.shadow.querySelector('style');
       if (style && init.config.primary_color) style.textContent = getStyles(init.config.primary_color);
 
-      this.hasConsent = init.active_conversation !== null;
-      this.panel.hydrate(init, this.hasConsent);
+      // Spec 007 US4 — branch on active_conversation.status.
+      const active = init.active_conversation;
+      if (active === null || active === undefined) {
+        this.hasConsent = false;
+        this.panel.hydrate(init, false);
+        return;
+      }
 
-      if (init.active_conversation) {
-        this.conversationId = init.active_conversation.id;
-        conversationStore.setActive(this.conversationId, 'open');
-        await this.connectWs(init);
-        await this.loadHistory();
+      switch (active.status) {
+        case 'open': {
+          this.conversationId = active.id;
+          conversationStore.setActive(active.id, 'open');
+          this.hasConsent = true;
+          this.panel.hydrate(init, true);
+          await this.loadHistory();
+          await this.connectWs(init);
+          break;
+        }
+        case 'resolved': {
+          // Read-only mode: show history + CTA to start a new conversation.
+          this.conversationId = active.id;
+          conversationStore.setActive(active.id, 'resolved');
+          this.hasConsent = true;
+          this.panel.hydrate(init, true);
+          await this.loadHistory();
+          this.panel.setResolvedMode(() => this.startNewConversation());
+          break;
+        }
+        case 'abandoned':
+        default: {
+          // Wipe stale state and treat as a fresh visit.
+          conversationStore.clear();
+          this.conversationId = null;
+          this.hasConsent = false;
+          this.panel.hydrate(init, false);
+          break;
+        }
       }
     } catch (err) {
       console.warn('[OmniDesk] /init failed', err);
     }
+  }
+
+  private startNewConversation(): void {
+    conversationStore.clear();
+    this.conversationId = null;
+    if (this.init) this.panel.hydrate(this.init, this.hasConsent);
   }
 
   private async loadHistory(): Promise<void> {

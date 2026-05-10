@@ -24,6 +24,8 @@ export interface PanelHandle {
   appendMessage: (message: Message) => void;
   setTyping: (active: boolean) => void;
   setConnected: (connected: boolean) => void;
+  // Spec 007 US4 — switches the panel into read-only history mode with a "start new" CTA.
+  setResolvedMode: (onStartNew: () => void) => void;
 }
 
 export function createPanel(callbacks: PanelCallbacks): PanelHandle {
@@ -114,6 +116,26 @@ export function createPanel(callbacks: PanelCallbacks): PanelHandle {
     setTyping: (a) => messages.setTyping(a),
     setConnected(connected) {
       banner.style.display = connected ? 'none' : 'block';
+    },
+    setResolvedMode(onStartNew) {
+      inputArea.setEnabled(false);
+      banner.style.display = 'block';
+      banner.textContent = 'Conversa encerrada.';
+
+      // Append a CTA below the message list (idempotent — replaces any existing one).
+      const existing = root.querySelector('.cta-start-new');
+      if (existing) existing.remove();
+      const cta = document.createElement('button');
+      cta.type = 'button';
+      cta.className = 'cta-start-new send';
+      cta.style.margin = '8px 12px';
+      cta.textContent = 'Iniciar nova conversa';
+      cta.addEventListener('click', () => {
+        cta.remove();
+        banner.style.display = 'none';
+        onStartNew();
+      });
+      root.insertBefore(cta, inputArea.el);
     },
   };
 }

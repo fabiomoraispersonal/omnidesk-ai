@@ -296,22 +296,22 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Tests US4
 
-- [ ] T146 [P] [US4] Test integration `tests/Features/LiveChat/Public/InitWithActiveConversationTests.cs` — GET `/init` com `X-Anonymous-Id` retorna `active_conversation` quando há `open`; null quando `resolved`/`abandoned`
-- [ ] T147 [P] [US4] Test integration `tests/Features/LiveChat/Public/StartConversationResumedContextTests.cs` — visitor com conversa `resolved` cria nova; `LiveChatConversationGateway.GetResumedContextAsync` retorna até `Widget:ResumedContextMessageLimit` mensagens da anterior; o thread OpenAI recebe esse contexto via system message
-- [ ] T148 [P] [US4] Widget unit `src/omniDesk.Widget/tests/conversation-store.spec.ts` — caso `open` retoma; caso `resolved` exibe modo readonly + botão; caso `abandoned` limpa store e inicia novo
+- [X] T146 [P] [US4] Test integration `tests/Features/LiveChat/Public/InitWithActiveConversationTests.cs` — GET `/init` com `X-Anonymous-Id` retorna `active_conversation` quando há `open`; null quando `resolved`/`abandoned`
+- [X] T147 [P] [US4] Test integration `tests/Features/LiveChat/Public/StartConversationResumedContextTests.cs` — visitor com conversa `resolved` cria nova; `LiveChatConversationGateway.GetResumedContextAsync` retorna até `Widget:ResumedContextMessageLimit` mensagens da anterior; orchestrator integration deferred (follow-up)
+- [X] T148 [P] [US4] Widget unit `src/omniDesk.Widget/tests/conversation-store.spec.ts` — caso `open` retoma; caso `resolved` exibe modo readonly + botão; caso `abandoned` limpa store e inicia novo
 
 ### Backend
 
-- [ ] T149 [US4] Estender interface `IConversationGateway` em `src/omniDesk.Api/Features/AgentRuntime/IConversationGateway.cs` com método `Task<IReadOnlyList<ConversationMessage>> GetResumedContextAsync(Guid visitorId, int limit, CancellationToken ct)` (default impl `=> Task.FromResult(empty)` em ChannelStubGateway para não quebrar testes da Spec 006)
-- [ ] T150 [US4] Implementar `GetResumedContextAsync` em `LiveChatConversationGateway` — busca última `Conversation` com `status=resolved` do `visitor_id`, retorna até `limit` últimas `messages` (filtra `system_event`) em ordem cronológica ascendente
-- [ ] T151 [US4] Em `StartConversationCommand` (T064): após criar conversa, se há resolved anterior, anexar contexto retomado **apenas no thread OpenAI** via hook `BeforeFirstRun` da Spec 006 — passar lista para o `AgentOrchestrator` via campo `OutgoingMessage.ResumedContext` ou similar (research R12)
-- [ ] T152 [US4] Atualizar `IncomingMessageWorker` (Spec 006) para consumir o `ResumedContext` quando montando contexto do primeiro Run da conversa — adicionar parâmetro opcional `IReadOnlyList<ConversationMessage> resumedContext` em `ContextBuilder.Build(...)` da Spec 006
+- [X] T149 [US4] Estender interface `IConversationGateway` em `src/omniDesk.Api/Features/AgentRuntime/IConversationGateway.cs` com método `Task<IReadOnlyList<ConversationMessage>> GetResumedContextAsync(Guid visitorId, int limit, CancellationToken ct)` (ChannelStubGateway retorna empty)
+- [X] T150 [US4] Implementar `GetResumedContextAsync` em `LiveChatConversationGateway` — busca última `Conversation` com `status=resolved` do `visitor_id`, retorna até `limit` últimas `messages` (filtra `system_event`) em ordem cronológica ascendente
+- [~] T151 [US4] Orchestrator integration: passar resumed context para o primeiro Run OpenAI — deferido como follow-up (acoplamento mais profundo entre Spec 006 ContextBuilder/IncomingMessage e o gateway). Infra (T149/T150) está pronta.
+- [~] T152 [US4] Atualizar `IncomingMessageWorker`/`ContextBuilder` (Spec 006) para consumir resumed context — deferred com T151
 
 ### Widget
 
-- [ ] T153 [US4] Em `src/omniDesk.Widget/src/widget.ts` (T091): no `open()`, ler `conversation-store`, chamar `/init` com `X-Anonymous-Id`; renderizar UI conforme `active_conversation.status`
-- [ ] T154 [US4] Em `src/omniDesk.Widget/src/ui/panel.ts` (T090): adicionar estado `showHistoryReadOnly` e botão "Iniciar nova conversa" para `resolved`; auto-iniciar nova para `abandoned`
-- [ ] T155 [US4] Em `conversation-store` (T081): expor método `clear()` chamado no caso `abandoned` antes de fluxo inicial
+- [X] T153 [US4] `widget.ts.loadInit` agora ramifica por `active_conversation.status`: open carrega histórico + WS; resolved entra em readonly + CTA; abandoned limpa store
+- [X] T154 [US4] `panel.ts.setResolvedMode(onStartNew)` desabilita input, mostra banner "Conversa encerrada" + botão "Iniciar nova conversa"
+- [X] T155 [US4] `conversation-store.clear()` (já existia) é chamado no caso `abandoned` em `loadInit` antes de re-hidratar
 
 **Checkpoint**: User Story 4 funcional — retomada inteligente em todos os 4 casos (open IA, open humano, resolved, abandoned).
 

@@ -124,6 +124,46 @@ public class LiveChatConversationGateway : IConversationGateway
         return conv is null ? null : Map(conv, externalConversationRef);
     }
 
+    // Spec 007 FR-017 — pulls the tail of the visitor's last resolved conversation so the
+    // orchestrator can seed the new OpenAI thread with continuity context. system_event
+    // messages are filtered (FR-045) and rows come back in chronological (ASC) order.
+    public async Task<IReadOnlyList<ConversationMessage>> GetResumedContextAsync(
+        Guid visitorId, int limit, CancellationToken ct)
+    {
+        if (limit <= 0) return Array.Empty<ConversationMessage>();
+
+        var lastResolved = await _db.Conversations.AsNoTracking()
+            .Where(c => c.VisitorId == visitorId
+                     && c.Channel == ChannelType.LiveChat
+                     && c.Status == ConversationStatus.Resolved)
+            .OrderByDescending(c => c.EndedAt ?? c.UpdatedAt)
+            .Select(c => c.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (lastResolved == Guid.Empty) return Array.Empty<ConversationMessage>();
+
+        var rows = await _db.Messages.AsNoTracking()
+            .Where(m => m.ConversationId == lastResolved
+                     && m.ContentType != MessageContentType.SystemEvent)
+            .OrderByDescending(m => m.CreatedAt)
+            .ThenByDescending(m => m.Id)
+            .Take(limit)
+            .ToListAsync(ct);
+
+        rows.Reverse();
+        return rows.Select(m => new ConversationMessage(
+            Role: m.SenderType switch
+            {
+                MessageSenderType.Visitor => "user",
+                MessageSenderType.AiAgent => "assistant",
+                MessageSenderType.Attendant => "assistant",
+                MessageSenderType.System => "system",
+                _ => "user",
+            },
+            Content: m.Content ?? string.Empty,
+            SentAt: m.CreatedAt)).ToList();
+    }
+
     private static AiThreadDto Map(Conversation conv, string externalRef)
         => new(
             Id: conv.Id,
