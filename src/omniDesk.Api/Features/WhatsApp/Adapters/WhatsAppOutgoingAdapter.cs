@@ -1,8 +1,11 @@
 using System.Text.Json;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Domain.WhatsApp;
 using omniDesk.Api.Features.AgentRuntime;
+using omniDesk.Api.Features.WhatsApp.Jobs;
+using omniDesk.Api.Features.WhatsApp.Send;
 using omniDesk.Api.Hubs.Events;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.LiveChat;
@@ -35,6 +38,9 @@ public sealed class WhatsAppOutgoingAdapter
     private readonly AesEncryptionService _aes;
     private readonly IWaMessageStatusesRepository _statusRepo;
     private readonly ITenantSlugAccessor _slug;
+    private readonly SessionWindowGuard _windowGuard;
+    private readonly WaOutgoingGuard _outgoingGuard;
+    private readonly IBackgroundJobClient _jobs;
     private readonly TimeProvider _clock;
     private readonly ILogger<WhatsAppOutgoingAdapter> _logger;
 
@@ -45,6 +51,9 @@ public sealed class WhatsAppOutgoingAdapter
         AesEncryptionService aes,
         IWaMessageStatusesRepository statusRepo,
         ITenantSlugAccessor slug,
+        SessionWindowGuard windowGuard,
+        WaOutgoingGuard outgoingGuard,
+        IBackgroundJobClient jobs,
         TimeProvider clock,
         ILogger<WhatsAppOutgoingAdapter> logger)
     {
@@ -54,6 +63,9 @@ public sealed class WhatsAppOutgoingAdapter
         _aes = aes;
         _statusRepo = statusRepo;
         _slug = slug;
+        _windowGuard = windowGuard;
+        _outgoingGuard = outgoingGuard;
+        _jobs = jobs;
         _clock = clock;
         _logger = logger;
     }
@@ -92,13 +104,20 @@ public sealed class WhatsAppOutgoingAdapter
             return;
         }
 
-        // Persist message imediatamente — recebe id local antes da chamada Meta.
+        // FR-014/FR-016 — guards antes de qualquer trabalho. Lança se proibido.
         var senderType = outgoing.Source switch
         {
-            "agent"  => MessageSenderType.AiAgent,
-            "system" => MessageSenderType.System,
-            _        => MessageSenderType.System,
+            "agent"     => MessageSenderType.AiAgent,
+            "attendant" => MessageSenderType.Attendant,
+            "system"    => MessageSenderType.System,
+            _           => MessageSenderType.System,
         };
+
+        var messageType = WaOutboundMessageType.Text;
+        _outgoingGuard.Validate(senderType, messageType);
+        _windowGuard.Validate(conv, messageType);
+
+        // Persist message imediatamente — recebe id local antes da chamada Meta.
 
         var message = new Message
         {
@@ -161,8 +180,13 @@ public sealed class WhatsAppOutgoingAdapter
 
             await BroadcastFailedAsync(conv, message, ex.Code.ToString(), ex.Message, ct);
 
-            // 401 / 190 — token revogado; sinaliza WaTokenRevokedDetectorJob (US3 task).
-            // Por ora apenas log; job é T085 (sessão futura).
+            // Spec 008 FR-018 / research R8 — token revogado: enfileira detector job
+            // que confirma com /me e desativa o canal se confirmado.
+            if (ex.IsTokenRevoked || ex.HttpStatusCode == 401)
+            {
+                _jobs.Enqueue<WaTokenRevokedDetectorJob>(j =>
+                    j.RunAsync(_slug.Slug, message.Id, CancellationToken.None));
+            }
         }
     }
 

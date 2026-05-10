@@ -220,6 +220,13 @@ builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Queries.GetWhat
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Commands.UpdateWhatsAppConfigCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Commands.ToggleWhatsAppChannelCommand>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.WhatsApp.Config.Validators.UpdateWhatsAppConfigValidator>();
+
+// Spec 008 US3 — Send + guards + token revoked detector
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.SessionWindowGuard>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.WaOutgoingGuard>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.Commands.SendWhatsAppMessageCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaTokenRevokedDetectorJob>();
+
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -385,6 +392,12 @@ var whatsappConfig = api.MapGroup("/whatsapp/config")
     .RequireAuthorization()
     .AddEndpointFilter<ImpersonationAuditFilter>();
 whatsappConfig.MapWhatsAppConfigEndpoints();
+
+// Spec 008 US3 — Atendente envia mensagem (texto livre dentro da janela 24h).
+var whatsappSend = api.MapGroup("/whatsapp/send")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+omniDesk.Api.Features.WhatsApp.Send.WhatsAppSendEndpoint.MapWhatsAppSendEndpoint(whatsappSend);
 
 // Spec 007 — CRM admin config surface (JWT auth).
 var widgetConfig = api.MapGroup("/widget/config")
