@@ -94,7 +94,7 @@ public class WidgetWebSocketEndpoint
 
         if (handshakeError is not null)
         {
-            await CloseAsync(ws, handshakeError.Value.Code, handshakeError.Value.Reason);
+            await CloseAsync(ws, handshakeError.Code, handshakeError.Reason);
             return;
         }
 
