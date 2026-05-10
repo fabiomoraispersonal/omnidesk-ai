@@ -30,11 +30,11 @@ description: "Task list for WhatsApp Channel implementation"
 
 **Purpose**: Variáveis de configuração e estrutura de pastas.
 
-- [ ] T001 Adicionar em `src/omniDesk.Api/appsettings.Development.json` e `src/omniDesk.Api/appsettings.json` as chaves novas: `WhatsApp:GraphApiBaseUrl=https://graph.facebook.com/v19.0`, `WhatsApp:WebhookProcessingTimeoutSeconds=5`, `WhatsApp:SessionWindowHours=24`, `WhatsApp:SessionExpiringThresholdMinutes=60`. **NÃO** commitar valores reais de `Security:DataProtectionKey` (user-secrets) (plan.md §Variáveis de configuração)
-- [ ] T002 [P] Criar estrutura de pastas backend: `src/omniDesk.Api/Domain/WhatsApp/`, `src/omniDesk.Api/Features/WhatsApp/{Webhook,Config,Templates,Send,Adapters,Jobs}/`, `src/omniDesk.Api/Infrastructure/WhatsApp/`. Pasta `src/omniDesk.Api/Infrastructure/Security/` já existe (ver `using omniDesk.Api.Infrastructure.Security;` em `Infrastructure/Provisioning/TenantProvisioningJob.cs`). **Migrations vivem em `src/omniDesk.Api/Infrastructure/Persistence/Migrations/` (single folder, convenção do projeto — ex: `Add_LiveChat_Tables.sql`).**
-- [ ] T003 [P] Criar estrutura de pastas CRM: `src/omniDesk.Crm/src/app/features/whatsapp-config/{components,services}/` e `src/omniDesk.Crm/src/app/features/whatsapp-templates/{components,services}/`
-- [ ] T004 [P] Criar estrutura de pastas de teste backend: `src/omniDesk.Api/tests/omniDesk.Api.Tests/Domain/WhatsApp/`, `Features/WhatsApp/{Webhook,Config,Templates,Send,Adapters,Jobs}/`, `Infrastructure/{WhatsApp,Security}/`, `Helpers/Fixtures/WhatsApp/{MetaResponses,Webhooks}/`
-- [ ] T005 [P] Documentar setup local em `specs/008-whatsapp-channel/quickstart.md` está atualizado (já criado pelo plan); adicionar README curto em `src/omniDesk.Api/Features/WhatsApp/README.md` linkando ao plan + research
+- [X] T001 Adicionar em `src/omniDesk.Api/appsettings.Development.json` e `src/omniDesk.Api/appsettings.json` as chaves novas: `WhatsApp:GraphApiBaseUrl=https://graph.facebook.com/v19.0`, `WhatsApp:WebhookProcessingTimeoutSeconds=5`, `WhatsApp:SessionWindowHours=24`, `WhatsApp:SessionExpiringThresholdMinutes=60`. **Sem chave nova de criptografia** — `AesEncryptionService` já existe e usa env var `AES_ENCRYPTION_KEY` (ver `Infrastructure/Security/AesEncryptionService.cs`); reuso direto
+- [X] T002 [P] Criar estrutura de pastas backend: `src/omniDesk.Api/Domain/WhatsApp/`, `src/omniDesk.Api/Features/WhatsApp/{Webhook,Config,Templates,Send,Adapters,Jobs}/`, `src/omniDesk.Api/Infrastructure/WhatsApp/`. Pasta `src/omniDesk.Api/Infrastructure/Security/` já existe (ver `using omniDesk.Api.Infrastructure.Security;` em `Infrastructure/Provisioning/TenantProvisioningJob.cs`). **Migrations vivem em `src/omniDesk.Api/Infrastructure/Persistence/Migrations/` (single folder, convenção do projeto — ex: `Add_LiveChat_Tables.sql`).**
+- [X] T003 [P] Criar estrutura de pastas CRM: `src/omniDesk.Crm/src/app/features/whatsapp-config/{components,services}/` e `src/omniDesk.Crm/src/app/features/whatsapp-templates/{components,services}/`
+- [X] T004 [P] Criar estrutura de pastas de teste backend: `src/omniDesk.Api/tests/omniDesk.Api.Tests/Domain/WhatsApp/`, `Features/WhatsApp/{Webhook,Config,Templates,Send,Adapters,Jobs}/`, `Infrastructure/{WhatsApp,Security}/`, `Helpers/Fixtures/WhatsApp/{MetaResponses,Webhooks}/`
+- [X] T005 [P] Documentar setup local em `specs/008-whatsapp-channel/quickstart.md` está atualizado (já criado pelo plan); adicionar README curto em `src/omniDesk.Api/Features/WhatsApp/README.md` linkando ao plan + research
 
 ---
 
@@ -85,10 +85,10 @@ description: "Task list for WhatsApp Channel implementation"
 - [ ] T030 [P] Criar `WhatsAppTemplateRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WhatsAppTemplateRepository.cs` implementando `IWhatsAppTemplateRepository`. Filtros: status, type, paginação
 - [ ] T031 [P] Criar `WaMessageStatusesRepository.cs` em `src/omniDesk.Api/Infrastructure/WhatsApp/WaMessageStatusesRepository.cs` (MongoDB) — collection `{tenant_slug}_wa_message_statuses` com `InsertAsync`, `ListByMessageAsync`, índice unique `wa_message_id` criado em ensure-indexes startup hook
 
-### Criptografia AES-256-GCM (research R3)
+### Criptografia AES-256-GCM (research R3 — REUSO)
 
-- [ ] T032 Criar `AesGcmEncryptionService.cs` em `src/omniDesk.Api/Infrastructure/Security/AesGcmEncryptionService.cs` com construtor recebendo chave de 32 bytes (lida de `Security:DataProtectionKey` base64). Métodos: `string Encrypt(string plaintext)` (gera nonce 12 bytes random, retorna base64 de `nonce ‖ ct ‖ tag`), `string Decrypt(string ciphertextB64)` (separa partes, valida tag, retorna plaintext). Usa `System.Security.Cryptography.AesGcm`. Falha rápida em startup se chave inválida/ausente
-- [ ] T033 Registrar `AesGcmEncryptionService` como `Singleton` em `src/omniDesk.Api/Program.cs` lendo a chave via `IConfiguration["Security:DataProtectionKey"]`. Lançar `InvalidOperationException` na startup se faltar
+- [X] T032 **Reuso — sem código novo.** `AesEncryptionService` já existe em `src/omniDesk.Api/Infrastructure/Security/AesEncryptionService.cs` com AES-256-GCM, formato de armazenamento `nonceHex:ciphertextHex:tagHex`, key 32 bytes via env var `AES_ENCRYPTION_KEY`. Usado por `Features/Admin/Tenants/TenantsEndpoints.cs` (Spec 003). Esta spec injeta o serviço onde precisar (Encrypt em UpdateConfig, Decrypt em SendAsync/HMAC validation)
+- [X] T033 **Já registrado.** `services.AddSingleton<AesEncryptionService>()` em `src/omniDesk.Api/Infrastructure/Tenants/TenantInfrastructureExtensions.cs:74`. Sem mudança
 
 ### HMAC validation (research R4) + raw body middleware
 
