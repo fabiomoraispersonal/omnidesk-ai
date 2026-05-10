@@ -42,6 +42,7 @@ using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Features.LiveChat.Adapters;
 using omniDesk.Api.Features.LiveChat.Config;
+using omniDesk.Api.Features.LiveChat.Inbox;
 using omniDesk.Api.Features.LiveChat.Public;
 using omniDesk.Api.Features.LiveChat.Uploads;
 using omniDesk.Api.Infrastructure.LiveChat;
@@ -174,6 +175,9 @@ builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Config.Commands.Update
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Config.Commands.ToggleWidgetCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Jobs.WidgetDisableEnforcementJob>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveChat.Config.Validators.UpdateWidgetConfigValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.SendAttendantMessageCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.ResolveConversationCommand>();
+builder.Services.AddScoped<omniDesk.Api.Hubs.CrmWebSocketEndpoint>();
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -315,6 +319,9 @@ var conversations = api.MapGroup("/conversations")
                        .AddEndpointFilter<ImpersonationAuditFilter>();
 SuggestReplyEndpoint.Map(conversations);
 
+// Spec 007 US3 — attendant inbox surface (list, history, send, resolve).
+conversations.MapInboxConversationEndpoints();
+
 // Spec 007 — Public widget surface (auth via WidgetToken scheme)
 var widgetPublic = api.MapGroup("/public/widget");
 widgetPublic.MapWidgetPublicEndpoints();
@@ -345,6 +352,14 @@ app.Map("/ws/widget/{conversation_id:guid}",
         await endpoint.HandleAsync(ctx, conversation_id, ct);
     })
     .RequireAuthorization(omniDesk.Api.Features.LiveChat.Public.WidgetTokenAuthHandler.SchemeName);
+
+// Spec 007 US3 — attendant CRM WebSocket. Standard JWT auth.
+app.Map("/ws/crm",
+    async (HttpContext ctx, omniDesk.Api.Hubs.CrmWebSocketEndpoint endpoint, CancellationToken ct) =>
+    {
+        await endpoint.HandleAsync(ctx, ct);
+    })
+    .RequireAuthorization();
 
 app.Run();
 

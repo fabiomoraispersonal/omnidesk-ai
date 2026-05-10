@@ -43,5 +43,12 @@ export const routes: Routes = [
         (m) => m.LiveChatConfigComponent,
       ),
   },
+  {
+    path: 'live-chat',
+    loadComponent: () =>
+      import('./features/live-chat-inbox/live-chat-inbox.component').then(
+        (m) => m.LiveChatInboxComponent,
+      ),
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

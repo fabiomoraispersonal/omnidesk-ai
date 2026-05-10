@@ -95,7 +95,7 @@ public class LiveChatOutgoingAdapter
         {
             var crmEnvelope = JsonSerializer.Serialize(new
             {
-                type = "chat.message_received",
+                type = Hubs.Events.CrmEvents.ChatMessageReceived,
                 payload = new
                 {
                     conversation_id = conversationId,
@@ -109,6 +109,29 @@ public class LiveChatOutgoingAdapter
             await sub.PublishAsync(
                 RedisChannel.Literal(RedisChannelNames.CrmUser(_slug.Slug, attendantId)),
                 crmEnvelope);
+
+            // Spec 007 T137 — browser notification trigger when the message did NOT
+            // originate from this same attendant (no point notifying yourself).
+            if (entity.SenderType != Domain.LiveChat.MessageSenderType.Attendant
+                || (entity.SenderId is { } sid && sid != attendantId))
+            {
+                var notifyEnvelope = JsonSerializer.Serialize(new
+                {
+                    type = Hubs.Events.CrmEvents.ChatBrowserNotify,
+                    payload = new
+                    {
+                        trigger = Hubs.Events.CrmEvents.TriggerNewMessage,
+                        conversation_id = conversationId,
+                        title = "Nova mensagem",
+                        body = (entity.Content ?? string.Empty).Length > 80
+                            ? entity.Content![..80] + "…"
+                            : entity.Content ?? string.Empty,
+                    },
+                }, JsonOpts);
+                await sub.PublishAsync(
+                    RedisChannel.Literal(RedisChannelNames.CrmUser(_slug.Slug, attendantId)),
+                    notifyEnvelope);
+            }
         }
 
         _logger.LogDebug(

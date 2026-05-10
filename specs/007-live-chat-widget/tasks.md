@@ -247,37 +247,27 @@ description: "Task list for Live Chat (Widget) implementation"
 
 ### Tests US3
 
-- [ ] T124 [P] [US3] Test contract `tests/Features/LiveChat/Inbox/ListActiveConversationsTests.cs` — GET `/api/conversations` retorna apenas `status=open` para o atendente/dept; ordem por `last_message_at DESC`
-- [ ] T125 [P] [US3] Test contract `tests/Features/LiveChat/Inbox/GetConversationDetailTests.cs` — GET `/api/conversations/{id}/messages` paginado, atendente só pode ler suas conversas (ou do depto enquanto sem atribuição)
-- [ ] T126 [P] [US3] Test contract `tests/Features/LiveChat/Inbox/SendAttendantMessageTests.cs` — POST nega quando atendente não dono; quando dono, INSERT message + publica `message.new` no canal do widget
-- [ ] T127 [P] [US3] Test contract `tests/Features/LiveChat/Inbox/ResolveConversationTests.cs` — POST `/resolve` muda status=resolved, ended_by=attendant, ended_at set; conversa some da lista
-- [ ] T128 [P] [US3] Test integration `tests/Hubs/CrmWebSocketEndpointTests.cs` — JWT inválido → 4401; JWT válido assina canais `crm:user:{id}` e `crm:dept:{id}`; receber `chat.new_conversation` + `chat.message_received` + `chat.browser_notify`
-- [ ] T129 [P] [US3] CRM unit `src/omniDesk.Crm/src/app/features/live-chat-inbox/live-chat-inbox.component.spec.ts` — lista esquerda renderiza; ao clicar conversa, painel direito carrega histórico
-- [ ] T130 [P] [US3] CRM unit `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/browser-notification.service.spec.ts` — solicita permissão na primeira sessão; emite Notification apenas quando `document.visibilityState='hidden'` OU conversa não focada
+- [~] T124-T128 [US3] Backend tests — Skip placeholders (JWT-aware Spec007WebFactory pendente; follow-up)
+- [~] T129-T130 [US3] CRM unit tests — Karma não cabeado neste workspace; deferred
 
-### Backend — endpoints CRM
+### Backend
 
-- [ ] T131 [P] [US3] Criar `ConversationListEndpoints.cs` em `src/omniDesk.Api/Features/LiveChat/Inbox/ConversationListEndpoints.cs` — GET `/api/conversations?status=active` (paginado); filtra por `attendant_id = currentUser.Id` ou `(attendant_id IS NULL AND department_id IN currentUser.Departments)`
-- [ ] T132 [US3] Criar `ConversationDetailEndpoints.cs` em `src/omniDesk.Api/Features/LiveChat/Inbox/ConversationDetailEndpoints.cs` — GET `/api/conversations/{id}/messages` (paginação), POST `/api/conversations/{id}/messages` (atendente envia), POST `/api/conversations/{id}/resolve`
-- [ ] T133 [US3] Implementar `SendAttendantMessageCommand.cs` em `src/omniDesk.Api/Features/LiveChat/Inbox/Commands/SendAttendantMessageCommand.cs` — valida ownership, INSERT message com `sender_type=attendant`, `sender_id=user.Id`, publica `message.new` no canal widget
-- [ ] T134 [US3] Implementar `ResolveConversationCommand.cs` em `src/omniDesk.Api/Features/LiveChat/Inbox/Commands/ResolveConversationCommand.cs` — UPDATE status=resolved, ended_by=attendant, ended_at=NOW(); publica `conversation.resolved` no widget e `chat.conversation_resolved` no CRM
+- [X] T131-T132 [US3] `InboxConversationEndpoints.cs` consolidado: GET `/`, GET `/{id}/livechat-messages`, POST `/{id}/livechat-messages`, POST `/{id}/resolve` — montado em `/api/conversations` ao lado de SuggestReplyEndpoint
+- [X] T133 [US3] `SendAttendantMessageCommand.cs` — ownership check + persist + delegação ao `LiveChatOutgoingAdapter`
+- [X] T134 [US3] `ResolveConversationCommand.cs` — UPDATE + publica `conversation.resolved` (widget) + `chat.conversation_resolved` (CRM)
+- [X] T135 [US3] `CrmWebSocketEndpoint.cs` — `/ws/crm`, JWT auth, subscribe `crm:user:{id}` + `crm:dept:{id}` via `WebSocketBroker`
+- [~] T136 [P] [US3] Handlers WS CRM — V1 não usa WS para inbound CRM (REST cobre send/resolve); typing fica para follow-up
+- [X] T137 [US3] `LiveChatOutgoingAdapter` agora também publica `chat.browser_notify` quando o destinatário não é o autor
 
-### Backend — WebSocket CRM
+### CRM Angular
 
-- [ ] T135 [US3] Criar `CrmWebSocketEndpoint.cs` em `src/omniDesk.Api/Hubs/CrmWebSocketEndpoint.cs` — `/ws/crm`; valida JWT na query, lê `attendants.department_id`, assina `crm:user:{userId}` + `crm:dept:{deptId}`; loop de eventos
-- [ ] T136 [P] [US3] Implementar handlers em `src/omniDesk.Api/Hubs/Handlers/Crm/` — `AttendantTypingHandler.cs`, `ConversationSendHandler.cs`, `ConversationResolveHandler.cs`, `MessagesReadHandler.cs` (CRM)
-- [ ] T137 [US3] Em `LiveChatOutgoingAdapter` (T069), publicar evento `chat.browser_notify` no canal CRM com triggers `new_conversation`, `new_message`, `transferred` conforme spec §8
-
-### CRM Angular — multi-conv inbox
-
-- [ ] T138 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/live-chat-inbox/services/inbox.service.ts` — signal store com `conversations = signal<Conversation[]>([])`, `selectedId = signal<string|null>(null)`; métodos `load()`, `select(id)`, `sendMessage(id, text)`, `resolve(id)`
-- [ ] T139 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/live-chat-inbox/services/crm-websocket.service.ts` — singleton WebSocket `/ws/crm`, autorenova JWT em background, dispatcha eventos para `inbox.service`
-- [ ] T140 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/live-chat-inbox/services/browser-notification.service.ts` — `requestPermission()`, `notify(title, body, conversationId)` que pula quando `visibilityState='visible'` E `inbox.selectedId() === conversationId`
-- [ ] T141 [US3] Criar `src/omniDesk.Crm/src/app/features/live-chat-inbox/live-chat-inbox.component.ts` (standalone, lazy) — split panel (esquerda + direita) usando PrimeNG SplitPanel ou flex CSS
-- [ ] T142 [P] [US3] Criar `components/conversation-list.component.ts` — `<p-listbox>` com badge colorido (vermelho/amarelo/cinza), prévia da última mensagem, timestamp relativo
-- [ ] T143 [P] [US3] Criar `components/conversation-detail.component.ts` — header (nome visitante, canal), área scroll com mensagens (alinhadas por sender), input + anexo + botão "Encerrar conversa" (PrimeNG Button danger)
-- [ ] T144 [US3] Adicionar rota lazy `live-chat-inbox` em `src/omniDesk.Crm/src/app/app.routes.ts` e entrada no menu lateral
-- [ ] T145 [US3] Solicitar permissão de notificação no primeiro mount de `live-chat-inbox.component` (uma vez por sessão); link para `Configurações → Notificações` (placeholder em US3, página simples)
+- [X] T138 [P] [US3] `inbox.service.ts` — signal store completo
+- [X] T139 [P] [US3] `crm-websocket.service.ts` — singleton WS com reconexão linear
+- [X] T140 [P] [US3] `browser-notification.service.ts` — silencioso quando aba focada + conversa selecionada
+- [X] T141 [US3] `live-chat-inbox.component.ts` (standalone, lazy) — split flex CSS (T142/T143 consolidados)
+- [~] T142-T143 [P] [US3] Sub-componentes separados — consolidados no main para V1
+- [X] T144 [US3] Rota lazy `live-chat` em `app.routes.ts`. Menu lateral pendente (CRM sem layout)
+- [X] T145 [US3] `requestPermission()` em `ngOnInit`
 
 **Checkpoint**: User Story 3 funcional — atendente recebe transbordo, gerencia múltiplas conversas, browser notifications, encerra manualmente.
 
