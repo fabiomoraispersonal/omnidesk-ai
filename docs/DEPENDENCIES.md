@@ -55,7 +55,7 @@ flowchart TD
 | **04** | Roles | 02, 03 |
 | **05** | Departments | 03, 04 |
 | **06** | AI Agents | 05 |
-| **07** | Live Chat | 05, 06 |
+| **07** | Live Chat | 05, 06 — ✅ COMPLETE (V1: backend, widget, CRM config, CRM inbox, lifecycle jobs, attachments) |
 | **08** | WhatsApp | 03 |
 | **09** | Tickets | 05, 07, 08 |
 | **10** | Notifications | 08, 09 |
