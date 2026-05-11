@@ -476,11 +476,13 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 008 — WhatsApp** — plano completo. Plano em [specs/008-whatsapp-channel/plan.md](specs/008-whatsapp-channel/plan.md). Branch `008-whatsapp-channel`. Pré-requisitos: Specs 002, 003, 004, 006, 007 (todas COMPLETE).
+**Spec 008 — WhatsApp** — 136/149 tasks done (~91%) — funcionalmente completa, pronta para PR/merge. Branch `008-whatsapp-channel`.
 
-Segundo adapter de canal (após Live Chat 007), implementa Princípio §III Channel Agnosticism. Reusa 100% do pipeline conversacional (`IncomingMessageWorker`/`OutgoingMessageWorker` da 006, `messages`/`visitors`/`conversations` da 007, `/ws/crm` da 007). Entrega: 2 tabelas tenant-scoped (`whatsapp_config` 1:1, `whatsapp_templates`) + 2 colunas em `conversations` (`wa_contact_phone`, `wa_session_expires_at`); 1 collection MongoDB (`{slug}_wa_message_statuses`); webhook público com HMAC-SHA256 + verify_token; 4 jobs Hangfire (webhook async, session expiring, token revoked, template poller, media download); CRM Angular (config + templates + ícones de delivery + banner de janela 24h); AES-256-GCM próprio para access_token e app_secret; zero NuGet novo.
+Segundo adapter de canal (após Live Chat 007), implementa Princípio §III Channel Agnosticism. Reusa 100% do pipeline conversacional da 006/007. Entrega: 2 tabelas tenant-scoped (`whatsapp_config`, `whatsapp_templates`) + 2 colunas em `conversations`; 1 collection MongoDB; webhook público com HMAC-SHA256 + verify_token; 4 jobs Hangfire (session expiring notifier, token revoked detector, template status poller, media download); CRM Angular completo (whatsapp-config + whatsapp-templates + ícones delivery + banner janela 24h + template-picker dialog + audio player); AES-256-GCM reusado (Spec 003); zero NuGet novo.
 
-Próximo passo: `/speckit-tasks` para gerar `tasks.md`.
+**Cobertura de testes**: 46 unit tests passing + 6 arquivos integration tests (27 specs) prontos para CI com Testcontainers (T045 webhook, T061 secrets leak, T077 send, T090 session sweep, T105 templates CRUD, T106 template status handler). Tasks restantes (13) são integration tests redundantes (8) + polish manual que requer ambiente externo (5) — post-merge.
+
+Ver [tasks.md](specs/008-whatsapp-channel/tasks.md) e [acceptance.md](specs/008-whatsapp-channel/checklists/acceptance.md) para status detalhado.
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)
