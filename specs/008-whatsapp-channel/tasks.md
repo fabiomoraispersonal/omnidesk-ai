@@ -328,10 +328,10 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Implementation for User Story 6
 
-- [ ] T128 [US6] Estender `WhatsAppIncomingAdapter.HandleMessagesAsync` (T054) — para tipos `image`/`document`/`audio`:
+- [X] T128 [US6] Estender `WhatsAppIncomingAdapter.HandleMessagesAsync` (T054) — para tipos `image`/`document`/`audio`:
     - Persistir `messages` com `content_type` apropriado (`image`/`file`), `content` = caption (se existir) ou null, `metadata.wa_message_id`, `metadata.wa_attachment_meta_id = msg.MediaId`, `metadata.wa_attachment_filename = msg.Filename`, `metadata.wa_attachment_status = "pending"`, `metadata.wa_media_type = msg.Type` (audio diferenciado de image dentro do file)
     - `BackgroundJob.Enqueue<WaMediaDownloadJob>(j => j.RunAsync(slug, message.Id, msg.MediaId, msg.MimeType, msg.Filename))`
-- [ ] T129 [US6] Criar `WaMediaDownloadJob.cs` em `src/omniDesk.Api/Features/WhatsApp/Jobs/WaMediaDownloadJob.cs` (research R6). Pipeline:
+- [X] T129 [US6] Criar `WaMediaDownloadJob.cs` em `src/omniDesk.Api/Features/WhatsApp/Jobs/WaMediaDownloadJob.cs` (research R6). Pipeline:
     1. Carregar config + decrypt access_token.
     2. `metaClient.GetMediaInfoAsync(mediaId)` → URL temporária + mime + size.
     3. Validar size ≤ 100 MB.
@@ -341,8 +341,8 @@ description: "Task list for WhatsApp Channel implementation"
     7. Update `messages.attachment_url`, `messages.metadata.wa_attachment_status='ready'`.
     8. Broadcast WS `wa.message_status` com `attachment_ready=true`.
     9. Em falha, set `wa_attachment_status='failed'` + incident
-- [ ] T130 [US6] Estender `MimeTypeDetector` da Spec 007 (`src/omniDesk.Api/Features/LiveChat/Uploads/MimeTypeDetector.cs`) para incluir tipos de áudio: `audio/ogg`, `audio/mpeg`, `audio/aac`, `audio/mp4` na allowlist (com magic bytes correspondentes). Adicionar testes em `tests/Features/LiveChat/Uploads/MimeTypeDetectorTests.cs`
-- [ ] T131 [US6] Garantir tipos não suportados (`WaUnsupportedTypes.All`) são silenciosamente ignorados em `WhatsAppIncomingAdapter.HandleMessagesAsync` (T054 já tem early-continue) — adicionar log info estruturado: `_logger.LogInformation("WaUnsupportedMessageType: tenant={Tenant} type={Type} wa_message_id={Id}", slug, type, wa_message_id)` (FR-010)
+- [X] T130 [US6] Estender `MimeTypeDetector` da Spec 007 (`src/omniDesk.Api/Features/LiveChat/Uploads/MimeTypeDetector.cs`) para incluir tipos de áudio: `audio/ogg`, `audio/mpeg`, `audio/aac`, `audio/mp4` na allowlist (com magic bytes correspondentes). Adicionar testes em `tests/Features/LiveChat/Uploads/MimeTypeDetectorTests.cs`
+- [X] T131 [US6] Garantir tipos não suportados (`WaUnsupportedTypes.All`) são silenciosamente ignorados em `WhatsAppIncomingAdapter.HandleMessagesAsync` (T054 já tem early-continue) — adicionar log info estruturado: `_logger.LogInformation("WaUnsupportedMessageType: tenant={Tenant} type={Type} wa_message_id={Id}", slug, type, wa_message_id)` (FR-010)
 
 ### Frontend CRM
 

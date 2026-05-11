@@ -240,6 +240,9 @@ builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaTemplateStat
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaTemplateStatusPollerJob>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.WhatsApp.Templates.Validators.CreateTemplateValidator>();
 
+// Spec 008 US6 — Media download job (Meta GET media → MimeTypeDetector → MinIO).
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaMediaDownloadJob>();
+
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(

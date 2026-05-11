@@ -20,8 +20,14 @@ public class MimeTypeDetector
     public const string Docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     public const string Xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+    // Spec 008 US6 — formatos de áudio recebidos via WhatsApp.
+    public const string OggAudio = "audio/ogg";
+    public const string Mp3      = "audio/mpeg";
+    public const string Aac      = "audio/aac";
+    public const string Mp4Audio = "audio/mp4";
+
     public static readonly IReadOnlyCollection<string> Allowlist =
-        new[] { Jpeg, Png, Gif, Webp, Pdf, Docx, Xlsx };
+        new[] { Jpeg, Png, Gif, Webp, Pdf, Docx, Xlsx, OggAudio, Mp3, Aac, Mp4Audio };
 
     public async Task<string?> DetectAsync(Stream stream, CancellationToken ct = default)
     {
@@ -45,6 +51,16 @@ public class MimeTypeDetector
         if (StartsWith(head, [0x25, 0x50, 0x44, 0x46])) return Pdf; // %PDF
         if (StartsWith(head, [0x50, 0x4B, 0x03, 0x04])) // PK\x03\x04 — ZIP container.
             return await DetectOfficeFromZipAsync(stream, ct);
+
+        // Spec 008 US6 — magic bytes de áudio.
+        if (StartsWith(head, [0x4F, 0x67, 0x67, 0x53])) return OggAudio;  // "OggS"
+        if (StartsWith(head, [0xFF, 0xFB]) || StartsWith(head, [0xFF, 0xF3])
+            || StartsWith(head, [0xFF, 0xF2]) || StartsWith(head, [0x49, 0x44, 0x33])) // MPEG audio frame or "ID3"
+            return Mp3;
+        if (StartsWith(head, [0xFF, 0xF1]) || StartsWith(head, [0xFF, 0xF9])) return Aac; // ADTS AAC
+        // ISO BMFF / MP4: bytes 4..7 == "ftyp"
+        if (read >= 8 && head[4] == 0x66 && head[5] == 0x74 && head[6] == 0x79 && head[7] == 0x70)
+            return Mp4Audio;
 
         return null;
     }

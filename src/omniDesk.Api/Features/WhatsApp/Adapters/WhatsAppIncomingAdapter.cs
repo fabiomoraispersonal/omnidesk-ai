@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Domain.WhatsApp;
@@ -35,6 +36,7 @@ public sealed class WhatsAppIncomingAdapter
     private readonly AppDbContext _db;
     private readonly IConnectionMultiplexer _redis;
     private readonly IncomingMessagePublisher _publisher;
+    private readonly Hangfire.IBackgroundJobClient _backgroundJobs;
     private readonly TimeProvider _clock;
     private readonly ILogger<WhatsAppIncomingAdapter> _logger;
 
@@ -42,12 +44,14 @@ public sealed class WhatsAppIncomingAdapter
         AppDbContext db,
         IConnectionMultiplexer redis,
         IncomingMessagePublisher publisher,
+        Hangfire.IBackgroundJobClient backgroundJobs,
         TimeProvider clock,
         ILogger<WhatsAppIncomingAdapter> logger)
     {
         _db = db;
         _redis = redis;
         _publisher = publisher;
+        _backgroundJobs = backgroundJobs;
         _clock = clock;
         _logger = logger;
     }
@@ -174,7 +178,7 @@ public sealed class WhatsAppIncomingAdapter
             return;
         }
 
-        var (contentType, content, attachmentUrl, attachmentName) = MapPayload(msg, supported.Value);
+        var (contentType, content, attachmentUrl, attachmentName, mediaId) = MapPayload(msg, supported.Value);
 
         var message = new Message
         {
@@ -190,6 +194,15 @@ public sealed class WhatsAppIncomingAdapter
         };
         _db.Messages.Add(message);
         await _db.SaveChangesAsync(ct);
+
+        // Spec 008 US6 — mídia tem media_id da Meta; enfileira download async.
+        // Imagem/documento/áudio entram aqui com attachment_url=null e mediaId set.
+        if (!string.IsNullOrEmpty(mediaId))
+        {
+            _backgroundJobs.Enqueue<Jobs.WaMediaDownloadJob>(j =>
+                j.RunAsync(tenantSlug, tenantId, message.Id, mediaId,
+                    attachmentName, msg.Type, CancellationToken.None));
+        }
 
         // 5. Enfileira no pipeline IA (channel-agnostic).
         var sentAt = ParseUnixSeconds(msg.Timestamp) ?? _clock.GetUtcNow();
@@ -292,20 +305,20 @@ public sealed class WhatsAppIncomingAdapter
         }
     }
 
-    private static (MessageContentType ContentType, string? Content, string? AttachmentUrl, string? AttachmentName) MapPayload(
+    private static (MessageContentType ContentType, string? Content, string? AttachmentUrl, string? AttachmentName, string? MediaId) MapPayload(
         WaIncomingMessage msg, WaSupportedMessageType type)
     {
         return type switch
         {
             WaSupportedMessageType.Text =>
-                (MessageContentType.Text, msg.Text?.Body, null, null),
+                (MessageContentType.Text, msg.Text?.Body, null, null, null),
             WaSupportedMessageType.Image =>
-                (MessageContentType.Image, msg.Image?.Caption, null, msg.Image?.Id),
+                (MessageContentType.Image, msg.Image?.Caption, null, null, msg.Image?.Id),
             WaSupportedMessageType.Document =>
-                (MessageContentType.File, msg.Document?.Caption, null, msg.Document?.Filename),
+                (MessageContentType.File, msg.Document?.Caption, null, msg.Document?.Filename, msg.Document?.Id),
             WaSupportedMessageType.Audio =>
-                (MessageContentType.File, null, null, msg.Audio?.Id),
-            _ => (MessageContentType.Text, null, null, null),
+                (MessageContentType.File, null, null, null, msg.Audio?.Id),
+            _ => (MessageContentType.Text, null, null, null, null),
         };
     }
 
