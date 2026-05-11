@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextareaModule } from 'primeng/inputtextarea';
@@ -19,6 +21,11 @@ import { MessageService } from 'primeng/api';
 import { InboxService } from './services/inbox.service';
 import { CrmWebSocketService } from './services/crm-websocket.service';
 import { BrowserNotificationService } from './services/browser-notification.service';
+import {
+  TemplatePickerDialogComponent,
+  TemplatePickerResult,
+} from './components/template-picker-dialog.component';
+import { environment } from '../../../environments/environment';
 
 /**
  * Spec 007 US3 — multi-conversation inbox for attendants.
@@ -38,6 +45,7 @@ import { BrowserNotificationService } from './services/browser-notification.serv
   imports: [
     CommonModule, FormsModule, CardModule, ButtonModule,
     InputTextareaModule, ToastModule, DatePipe,
+    TemplatePickerDialogComponent,
   ],
   providers: [MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -137,10 +145,24 @@ import { BrowserNotificationService } from './services/browser-notification.serv
         <footer class="composer">
           <textarea pInputTextarea rows="2" [(ngModel)]="draft"
                     placeholder="Digite uma mensagem…"
+                    [disabled]="isSessionExpired()"
                     (keydown.enter)="onEnter($event)"></textarea>
-          <p-button label="Enviar" icon="pi pi-send" (onClick)="send()" [disabled]="!draft().trim()"></p-button>
+          @if (isSessionExpired()) {
+            <p-button label="Selecionar template" icon="pi pi-list"
+                      severity="warn"
+                      (onClick)="openTemplatePicker()"></p-button>
+          } @else {
+            <p-button label="Enviar" icon="pi pi-send" (onClick)="send()" [disabled]="!draft().trim()"></p-button>
+          }
         </footer>
       </main>
+
+      <app-template-picker-dialog
+        [visible]="templatePickerVisible()"
+        [sending]="sendingTemplate()"
+        (submitted)="onTemplateSubmitted($event)"
+        (canceled)="closeTemplatePicker()"
+      ></app-template-picker-dialog>
 
       <ng-template #placeholder>
         <main class="detail empty">
@@ -203,8 +225,11 @@ export class LiveChatInboxComponent implements OnInit, OnDestroy {
   private readonly ws = inject(CrmWebSocketService);
   private readonly notify = inject(BrowserNotificationService);
   private readonly toast = inject(MessageService);
+  private readonly http = inject(HttpClient);
 
   protected readonly draft = signal('');
+  protected readonly templatePickerVisible = signal(false);
+  protected readonly sendingTemplate = signal(false);
 
   @ViewChild('scroll') private scrollEl?: ElementRef<HTMLDivElement>;
 
@@ -326,5 +351,60 @@ export class LiveChatInboxComponent implements OnInit, OnDestroy {
   /** Anexo marcado como falha pelo WaMediaDownloadJob? */
   protected isAttachmentFailed(name?: string | null): boolean {
     return !!name && name.startsWith('_failed:');
+  }
+
+  /** Janela 24h expirada na conversa atual? */
+  protected isSessionExpired(): boolean {
+    if (!this.isWhatsAppChannel()) return false;
+    const id = this.inbox.selectedId();
+    if (!id) return false;
+    const w = this.ws.waSessionWindows().get(id);
+    return w?.status === 'expired';
+  }
+
+  /** Abre dialog para escolher template aprovado (janela expirada). */
+  protected openTemplatePicker(): void {
+    this.templatePickerVisible.set(true);
+  }
+
+  protected closeTemplatePicker(): void {
+    this.templatePickerVisible.set(false);
+  }
+
+  /**
+   * Envia template via POST /api/whatsapp/send/template. Reuso do HttpClient
+   * inline em vez de injetar o WhatsAppTemplatesService — apenas uma chamada.
+   * No sucesso: limpa dialog, mensagem aparecerá via chat.message_received.
+   */
+  protected async onTemplateSubmitted(result: TemplatePickerResult): Promise<void> {
+    const conversationId = this.inbox.selectedId();
+    if (!conversationId) return;
+
+    this.sendingTemplate.set(true);
+    try {
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/api/whatsapp/send/template`, {
+          conversation_id: conversationId,
+          template_id: result.templateId,
+          variables: result.variables,
+        }),
+      );
+      this.toast.add({
+        severity: 'success',
+        summary: 'Template enviado',
+        detail: 'Aguardando confirmação de entrega.',
+        life: 3000,
+      });
+      this.closeTemplatePicker();
+      requestAnimationFrame(() => this.scrollToBottom());
+    } catch (err) {
+      let detail = 'Falha ao enviar template.';
+      if (err instanceof HttpErrorResponse && err.error?.error?.message) {
+        detail = err.error.error.message;
+      }
+      this.toast.add({ severity: 'error', summary: 'Erro', detail, life: 5000 });
+    } finally {
+      this.sendingTemplate.set(false);
+    }
   }
 }

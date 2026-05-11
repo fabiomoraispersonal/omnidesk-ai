@@ -264,10 +264,10 @@ description: "Task list for WhatsApp Channel implementation"
 ### Frontend CRM
 
 - [X] T098 [P] [US4] Estender `crm-websocket.service.ts` (T086) com `waSessionExpiring$` e `waSessionExpired$` Subjects + handlers para os 2 eventos
-- [ ] T099 [US4] Criar `session-window-banner.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/session-window-banner.component.ts` standalone. Input `sessionWindow: { status: 'active'|'expiring'|'expired'; expiresAt?: Date }`. Renderiza banner amarelo (expiring) ou vermelho (expired) com mensagem da contracts/whatsapp-websocket-events.md §2/§3. Em `active`, não renderiza nada
-- [ ] T100 [US4] Criar `template-picker-dialog.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/template-picker-dialog.component.ts` standalone usando PrimeNG Dialog + Listbox. Props: `templates: WhatsAppTemplateDto[]` (filtrado approved), Output: `(send) => { template_id, variables: Record<string,string> }`. Renderiza dropdown de template + form dinâmico de variáveis a partir de `template.variable_labels`
+- [X] T099 [US4] Criar `session-window-banner.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/session-window-banner.component.ts` standalone. Input `sessionWindow: { status: 'active'|'expiring'|'expired'; expiresAt?: Date }`. Renderiza banner amarelo (expiring) ou vermelho (expired) com mensagem da contracts/whatsapp-websocket-events.md §2/§3. Em `active`, não renderiza nada
+- [X] T100 [US4] Criar `template-picker-dialog.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/template-picker-dialog.component.ts` standalone usando PrimeNG Dialog + Listbox. Props: `templates: WhatsAppTemplateDto[]` (filtrado approved), Output: `(send) => { template_id, variables: Record<string,string> }`. Renderiza dropdown de template + form dinâmico de variáveis a partir de `template.variable_labels`
 - [X] T101 [US4] Estender `conversation-detail.component.ts` (T087) com `sessionWindow = signal<{ status; expiresAt? }>({ status: 'active' })`, effects para `waSessionExpiring$` e `waSessionExpired$`; quando `status='expired'`: input de texto livre disabled + botão "Selecionar template" abre `template-picker-dialog`; ao receber `chat.message_received` em conversa expired → re-fetch conversation e voltar para `active` (item §4 do WS contract)
-- [ ] T102 [P] [US4] Atualizar `conversation-detail.component.spec.ts` cobrindo: banner renderiza por status; input desabilita em expired; dialog de template abre; envio chama service com payload correto
+- [X] T102 [P] [US4] Atualizar `conversation-detail.component.spec.ts` cobrindo: banner renderiza por status; input desabilita em expired; dialog de template abre; envio chama service com payload correto
 
 **Checkpoint**: User Story 4 funcional. Janela expirada bloqueia texto, força template. SC-003 (100% blocked sem template) validável.
 
@@ -346,8 +346,8 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Frontend CRM
 
-- [ ] T132 [US6] Estender `conversation-detail.component.ts` (T087) com renderização condicional por `content_type`: `image` → `<img [src]="attachment_url">` com preview clicável; `file` com `metadata.wa_media_type` = audio → `<audio controls [src]="attachment_url">`; `file` outros → link de download com nome do arquivo. Quando `metadata.wa_attachment_status='pending'`: spinner; quando `failed`: placeholder "Falha ao carregar mídia" + botão retry (em V1.1 — em V1 apenas exibe placeholder)
-- [ ] T133 [P] [US6] Atualizar `conversation-detail.component.spec.ts` cobrindo: image renderiza preview; pdf renderiza link de download; audio renderiza player; pending mostra spinner; failed mostra placeholder; tipos não suportados não aparecem (test é via dataset de mensagens — confirmar count)
+- [X] T132 [US6] Estender `conversation-detail.component.ts` (T087) com renderização condicional por `content_type`: `image` → `<img [src]="attachment_url">` com preview clicável; `file` com `metadata.wa_media_type` = audio → `<audio controls [src]="attachment_url">`; `file` outros → link de download com nome do arquivo. Quando `metadata.wa_attachment_status='pending'`: spinner; quando `failed`: placeholder "Falha ao carregar mídia" + botão retry (em V1.1 — em V1 apenas exibe placeholder)
+- [X] T133 [P] [US6] Atualizar `conversation-detail.component.spec.ts` cobrindo: image renderiza preview; pdf renderiza link de download; audio renderiza player; pending mostra spinner; failed mostra placeholder; tipos não suportados não aparecem (test é via dataset de mensagens — confirmar count)
 
 **Checkpoint**: User Story 6 funcional. Mídia recebida e exibida. Tipos não suportados silenciados. SC-009 validável.
 
