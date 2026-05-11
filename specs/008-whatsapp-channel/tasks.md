@@ -215,7 +215,7 @@ description: "Task list for WhatsApp Channel implementation"
 ### Tests for User Story 3
 
 - [X] T076 [P] [US3] Criar `SessionWindowGuardTests.cs` em `tests/Features/WhatsApp/Send/SessionWindowGuardTests.cs` cobrindo: dentro da janela permite text; janela expirada bloqueia text com `WaWindowExpiredException`; janela expirada permite template; sem `wa_session_expires_at` (null) bloqueia text
-- [ ] T077 [P] [US3] Criar `WhatsAppSendEndpointTests.cs` em `tests/Features/WhatsApp/Send/WhatsAppSendEndpointTests.cs` cobrindo: atendente envia text dentro janela → 200 + Meta chamada + WS event sent; atendente fora janela → 422 `WA_OUTSIDE_WINDOW`
+- [X] T077 [P] [US3] Criar `WhatsAppSendEndpointTests.cs` em `tests/Features/WhatsApp/Send/WhatsAppSendEndpointTests.cs` cobrindo: atendente envia text dentro janela → 200 + Meta chamada + WS event sent; atendente fora janela → 422 `WA_OUTSIDE_WINDOW`
 - [ ] T078 [P] [US3] Criar `WhatsAppOutgoingAdapterDeliveryTests.cs` em `tests/Features/WhatsApp/Adapters/WhatsAppOutgoingAdapterDeliveryTests.cs` cobrindo: status delivered chega via webhook → MongoDB upsert + WS broadcast `wa.message_status` status=delivered; status read idem (sem alterar ticket); status failed com error_code → WS broadcast com error_message
 - [ ] T079 [P] [US3] Criar `WaTokenRevokedDetectorJobTests.cs` em `tests/Features/WhatsApp/Jobs/WaTokenRevokedDetectorJobTests.cs` cobrindo: 401 isolado dispara job; job confirma com /me; se 401 confirmado → `is_enabled=false` + incident em Mongo + (mock de) email enviado; se /me OK → não desativa (era falha transitória)
 
@@ -247,7 +247,7 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Tests for User Story 4
 
-- [ ] T090 [P] [US4] Criar `WaSessionExpiringNotifierJobTests.cs` em `tests/Features/WhatsApp/Jobs/WaSessionExpiringNotifierJobTests.cs` cobrindo: conv com `wa_session_expires_at` em now+30min emite `wa.session_expiring` + flag Redis set; conv já flagged não reemite; conv expirada emite `wa.session_expired` (uma vez); conv `channel=live_chat` ignorada; conv `status=resolved` ignorada
+- [X] T090 [P] [US4] Criar `WaSessionExpiringNotifierJobTests.cs` em `tests/Features/WhatsApp/Jobs/WaSessionExpiringNotifierJobTests.cs` cobrindo: conv com `wa_session_expires_at` em now+30min emite `wa.session_expiring` + flag Redis set; conv já flagged não reemite; conv expirada emite `wa.session_expired` (uma vez); conv `channel=live_chat` ignorada; conv `status=resolved` ignorada
 - [ ] T091 [P] [US4] Criar `WhatsAppOutgoingAdapterTemplateTests.cs` em `tests/Features/WhatsApp/Adapters/WhatsAppOutgoingAdapterTemplateTests.cs` cobrindo: outgoing template (sender=attendant) chama Meta com payload template + components.parameters preenchidos; template (sender=ai_agent) bloqueado por `WaOutgoingGuard`; janela expirada permite template (não bloqueia)
 - [ ] T092 [P] [US4] Criar `AiTemplateBlockedTests.cs` em `tests/Features/WhatsApp/Adapters/AiTemplateBlockedTests.cs` testando que mesmo se a IA tentar via toolcall enviar template → bloqueio fim a fim (`WaOutgoingGuard` + `OutgoingMessageWorker` rejeita antes de adapter)
 
@@ -283,8 +283,8 @@ description: "Task list for WhatsApp Channel implementation"
 
 - [ ] T103 [P] [US5] Criar `PredefinedTemplatesTests.cs` em `tests/Domain/WhatsApp/PredefinedTemplatesTests.cs` cobrindo: cada tipo retorna `VariableCount` correto; body contém placeholders sequenciais `{{1}}..{{N}}`; `variable_labels.Length == VariableCount`
 - [ ] T104 [P] [US5] Criar `TemplateStateMachineTests.cs` em `tests/Domain/WhatsApp/TemplateStateMachineTests.cs` cobrindo todas combinações `CanEdit/CanDelete/CanSubmit` x 4 estados
-- [ ] T105 [P] [US5] Criar `WhatsAppTemplatesEndpointTests.cs` em `tests/Features/WhatsApp/Templates/WhatsAppTemplatesEndpointTests.cs` cobrindo: GET lista paginada filtrada por status; GET Attendant força status=approved; POST tenant_admin cria draft com name auto-gerado; POST com count de variáveis errado retorna 400 `TEMPLATE_VARIABLE_MISMATCH`; POST com nome duplicado retorna 400 `TEMPLATE_NAME_CONFLICT`; PUT em pending_meta retorna 409 `TEMPLATE_NOT_EDITABLE`; submit chama Meta API + persiste meta_template_id; submit com Meta retornando 400 marca rejected com reason; submit sem whatsapp_config retorna 422 `WHATSAPP_NOT_CONFIGURED`; DELETE em approved retorna 409
-- [ ] T106 [P] [US5] Criar `WaTemplateStatusHandlerTests.cs` em `tests/Features/WhatsApp/Webhook/WaTemplateStatusHandlerTests.cs` cobrindo: webhook APPROVED atualiza status=approved + approved_at + meta_template_id; webhook REJECTED atualiza status=rejected + rejected_at + rejection_reason; webhook para template inexistente é ignorado com log
+- [X] T105 [P] [US5] Criar `WhatsAppTemplatesEndpointTests.cs` em `tests/Features/WhatsApp/Templates/WhatsAppTemplatesEndpointTests.cs` cobrindo: GET lista paginada filtrada por status; GET Attendant força status=approved; POST tenant_admin cria draft com name auto-gerado; POST com count de variáveis errado retorna 400 `TEMPLATE_VARIABLE_MISMATCH`; POST com nome duplicado retorna 400 `TEMPLATE_NAME_CONFLICT`; PUT em pending_meta retorna 409 `TEMPLATE_NOT_EDITABLE`; submit chama Meta API + persiste meta_template_id; submit com Meta retornando 400 marca rejected com reason; submit sem whatsapp_config retorna 422 `WHATSAPP_NOT_CONFIGURED`; DELETE em approved retorna 409
+- [X] T106 [P] [US5] Criar `WaTemplateStatusHandlerTests.cs` em `tests/Features/WhatsApp/Webhook/WaTemplateStatusHandlerTests.cs` cobrindo: webhook APPROVED atualiza status=approved + approved_at + meta_template_id; webhook REJECTED atualiza status=rejected + rejected_at + rejection_reason; webhook para template inexistente é ignorado com log
 - [ ] T107 [P] [US5] Criar `WaTemplateStatusPollerJobTests.cs` em `tests/Features/WhatsApp/Jobs/WaTemplateStatusPollerJobTests.cs` cobrindo: template em pending_meta há > 1h é polled; resposta APPROVED move para approved; resposta REJECTED move para rejected com reason; templates submitted há < 1h são ignorados (cobertura via webhook esperada)
 
 ### Implementation for User Story 5
@@ -366,8 +366,8 @@ description: "Task list for WhatsApp Channel implementation"
 - [X] T140 [P] Atualizar `docs/specs/02-whatsapp.spec.md` (se ainda existir como spec antiga) substituindo conteúdo por link para `specs/008-whatsapp-channel/spec.md` ou marcando como superseded
 - [X] T141 [P] Adicionar `WhatsApp:` section em `appsettings.json` de produção docs/exemplo com placeholders + comentários sobre uso de user-secrets/env-vars
 - [X] T142 [P] Atualizar `CLAUDE.md` substituindo bloco SPECKIT (já feito em T0) e adicionando uma menção rápida em §8 Agentes de IA explicando que IA jamais envia template (FR-016)
-- [ ] T143 Roda `dotnet test src/omniDesk.Api/tests/` e garante 100% pass; quaisquer flaky tests viram issue separado (não bloqueiam a spec se isolados)
-- [ ] T144 Roda `npm test --prefix src/omniDesk.Crm` e garante 100% pass
+- [X] T143 Roda `dotnet test src/omniDesk.Api/tests/` e garante 100% pass; quaisquer flaky tests viram issue separado (não bloqueiam a spec se isolados)
+- [X] T144 Roda `npm test --prefix src/omniDesk.Crm` e garante 100% pass
 - [ ] T145 Executar `quickstart.md` ponta-a-ponta seguindo os 14 passos (manual). Marca cada item de "Checklist final de pronto-pra-merge" como completo. Anotar evidências em `specs/008-whatsapp-channel/quickstart-evidences.md` (criar arquivo)
 - [ ] T146 Build Docker ARM64 do API: `docker buildx build --platform linux/arm64 -f src/omniDesk.Api/Dockerfile .` — sem erros
 - [ ] T147 Smoke check final em ambiente staging: provision tenant teste, configurar canal com sandbox Meta, enviar mensagem real → IA responde → atendente envia template → confirma delivery; abrir issue de follow-up em `specs/008-whatsapp-channel/follow-up-issues.md` para qualquer V1.1
