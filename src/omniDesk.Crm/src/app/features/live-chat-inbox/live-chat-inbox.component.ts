@@ -70,12 +70,24 @@ import { BrowserNotificationService } from './services/browser-notification.serv
       <main class="detail" *ngIf="inbox.selected() as conv; else placeholder">
         <header>
           <div>
-            <h2>Visitante {{ conv.visitor_id.slice(0, 8) }}</h2>
-            <p class="muted">{{ conv.channel }} · iniciado em {{ conv.created_at | date: 'shortDate' }}</p>
+            <h2>
+              Visitante {{ conv.visitor_id.slice(0, 8) }}
+              <!-- Spec 008 US3 — badge do canal WhatsApp -->
+              <span *ngIf="conv.channel === 'whatsapp'" class="channel-badge whatsapp">WhatsApp</span>
+              <span *ngIf="conv.channel === 'live_chat'" class="channel-badge live-chat">Web Chat</span>
+            </h2>
+            <p class="muted">{{ channelLabel(conv.channel) }} · iniciado em {{ conv.created_at | date: 'shortDate' }}</p>
           </div>
           <p-button label="Encerrar conversa" severity="danger" [outlined]="true"
                     icon="pi pi-times" (onClick)="resolve(conv.id)"></p-button>
         </header>
+
+        <!-- Spec 008 US4 — banner janela 24h (WhatsApp only) -->
+        <div class="session-banner" *ngIf="sessionWindowBanner() as banner"
+             [class.warn]="banner.kind === 'warn'"
+             [class.danger]="banner.kind === 'danger'">
+          {{ banner.text }}
+        </div>
 
         <div class="messages" #scroll>
           <div *ngFor="let msg of inbox.selectedMessages()"
@@ -89,14 +101,35 @@ import { BrowserNotificationService } from './services/browser-notification.serv
                 <img [src]="msg.attachment_url" [alt]="msg.attachment_name ?? ''" />
               </ng-container>
               <ng-container *ngIf="msg.content_type === 'file' && msg.attachment_url">
-                <a [href]="msg.attachment_url" target="_blank" rel="noopener noreferrer">
-                  📎 {{ msg.attachment_name ?? 'arquivo' }}
-                </a>
+                <ng-container *ngIf="isAudioAttachment(msg.attachment_name); else fileLink">
+                  <audio controls [src]="msg.attachment_url"></audio>
+                </ng-container>
+                <ng-template #fileLink>
+                  <a [href]="msg.attachment_url" target="_blank" rel="noopener noreferrer">
+                    📎 {{ msg.attachment_name ?? 'arquivo' }}
+                  </a>
+                </ng-template>
+              </ng-container>
+              <ng-container *ngIf="msg.content_type === 'file' && !msg.attachment_url">
+                <span *ngIf="isAttachmentFailed(msg.attachment_name); else loadingMedia"
+                      class="attachment-failed">⚠️ Falha ao carregar mídia</span>
+                <ng-template #loadingMedia>
+                  <span class="attachment-loading">⏳ Carregando mídia…</span>
+                </ng-template>
               </ng-container>
               <ng-container *ngIf="msg.content_type !== 'image' && msg.content_type !== 'file'">
                 {{ msg.content }}
               </ng-container>
-              <small class="ts">{{ msg.created_at | date: 'short' }}</small>
+              <small class="ts">
+                {{ msg.created_at | date: 'short' }}
+                <!-- Spec 008 US3 — ícones de delivery WhatsApp para mensagens enviadas (não-visitor) -->
+                <ng-container *ngIf="isWhatsAppChannel() && msg.sender_type !== 'visitor' && deliveryIcon(msg.id) as ico">
+                  <span class="delivery-icon"
+                        [class.delivery-read]="ico.read"
+                        [class.delivery-failed]="ico.failed"
+                        [title]="ico.tooltip">{{ ico.glyph }}</span>
+                </ng-container>
+              </small>
             </div>
           </div>
         </div>
@@ -149,6 +182,20 @@ import { BrowserNotificationService } from './services/browser-notification.serv
     .composer { display: flex; gap: 8px; padding: 12px; background: white; border-top: 1px solid #EDE7DF; }
     .composer textarea { flex: 1; resize: none; }
     .muted { color: #7A7A7A; }
+
+    /* Spec 008 US3/US4/US6 — WhatsApp UI additions */
+    .channel-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px;
+                     margin-left: 8px; vertical-align: middle; font-weight: 500; }
+    .channel-badge.whatsapp { background: #25D366; color: white; }
+    .channel-badge.live-chat { background: #6F7D5C; color: white; }
+    .delivery-icon { margin-left: 6px; font-size: 11px; color: #9A9A9A; }
+    .delivery-icon.delivery-read { color: #34B7F1; } /* WhatsApp blue */
+    .delivery-icon.delivery-failed { color: #B85C5C; }
+    .attachment-failed { color: #B85C5C; font-size: 12px; }
+    .attachment-loading { color: #9A9A9A; font-size: 12px; font-style: italic; }
+    .session-banner { padding: 8px 16px; font-size: 13px; text-align: center; }
+    .session-banner.warn { background: #FDF7E2; color: #846200; border-bottom: 1px solid #F0E0A8; }
+    .session-banner.danger { background: #FDECEC; color: #842020; border-bottom: 1px solid #F0A8A8; font-weight: 500; }
   `],
 })
 export class LiveChatInboxComponent implements OnInit, OnDestroy {
@@ -208,5 +255,76 @@ export class LiveChatInboxComponent implements OnInit, OnDestroy {
   private scrollToBottom(): void {
     const el = this.scrollEl?.nativeElement;
     if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  // ---- Spec 008 US3/US4/US6 helpers ----
+
+  /** Conversa selecionada é WhatsApp? */
+  protected isWhatsAppChannel(): boolean {
+    return this.inbox.selected()?.channel === 'whatsapp';
+  }
+
+  /**
+   * Mapeia status WhatsApp → glyph + tooltip + flag de cor especial (read=azul, failed=vermelho).
+   * Retorna null se mensagem não tem status conhecido (ainda não chegou pelo WS).
+   */
+  protected deliveryIcon(messageId: string):
+      { glyph: string; tooltip: string; read: boolean; failed: boolean } | null {
+    const state = this.ws.waMessageStatuses().get(messageId);
+    if (!state) return { glyph: '✓', tooltip: 'Enviado (aguardando confirmação)', read: false, failed: false };
+
+    switch (state.status) {
+      case 'sent':
+        return { glyph: '✓', tooltip: 'Enviado para os servidores da Meta', read: false, failed: false };
+      case 'delivered':
+        return { glyph: '✓✓', tooltip: 'Entregue ao cliente', read: false, failed: false };
+      case 'read':
+        return { glyph: '✓✓', tooltip: 'Lido pelo cliente', read: true, failed: false };
+      case 'failed':
+        return {
+          glyph: '✗',
+          tooltip: state.errorMessage ?? 'Falha ao entregar a mensagem.',
+          read: false,
+          failed: true,
+        };
+      default:
+        return { glyph: '✓', tooltip: state.status, read: false, failed: false };
+    }
+  }
+
+  /** Banner do estado da janela 24h (WhatsApp only). */
+  protected sessionWindowBanner(): { kind: 'warn' | 'danger'; text: string } | null {
+    if (!this.isWhatsAppChannel()) return null;
+    const id = this.inbox.selectedId();
+    if (!id) return null;
+    const w = this.ws.waSessionWindows().get(id);
+    if (!w || w.status === 'active') return null;
+
+    if (w.status === 'expiring') {
+      return {
+        kind: 'warn',
+        text: `⚠️ A janela de 24h da Meta expira em ${w.minutesRemaining} min. Após isso, será necessário enviar template aprovado.`,
+      };
+    }
+    return {
+      kind: 'danger',
+      text: '🚫 A janela de 24h da Meta expirou. Selecione um template aprovado para enviar.',
+    };
+  }
+
+  /** Label amigável do canal. */
+  protected channelLabel(channel: string): string {
+    return channel === 'whatsapp' ? 'WhatsApp' : channel === 'live_chat' ? 'Web Chat' : channel;
+  }
+
+  /** Anexo de áudio (extensão típica)? */
+  protected isAudioAttachment(name?: string | null): boolean {
+    if (!name) return false;
+    return /\.(ogg|opus|mp3|aac|m4a|wav)$/i.test(name);
+  }
+
+  /** Anexo marcado como falha pelo WaMediaDownloadJob? */
+  protected isAttachmentFailed(name?: string | null): boolean {
+    return !!name && name.startsWith('_failed:');
   }
 }

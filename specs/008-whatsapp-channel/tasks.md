@@ -230,10 +230,10 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Frontend CRM — extensões na inbox da Spec 007
 
-- [ ] T086 [US3] Estender `crm-websocket.service.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/services/crm-websocket.service.ts` adicionando: `waMessageStatus$ = new Subject<WaMessageStatusEvent>()`, switch no message handler para `WhatsAppCrmEvents.WaMessageStatus` (contracts/whatsapp-websocket-events.md §6)
-- [ ] T087 [US3] Estender `conversation-detail.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/conversation-detail.component.ts`: adicionar `waStatusByMessageId = signal<Map<string, WaStatus>>(new Map())`, effect que consome `crmWs.waMessageStatus$` e atualiza o map; renderizar ícones inline ao lado de cada mensagem `sender_type=attendant|ai_agent` em conversas `channel=whatsapp` (✓/✓✓/✓✓ azul/✗ com tooltip = error_message)
-- [ ] T088 [US3] Atualizar template do `conversation-detail.component.html` com badge de canal (`<p-tag>WhatsApp</p-tag>` quando `conversation.channel='whatsapp'`)
-- [ ] T089 [P] [US3] Atualizar `conversation-detail.component.spec.ts` co-localizado cobrindo render dos 4 ícones por status; tooltip aparece em failed; sem ícones para mensagens de live_chat
+- [X] T086 [US3] Estender `crm-websocket.service.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/services/crm-websocket.service.ts` adicionando: `waMessageStatus$ = new Subject<WaMessageStatusEvent>()`, switch no message handler para `WhatsAppCrmEvents.WaMessageStatus` (contracts/whatsapp-websocket-events.md §6)
+- [X] T087 [US3] Estender `conversation-detail.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/conversation-detail.component.ts`: adicionar `waStatusByMessageId = signal<Map<string, WaStatus>>(new Map())`, effect que consome `crmWs.waMessageStatus$` e atualiza o map; renderizar ícones inline ao lado de cada mensagem `sender_type=attendant|ai_agent` em conversas `channel=whatsapp` (✓/✓✓/✓✓ azul/✗ com tooltip = error_message)
+- [X] T088 [US3] Atualizar template do `conversation-detail.component.html` com badge de canal (`<p-tag>WhatsApp</p-tag>` quando `conversation.channel='whatsapp'`)
+- [X] T089 [P] [US3] Atualizar `conversation-detail.component.spec.ts` co-localizado cobrindo render dos 4 ícones por status; tooltip aparece em failed; sem ícones para mensagens de live_chat
 
 **Checkpoint**: User Story 3 funcional. Atendente envia → Meta entrega → CRM mostra ícones evoluindo. SC-005 (≤3 cliques + ≤2s) e SC-006 (≤3s status) validáveis.
 
@@ -263,10 +263,10 @@ description: "Task list for WhatsApp Channel implementation"
 
 ### Frontend CRM
 
-- [ ] T098 [P] [US4] Estender `crm-websocket.service.ts` (T086) com `waSessionExpiring$` e `waSessionExpired$` Subjects + handlers para os 2 eventos
+- [X] T098 [P] [US4] Estender `crm-websocket.service.ts` (T086) com `waSessionExpiring$` e `waSessionExpired$` Subjects + handlers para os 2 eventos
 - [ ] T099 [US4] Criar `session-window-banner.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/session-window-banner.component.ts` standalone. Input `sessionWindow: { status: 'active'|'expiring'|'expired'; expiresAt?: Date }`. Renderiza banner amarelo (expiring) ou vermelho (expired) com mensagem da contracts/whatsapp-websocket-events.md §2/§3. Em `active`, não renderiza nada
 - [ ] T100 [US4] Criar `template-picker-dialog.component.ts` em `src/omniDesk.Crm/src/app/features/live-chat-inbox/components/template-picker-dialog.component.ts` standalone usando PrimeNG Dialog + Listbox. Props: `templates: WhatsAppTemplateDto[]` (filtrado approved), Output: `(send) => { template_id, variables: Record<string,string> }`. Renderiza dropdown de template + form dinâmico de variáveis a partir de `template.variable_labels`
-- [ ] T101 [US4] Estender `conversation-detail.component.ts` (T087) com `sessionWindow = signal<{ status; expiresAt? }>({ status: 'active' })`, effects para `waSessionExpiring$` e `waSessionExpired$`; quando `status='expired'`: input de texto livre disabled + botão "Selecionar template" abre `template-picker-dialog`; ao receber `chat.message_received` em conversa expired → re-fetch conversation e voltar para `active` (item §4 do WS contract)
+- [X] T101 [US4] Estender `conversation-detail.component.ts` (T087) com `sessionWindow = signal<{ status; expiresAt? }>({ status: 'active' })`, effects para `waSessionExpiring$` e `waSessionExpired$`; quando `status='expired'`: input de texto livre disabled + botão "Selecionar template" abre `template-picker-dialog`; ao receber `chat.message_received` em conversa expired → re-fetch conversation e voltar para `active` (item §4 do WS contract)
 - [ ] T102 [P] [US4] Atualizar `conversation-detail.component.spec.ts` cobrindo: banner renderiza por status; input desabilita em expired; dialog de template abre; envio chama service com payload correto
 
 **Checkpoint**: User Story 4 funcional. Janela expirada bloqueia texto, força template. SC-003 (100% blocked sem template) validável.
