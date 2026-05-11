@@ -230,6 +230,16 @@ builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaTokenRevokedDet
 // Spec 008 US4 — Session window sweep job
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaSessionExpiringNotifierJob>();
 
+// Spec 008 US5 — Templates CRUD + submit + webhook status handler + poller
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Queries.ListTemplatesQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.CreateTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.UpdateTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.SubmitTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.DeleteTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaTemplateStatusHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaTemplateStatusPollerJob>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.WhatsApp.Templates.Validators.CreateTemplateValidator>();
+
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -303,6 +313,12 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Features.WhatsApp.Jobs.WaSessionExpiringNo
     "wa-session-expiring-notifier",
     job => job.RunAsync(CancellationToken.None),
     "*/5 * * * *");
+
+// Spec 008 US5 — fallback poller para template status (cron @hourly).
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.WhatsApp.Jobs.WaTemplateStatusPollerJob>(
+    "wa-template-status-poller",
+    job => job.RunAsync(CancellationToken.None),
+    "0 * * * *");
 
 await app.SeedDatabaseAsync();
 
@@ -407,6 +423,12 @@ var whatsappSend = api.MapGroup("/whatsapp/send")
     .RequireAuthorization()
     .AddEndpointFilter<ImpersonationAuditFilter>();
 omniDesk.Api.Features.WhatsApp.Send.WhatsAppSendEndpoint.MapWhatsAppSendEndpoint(whatsappSend);
+
+// Spec 008 US5 — Templates CRUD (JWT auth; CRUD requer CanManageTemplates).
+var whatsappTemplates = api.MapGroup("/whatsapp/templates")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+omniDesk.Api.Features.WhatsApp.Templates.WhatsAppTemplatesEndpoints.MapWhatsAppTemplatesEndpoints(whatsappTemplates);
 
 // Spec 007 — CRM admin config surface (JWT auth).
 var widgetConfig = api.MapGroup("/widget/config")

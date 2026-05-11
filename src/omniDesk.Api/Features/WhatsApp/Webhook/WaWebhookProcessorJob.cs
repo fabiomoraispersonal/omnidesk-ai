@@ -18,17 +18,20 @@ public sealed class WaWebhookProcessorJob
     private readonly TenantContextHolder _tenantContext;
     private readonly WhatsAppIncomingAdapter _incoming;
     private readonly IWaMessageStatusesRepository _statusRepo;
+    private readonly WaTemplateStatusHandler _templateStatusHandler;
     private readonly ILogger<WaWebhookProcessorJob> _logger;
 
     public WaWebhookProcessorJob(
         TenantContextHolder tenantContext,
         WhatsAppIncomingAdapter incoming,
         IWaMessageStatusesRepository statusRepo,
+        WaTemplateStatusHandler templateStatusHandler,
         ILogger<WaWebhookProcessorJob> logger)
     {
         _tenantContext = tenantContext;
         _incoming = incoming;
         _statusRepo = statusRepo;
+        _templateStatusHandler = templateStatusHandler;
         _logger = logger;
     }
 
@@ -80,10 +83,7 @@ public sealed class WaWebhookProcessorJob
                         break;
 
                     case MetaApi.WebhookFields.MessageTemplateStatusUpdate:
-                        // Template status update — handled em US5 (T117). Por ora apenas log.
-                        _logger.LogInformation(
-                            "WaTemplateStatusUpdate (US5 pending): tenant={Slug} event={Event} name={Name}",
-                            tenantSlug, change.Value.Event, change.Value.MessageTemplateName);
+                        await _templateStatusHandler.HandleAsync(tenantId, tenantSlug, change.Value, ct);
                         break;
 
                     default:
