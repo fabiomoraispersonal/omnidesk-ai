@@ -24,3 +24,35 @@ Cumpre o Princípio §III (Channel Agnosticism): traduz eventos da Meta Cloud AP
 - [Contracts](../../../../specs/008-whatsapp-channel/contracts/) — webhook, config, templates, Meta Graph, adapters, WS events
 - [Quickstart](../../../../specs/008-whatsapp-channel/quickstart.md) — 14 roteiros de validação manual
 - [Tasks](../../../../specs/008-whatsapp-channel/tasks.md) — breakdown de implementação (149 tarefas)
+
+## Configuração — chaves `WhatsApp:` em `IConfiguration`
+
+`appsettings.json` (committado, sem segredos) define defaults editáveis:
+
+| Chave | Default | O que controla |
+|---|---|---|
+| `WhatsApp:GraphApiBaseUrl` | `https://graph.facebook.com/v19.0` | Base URL da Meta Cloud API. Override em testes (sandbox) ou para upgrade de versão. |
+| `WhatsApp:WebhookProcessingTimeoutSeconds` | `5` | SLO interno do controller (Meta timeout = 20s). Apenas observabilidade — não enforced em código. |
+| `WhatsApp:SessionWindowHours` | `24` | Janela Meta. Hard-coded em 24h em produção; configurável apenas para testes. |
+| `WhatsApp:SessionExpiringThresholdMinutes` | `60` | Quando emitir `wa.session_expiring` (default 1h antes de expirar). |
+
+Não há segredos no `appsettings.WhatsApp` — credenciais Meta (`access_token`/`app_secret`) vivem em `tenant_{slug}.whatsapp_config` cifradas com AES-256-GCM.
+
+## Chave-mestra de criptografia
+
+Reuso de `Infrastructure/Security/AesEncryptionService` (Spec 003). Lê env var **`AES_ENCRYPTION_KEY`** (32 bytes base64). Sem default — startup falha se ausente.
+
+### Dev (user-secrets)
+
+```bash
+cd src/omniDesk.Api
+dotnet user-secrets set "AES_ENCRYPTION_KEY" "$(openssl rand -base64 32)"
+```
+
+### Produção (env var no container)
+
+```bash
+docker run -e AES_ENCRYPTION_KEY="$(cat secrets/aes-key.b64)" ... omnidesk-api
+```
+
+⚠️ **Rotação de chave**: AES_ENCRYPTION_KEY é **estável**. Rotar invalida todos os `access_token`/`app_secret` cifrados (cada tenant precisaria reinserir credenciais Meta). Justificativa em [research.md R3](../../../../specs/008-whatsapp-channel/research.md#r3-aes-256-gcm-vs-dataprotection-aspnet).

@@ -304,6 +304,10 @@ Mensagem recebida (webhook / WebSocket)
 | `check_availability` | Consulta horários disponíveis |
 | `create_appointment` | Cria agendamento |
 
+### Restrições por canal
+
+- **WhatsApp (Spec 008 FR-016)**: a IA **NUNCA** envia mensagens-template. Templates aprovados pela Meta são exclusivos do atendente humano. Enforcement em duas camadas: (1) `IConversationGateway.EnqueueOutgoingAsync` recebe apenas `OutgoingMessage` agnóstico (sem campo template); (2) `WaOutgoingGuard.Validate` rejeita explicitamente `MessageSenderType.AiAgent + WaOutboundMessageType.Template`. Se a janela de 24h expirar durante uma conversa atendida pela IA, o sistema escala humano automaticamente (`wa.session_expired` event + handoff).
+
 ---
 
 ## 9. Filas Redis (Hangfire)

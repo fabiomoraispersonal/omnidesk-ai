@@ -56,7 +56,7 @@ flowchart TD
 | **05** | Departments | 03, 04 |
 | **06** | AI Agents | 05 |
 | **07** | Live Chat | 05, 06 — ✅ COMPLETE (V1: backend, widget, CRM config, CRM inbox, lifecycle jobs, attachments) |
-| **08** | WhatsApp | 03 |
+| **08** | WhatsApp | 02, 03, 04, 06, 07 — ✅ BACKEND COMPLETE (US1-US6 entregues; Polish parcial; frontend Angular + integration tests Testcontainers pendentes). Detalhes em [specs/008-whatsapp-channel/tasks.md](../specs/008-whatsapp-channel/tasks.md). |
 | **09** | Tickets | 05, 07, 08 |
 | **10** | Notifications | 08, 09 |
 | **11** | Agenda | 05, 10 |

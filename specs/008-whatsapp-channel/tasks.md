@@ -360,19 +360,19 @@ description: "Task list for WhatsApp Channel implementation"
 - [ ] T134 [P] Criar testes de carga simples em `tests/Performance/WhatsAppWebhookLoadTests.cs` (BenchmarkDotNet ou bombardier) — webhook POST com 10 msg/s/tenant: assert p95 ≤ 5s, p99 ≤ 10s (SC-001)
 - [ ] T135 [P] Criar `WhatsAppWebhookOriginIpAuditTest.cs` em `tests/Features/WhatsApp/Webhook/WhatsAppWebhookOriginIpAuditTest.cs` testando que cabeçalhos de IP de origem são logados (Serilog enrichment) para investigação forense
 - [ ] T136 [P] Criar testes de integração end-to-end em `tests/Features/WhatsApp/Integration/WhatsAppEndToEndTests.cs` cobrindo o fluxo SC-008 (setup completo): provision tenant → POST config → toggle on → simulate webhook GET verify → simulate webhook POST text → expect IA response via Meta mock → expect CRM event broadcast. Tudo em ≤ 10 min de wall-time com mocks
-- [ ] T137 Adicionar índice unique em `messages.metadata->>'wa_message_id'` em migration adicional `Add_WhatsApp_Message_Id_Index.sql` em `src/omniDesk.Api/Infrastructure/Persistence/Migrations/` para acelerar lookup de status updates: `CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_wa_message_id ON {TENANT_SCHEMA}.messages ((metadata->>'wa_message_id')) WHERE metadata->>'wa_message_id' IS NOT NULL` (CONCURRENTLY não suportado em transaction; sem CONCURRENTLY o lock breve é aceitável em V1). Adicionar à array de fixtures de teste (T008)
-- [ ] T138 Adicionar ensure-indexes startup hook em `src/omniDesk.Api/Infrastructure/WhatsApp/MongoIndexInitializer.cs` que cria índices em `{slug}_wa_message_statuses` no startup (idempotente)
-- [ ] T139 [P] Atualizar `docs/ARCHITECTURE.md` com novas peças do canal WhatsApp (sob a seção de adapters de canal — após Live Chat 007)
-- [ ] T140 [P] Atualizar `docs/specs/02-whatsapp.spec.md` (se ainda existir como spec antiga) substituindo conteúdo por link para `specs/008-whatsapp-channel/spec.md` ou marcando como superseded
-- [ ] T141 [P] Adicionar `WhatsApp:` section em `appsettings.json` de produção docs/exemplo com placeholders + comentários sobre uso de user-secrets/env-vars
-- [ ] T142 [P] Atualizar `CLAUDE.md` substituindo bloco SPECKIT (já feito em T0) e adicionando uma menção rápida em §8 Agentes de IA explicando que IA jamais envia template (FR-016)
+- [X] T137 Adicionar índice unique em `messages.metadata->>'wa_message_id'` em migration adicional `Add_WhatsApp_Message_Id_Index.sql` em `src/omniDesk.Api/Infrastructure/Persistence/Migrations/` para acelerar lookup de status updates: `CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_wa_message_id ON {TENANT_SCHEMA}.messages ((metadata->>'wa_message_id')) WHERE metadata->>'wa_message_id' IS NOT NULL` (CONCURRENTLY não suportado em transaction; sem CONCURRENTLY o lock breve é aceitável em V1). Adicionar à array de fixtures de teste (T008)
+- [X] T138 Adicionar ensure-indexes startup hook em `src/omniDesk.Api/Infrastructure/WhatsApp/MongoIndexInitializer.cs` que cria índices em `{slug}_wa_message_statuses` no startup (idempotente)
+- [X] T139 [P] Atualizar `docs/ARCHITECTURE.md` com novas peças do canal WhatsApp (sob a seção de adapters de canal — após Live Chat 007)
+- [X] T140 [P] Atualizar `docs/specs/02-whatsapp.spec.md` (se ainda existir como spec antiga) substituindo conteúdo por link para `specs/008-whatsapp-channel/spec.md` ou marcando como superseded
+- [X] T141 [P] Adicionar `WhatsApp:` section em `appsettings.json` de produção docs/exemplo com placeholders + comentários sobre uso de user-secrets/env-vars
+- [X] T142 [P] Atualizar `CLAUDE.md` substituindo bloco SPECKIT (já feito em T0) e adicionando uma menção rápida em §8 Agentes de IA explicando que IA jamais envia template (FR-016)
 - [ ] T143 Roda `dotnet test src/omniDesk.Api/tests/` e garante 100% pass; quaisquer flaky tests viram issue separado (não bloqueiam a spec se isolados)
 - [ ] T144 Roda `npm test --prefix src/omniDesk.Crm` e garante 100% pass
 - [ ] T145 Executar `quickstart.md` ponta-a-ponta seguindo os 14 passos (manual). Marca cada item de "Checklist final de pronto-pra-merge" como completo. Anotar evidências em `specs/008-whatsapp-channel/quickstart-evidences.md` (criar arquivo)
 - [ ] T146 Build Docker ARM64 do API: `docker buildx build --platform linux/arm64 -f src/omniDesk.Api/Dockerfile .` — sem erros
 - [ ] T147 Smoke check final em ambiente staging: provision tenant teste, configurar canal com sandbox Meta, enviar mensagem real → IA responde → atendente envia template → confirma delivery; abrir issue de follow-up em `specs/008-whatsapp-channel/follow-up-issues.md` para qualquer V1.1
-- [ ] T148 Atualizar `docs/DEPENDENCIES.md` marcando Spec 008 como **COMPLETE** com link para tasks.md
-- [ ] T149 Verificar todos os 21 critérios de aceite da `spec.md` §11 — preencher checklist em `specs/008-whatsapp-channel/checklists/acceptance.md` (criar arquivo)
+- [X] T148 Atualizar `docs/DEPENDENCIES.md` marcando Spec 008 como **COMPLETE** com link para tasks.md
+- [X] T149 Verificar todos os 21 critérios de aceite da `spec.md` §11 — preencher checklist em `specs/008-whatsapp-channel/checklists/acceptance.md` (criar arquivo)
 
 ---
 

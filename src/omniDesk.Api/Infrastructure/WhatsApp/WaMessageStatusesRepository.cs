@@ -31,12 +31,17 @@ public class WaMessageStatusesRepository(IMongoClient mongo) : IWaMessageStatuse
 {
     private const string CollectionName = "wa_message_statuses";
 
+    // Spec 008 T138 — bootstrap lazy de índices por tenant. Primeira escrita
+    // cria os índices; chamadas subsequentes são no-op (set em memória).
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> _indexesEnsured = new();
+
     /// <summary>
     /// Insere um status update. Retorna <c>false</c> em caso de duplicata
     /// (combinação <c>wa_message_id + status</c> única — dedupe natural).
     /// </summary>
     public async Task<bool> InsertAsync(string tenantSlug, WaMessageStatusEntry entry, CancellationToken ct = default)
     {
+        await EnsureIndexesOnceAsync(tenantSlug, ct);
         var coll = Collection(tenantSlug);
         var doc = new BsonDocument
         {
@@ -111,5 +116,26 @@ public class WaMessageStatusesRepository(IMongoClient mongo) : IWaMessageStatuse
             throw new ArgumentException("tenant_slug required (Constitution §I)", nameof(tenantSlug));
         var dbName = tenantSlug.Replace('-', '_');
         return mongo.GetDatabase(dbName).GetCollection<BsonDocument>(CollectionName);
+    }
+
+    /// <summary>
+    /// Spec 008 T138 — bootstrap idempotente de índices por tenant. Primeira escrita
+    /// dispara <see cref="EnsureIndexesAsync"/>; cache em memória evita re-tentar
+    /// em escritas subsequentes. <see cref="IMongoCollection{T}.Indexes"/> é idempotente
+    /// no servidor (CreateOneAsync de índice já existente é no-op).
+    /// </summary>
+    private async Task EnsureIndexesOnceAsync(string tenantSlug, CancellationToken ct)
+    {
+        if (_indexesEnsured.ContainsKey(tenantSlug)) return;
+
+        try
+        {
+            await EnsureIndexesAsync(tenantSlug, ct);
+            _indexesEnsured.TryAdd(tenantSlug, true);
+        }
+        catch
+        {
+            // Não bloqueia escritas em caso de falha transitória — próxima escrita tenta de novo.
+        }
     }
 }

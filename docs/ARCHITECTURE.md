@@ -850,3 +850,70 @@ LiveChatOutgoingAdapter → Redis pub:
 - Rate limit Redis-backed: 30 req/min por `anonymous_id` (excluindo `/init`).
 - LGPD: `lgpd_consent_at` registrado no POST de criação; widget bloqueia envio até checkbox marcado.
 - Anexos: 10MB cap, content-sniff por magic bytes; arquivos em `tenant-{slug}/widget-uploads/{conv_id}/{uuid}-{file}`.
+
+---
+
+## WhatsApp Business (Spec 008)
+
+V1 backend entregue. Detalhes em [specs/008-whatsapp-channel/plan.md](../specs/008-whatsapp-channel/plan.md). Pendências (frontend Angular + integration tests + Polish) em `specs/008-whatsapp-channel/tasks.md`.
+
+**Componentes**:
+- `omniDesk.Api/Features/WhatsApp/` 6 sub-features:
+  - `Webhook/` — endpoints públicos (HMAC + verify_token), `RawBodyCaptureMiddleware`, `MetaWebhookSignatureValidator`, `WaWebhookTenantResolver` (cache Redis 60s), `WaWebhookProcessorJob` (Hangfire async), `WaTemplateStatusHandler`.
+  - `Config/` — CRM endpoints `/api/whatsapp/config` (GET/PUT/PATCH toggle) com RBAC `CanViewChannelStatus`/`CanEditChannelConfig`/`CanToggleChannel`.
+  - `Templates/` — CRUD + submit Meta + RBAC `CanManageTemplates` (Supervisor+); Attendant força filter `status=approved`.
+  - `Send/` — `/api/whatsapp/send` (texto livre) + `/api/whatsapp/send/template`; `SessionWindowGuard` + `WaOutgoingGuard` (IA bloqueada de enviar template).
+  - `Adapters/` — `WhatsAppIncomingAdapter` (Meta payload → `IncomingMessage` + `WaMediaDownloadJob`); `WhatsAppOutgoingAdapter` (`OutgoingMessage` agnóstico + `DispatchTemplateAsync` específico).
+  - `Jobs/` — 4 Hangfire jobs:
+    - `WaTokenRevokedDetectorJob` — disparado em 401 Meta; probe `/me`; desativa canal se confirmado.
+    - `WaSessionExpiringNotifierJob` — cron `*/5 * * * *`; emite `wa.session_expiring` (< 1h) e `wa.session_expired` (já passou).
+    - `WaTemplateStatusPollerJob` — cron `0 * * * *`; fallback para webhook Meta perdido.
+    - `WaMediaDownloadJob` — Meta GET media → MIME real → MinIO `tenant-{slug}/whatsapp-attachments/{conv_id}/{wamid}-{file}`.
+- `omniDesk.Api/Infrastructure/WhatsApp/`: `WhatsAppMetaClient` typed HttpClient com retry inline (3× exp, apenas 5xx/timeout), `MetaApi` constants (paths, headers, hub params, error codes), `MetaApiException`, DTOs Meta, `RedisKeys`, repositórios `WhatsAppConfigRepository` + `WhatsAppTemplateRepository` + `WaMessageStatusesRepository` (Mongo).
+- `omniDesk.Api/Hubs/Events/WhatsAppCrmEvents.cs`: 3 eventos novos no `/ws/crm` da Spec 007 — `wa.message_status`, `wa.session_expiring`, `wa.session_expired`.
+
+**Pipeline conversacional (com WhatsApp)**:
+
+```
+Cliente (WhatsApp)
+    ↓ HTTPS POST + HMAC-SHA256
+RawBodyCaptureMiddleware → WhatsAppWebhookEndpoints
+    ↓ (HMAC valid) → Hangfire enqueue wa-webhook
+WaWebhookProcessorJob → switch change.field:
+  ├── "messages" → WhatsAppIncomingAdapter
+  │     ├── visitor (deterministic GUID from phone)
+  │     ├── conversation channel=whatsapp + wa_session_expires_at=now+24h
+  │     ├── message + wa_message_id (idempotent)
+  │     ├── IncomingMessagePublisher → IncomingMessageWorker (Spec 006)
+  │     ├── (se mídia) WaMediaDownloadJob
+  │     └── WS chat.new_conversation / chat.message_received
+  └── "message_template_status_update" → WaTemplateStatusHandler
+        └── update template.Status (Approved/Rejected) + meta_template_id
+
+AgentOrchestrator (Spec 006, inalterado)
+    ↓
+IConversationGateway = LiveChatConversationGateway (channel-aware desde 008)
+    ↓ switch conv.Channel:
+  ├── WhatsApp → WhatsAppOutgoingAdapter.DispatchAsync
+  │     ├── SessionWindowGuard + WaOutgoingGuard
+  │     ├── WhatsAppMetaClient.SendTextAsync
+  │     ├── persist wa_message_id
+  │     ├── Mongo wa_message_statuses (sent)
+  │     └── WS wa.message_status
+  └── LiveChat → LiveChatOutgoingAdapter (Spec 007, inalterado)
+```
+
+**Decisões-chave**:
+- **Channel Agnosticism §III**: `IConversationGateway.EnqueueOutgoingAsync` é o único ponto channel-aware — switch por `Conversation.Channel`. AgentOrchestrator/IncomingMessageWorker/OutgoingMessageWorker da Spec 006 ficam intactos.
+- **Templates são WhatsApp-específico**: `DispatchTemplateAsync` é API separada, não passa por `OutgoingMessage` agnóstico. Caller (CRM atendente) sabe que está enviando template; orchestrator IA nunca tem essa API à disposição (FR-016).
+- **AES-256-GCM reusado** (Spec 003 `AesEncryptionService`): access_token + app_secret cifrados at-rest; key estável via env var `AES_ENCRYPTION_KEY` (não DataProtection — evita invalidar credenciais Meta em rotação).
+- **HMAC constant-time**: `CryptographicOperations.FixedTimeEquals` em UTF-8 hex bytes mitiga timing attack contra `app_secret`.
+- **app_secret per-tenant** (não global): cada tenant pode usar app Meta distinto; alinha com §I (Multi-Tenant Isolation).
+- **Async webhook**: controller faz HMAC + dedup + enqueue em ≤ 100ms; processamento real em Hangfire. Atende SLO interno de 5s (Meta timeout 20s).
+- **Janela 24h Meta**: coluna materializada `conversations.wa_session_expires_at` + sweep cron `*/5min` em vez de timer por conversa. Idempotência via Redis flags `WaExpiringEmitted` (1h TTL) e `WaExpiredEmitted` (24h TTL).
+- **Token revogado detect-then-confirm**: 401 isolado não desativa; job confirma com `/me`; só desativa se 401 ratificado. Evita desativação por falha transitória Meta.
+- **Mídia download async**: URL Meta expira em ~5min; baixar inline atrasaria 200 OK. Job `WaMediaDownloadJob` baixa → valida magic bytes → MinIO; CRM atualiza via WS `wa.message_status` `attachment_ready=true`.
+- **Templates pré-definidos** (`PredefinedTemplates`): 5 tipos (appointment_reminder/confirmation/cancellation, follow_up, custom). Variable count locked por tipo para pré-definidos. Tenant edita body, sistema garante estrutura.
+- **`name` snake_case auto**: `TemplateNameGenerator.Generate(type, slug)` produz `lembrete_consulta_clinicaabc`, `confirmacao_consulta_clinicaabc`, etc. Único por tenant (partial unique index).
+- **Logging mascarado** (FR-034): Serilog `Destructure.ByTransforming<WhatsAppConfig>` substitui access_token/app_secret por `"***"` em todos os sinks.
+- **Reabertura janela**: `WhatsAppIncomingAdapter` limpa flags Redis `WaExpiringEmitted`/`WaExpiredEmitted` ao receber nova mensagem do cliente. Cron seguinte volta a emitir caso a nova janela se aproxime do limite.
