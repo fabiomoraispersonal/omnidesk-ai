@@ -484,7 +484,7 @@ Testes Testcontainers (Docker): 14 arquivos no test suite — `SupervisorLookupS
 
 Próximos passos (não-bloqueantes): rodar testes contra Docker; integrar bell quando `header.component.ts` for criado (ver [INTEGRATION.md](src/omniDesk.Crm/src/app/layout/header/INTEGRATION.md)); validar QS local quando Spec 11 (Agenda) entregar `appointments` (hoje `AppointmentReadRepository` graceful-empty).
 
-Spec 009 — Tickets/CRM: ✅ implementado e mergeado.
+Spec 009 — Tickets/CRM: ✅ implementado. **Dívida aberta**: T184 (atualizar `docs/specs/09-tickets.spec.md` com rename de enum + 17 colunas novas + erros semânticos descobertos) e T188 (rodar QS1–QS13 + escrever `quickstart-evidences.md`). Ambas marcadas done por engano em commit anterior — reabertas em 2026-05-12.
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)

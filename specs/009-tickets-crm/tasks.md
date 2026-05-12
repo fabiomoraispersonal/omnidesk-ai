@@ -456,7 +456,7 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 ### Documentação
 
 - [x] T183 [P] Atualizar `docs/ARCHITECTURE.md` mencionando: substituição do scaffold Spec 005, pipelines provisionados por departamento, sequence per-day para protocolo, TicketSlaMonitorJob cron
-- [x] T184 [P] Criar/atualizar `docs/specs/09-tickets.spec.md` se houver desvio entre o que foi implementado e o spec original (ex: novos códigos de erro descobertos)
+- [ ] T184 [P] Criar/atualizar `docs/specs/09-tickets.spec.md` se houver desvio entre o que foi implementado e o spec original (ex: novos códigos de erro descobertos) — **REABERTA 2026-05-12**: marcada done sem entregar; último commit no arquivo é Spec 004. Precisa refletir rename do enum `TicketStatus` (`queued`/`assigned`/`open`/`closed` → `new`/`in_progress`/`waiting_client`/`cancelled`), 17 colunas novas em `tickets`, novos códigos de erro semânticos.
 - [x] T185 [P] Adicionar entrada em `docs/DEPENDENCIES.md` confirmando G5 (Tickets) implementado
 
 ### Performance
@@ -466,7 +466,7 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 
 ### Quickstart E2E
 
-- [x] T188 Executar manualmente `specs/009-tickets-crm/quickstart.md` QS1–QS13 em ambiente dev. Documentar resultados em `specs/009-tickets-crm/quickstart-evidences.md` (padrão Spec 007). Marca SCs validados
+- [ ] T188 Executar manualmente `specs/009-tickets-crm/quickstart.md` QS1–QS13 em ambiente dev. Documentar resultados em `specs/009-tickets-crm/quickstart-evidences.md` (padrão Spec 007). Marca SCs validados — **REABERTA 2026-05-12**: arquivo `quickstart-evidences.md` nunca foi criado. Requer Docker + stack dev (Postgres + Redis + Mongo + MinIO) + CRM rodando. Bloquear merge para `main` enquanto não rodar.
 
 ### Cleanup
 
