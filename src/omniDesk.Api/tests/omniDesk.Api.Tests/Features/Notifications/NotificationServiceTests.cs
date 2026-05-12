@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 using omniDesk.Api.Domain.Notifications;
@@ -7,6 +8,7 @@ using omniDesk.Api.Features.Notifications;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.Notifications;
 using omniDesk.Api.Infrastructure.Persistence;
+using omniDesk.Api.Infrastructure.Push;
 using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Tests.Helpers;
 using StackExchange.Redis;
@@ -84,11 +86,20 @@ public class NotificationServiceTests : IAsyncLifetime
         var db = _db!;
         var publisher = new NotificationEventPublisher(_redis!);
         var supervisors = new SupervisorLookupService(db, new MemoryCache(new MemoryCacheOptions()));
+        var prefsRepo = new AttendantPreferencesRepository(db);
+        var pushRepo = new PushSubscriptionRepository(db);
+        var vapid = new VapidKeyProvider(new ConfigurationBuilder().Build()); // empty config → push disabled
+        var dispatcher = new WebPushDispatcher(
+            vapid, pushRepo, NullLogger<WebPushDispatcher>.Instance);
         var slug = new TestSlugAccessor(TenantSchemaFixture.TenantSlug);
         return new NotificationService(
             new NotificationRepository(db),
             publisher,
             supervisors,
+            prefsRepo,
+            dispatcher,
+            _redis!,
+            db,
             slug,
             NullLogger<NotificationService>.Instance);
     }

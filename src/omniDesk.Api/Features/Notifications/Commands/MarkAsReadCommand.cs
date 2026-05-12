@@ -16,8 +16,9 @@ public class MarkAsReadCommand(
     NotificationEventPublisher publisher,
     ITenantSlugAccessor slug)
 {
+    /// <param name="userId">User id (for WS channel routing). Pass the caller's user id.</param>
     public async Task<MarkAsReadResult> ExecuteAsync(
-        Guid notificationId, Guid attendantId, CancellationToken ct)
+        Guid notificationId, Guid attendantId, Guid userId, CancellationToken ct)
     {
         var ok = await repo.MarkAsReadAsync(notificationId, attendantId, ct);
         if (!ok) return MarkAsReadResult.NotFound;
@@ -25,7 +26,7 @@ public class MarkAsReadCommand(
         try
         {
             var unread = await repo.CountUnreadAsync(attendantId, ct);
-            await publisher.PublishUnreadCountAsync(slug.Slug, attendantId, Math.Min(unread, 99));
+            await publisher.PublishUnreadCountAsync(slug.Slug, userId, Math.Min(unread, 99));
         }
         catch { /* WS publish best-effort; mark-as-read already committed */ }
 

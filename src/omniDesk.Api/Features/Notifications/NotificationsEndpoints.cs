@@ -77,7 +77,7 @@ public static class NotificationsEndpoints
         var attendant = await ResolveAttendantAsync(principal, attendantRepo, ct);
         if (attendant is null) return AttendantRequired();
 
-        var result = await command.ExecuteAsync(id, attendant.Id, ct);
+        var result = await command.ExecuteAsync(id, attendant.Id, attendant.UserId, ct);
         return result switch
         {
             MarkAsReadResult.Ok       => Results.Ok(new { success = true, data = new { id, is_read = true } }),
@@ -96,7 +96,7 @@ public static class NotificationsEndpoints
         var attendant = await ResolveAttendantAsync(principal, attendantRepo, ct);
         if (attendant is null) return AttendantRequired();
 
-        var marked = await command.ExecuteAsync(attendant.Id, ct);
+        var marked = await command.ExecuteAsync(attendant.Id, attendant.UserId, ct);
         return Results.Ok(new { success = true, data = new { marked } });
     }
 

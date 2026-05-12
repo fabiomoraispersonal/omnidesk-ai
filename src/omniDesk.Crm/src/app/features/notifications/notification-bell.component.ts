@@ -14,6 +14,7 @@ import { OverlayPanelModule, OverlayPanel } from 'primeng/overlaypanel';
 import { NotificationListComponent } from './notification-list.component';
 import { NotificationsService } from './notifications.service';
 import { NotificationStreamService } from '../../core/services/notification-stream.service';
+import { WebPushService } from '../../core/services/web-push.service';
 
 /**
  * Spec 010 US1 (T049) — bell icon + badge for the header.
@@ -55,6 +56,7 @@ import { NotificationStreamService } from '../../core/services/notification-stre
 export class NotificationBellComponent implements OnInit {
   private readonly svc = inject(NotificationsService);
   private readonly stream = inject(NotificationStreamService);
+  private readonly push = inject(WebPushService);
 
   @ViewChild('op') overlay?: OverlayPanel;
 
@@ -67,6 +69,9 @@ export class NotificationBellComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.stream.start();
     await this.svc.refreshUnreadCount().catch(() => { /* tolerate */ });
+    // Spec 010 US2 T062 — opportunistically register browser push. Idempotent;
+    // does nothing if VAPID isn't configured or permission was denied.
+    this.push.register().catch(() => { /* swallow — push is best-effort */ });
   }
 
   toggle(event: MouseEvent): void {

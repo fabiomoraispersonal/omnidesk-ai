@@ -2,6 +2,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -16,6 +17,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { TicketDetailService } from './services/ticket-detail.service';
 import { TicketsService } from '../tickets-kanban/services/tickets.service';
+import { CrmWebSocketService } from '../live-chat-inbox/services/crm-websocket.service';
 import { ConversationTimelineComponent } from '../../shared/components/conversation-timeline/conversation-timeline.component';
 import { InternalNotesSectionComponent } from './components/internal-notes-section.component';
 import { TicketSidePanelComponent } from './components/ticket-side-panel.component';
@@ -193,18 +195,47 @@ import { TicketSidePanelComponent } from './components/ticket-side-panel.compone
     }
   `],
 })
-export class TicketDetailComponent implements OnInit {
+export class TicketDetailComponent implements OnInit, OnDestroy {
   readonly detailService = inject(TicketDetailService);
   private readonly ticketsService = inject(TicketsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
+  private readonly ws = inject(CrmWebSocketService);
+
+  // Spec 010 US2 T063 — silence-rule heartbeat. TTL 60s server-side, refresh every 30s.
+  private viewingTicketId: string | null = null;
+  private viewingTimer: ReturnType<typeof setInterval> | null = null;
 
   replyContent = '';
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) void this.detailService.load(id);
+
+    // Spec 010 US2 T063 — tell backend which ticket we're viewing so it can
+    // suppress browser push for new_message / client_replied on THIS ticket.
+    if (id) {
+      this.viewingTicketId = id;
+      this.ws.connect(); // idempotent
+      this.ws.send({ type: 'attendant.viewing_ticket', ticket_id: id });
+      this.viewingTimer = setInterval(() => {
+        if (this.viewingTicketId) {
+          this.ws.send({ type: 'attendant.viewing_ticket', ticket_id: this.viewingTicketId });
+        }
+      }, 30_000);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.viewingTimer) {
+      clearInterval(this.viewingTimer);
+      this.viewingTimer = null;
+    }
+    if (this.viewingTicketId) {
+      this.ws.send({ type: 'attendant.viewing_ticket', ticket_id: null });
+      this.viewingTicketId = null;
+    }
   }
 
   goBack(): void {

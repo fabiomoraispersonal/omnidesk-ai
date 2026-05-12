@@ -10,13 +10,14 @@ public class MarkAllAsReadCommand(
     NotificationEventPublisher publisher,
     ITenantSlugAccessor slug)
 {
-    public async Task<int> ExecuteAsync(Guid attendantId, CancellationToken ct)
+    /// <param name="userId">User id (for WS channel routing). Pass the caller's user id.</param>
+    public async Task<int> ExecuteAsync(Guid attendantId, Guid userId, CancellationToken ct)
     {
         var marked = await repo.MarkAllAsReadAsync(attendantId, ct);
 
         try
         {
-            await publisher.PublishUnreadCountAsync(slug.Slug, attendantId, 0);
+            await publisher.PublishUnreadCountAsync(slug.Slug, userId, 0);
         }
         catch { /* WS publish best-effort */ }
 

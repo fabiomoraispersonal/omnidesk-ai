@@ -1,98 +1,50 @@
-import { Injectable, inject, OnDestroy } from '@angular/core';
-import { NotificationsService, NotificationDto } from '../../features/notifications/notifications.service';
-import { TokenService } from './token.service';
-import { environment } from '../../../environments/environment';
-
-interface WsEnvelope<T = unknown> {
-  type: string;
-  payload: T;
-  timestamp: string;
-  tenant_slug: string;
-}
+import { Injectable, effect, inject } from '@angular/core';
+import { NotificationsService } from '../../features/notifications/notifications.service';
+import { CrmWebSocketService } from '../../features/live-chat-inbox/services/crm-websocket.service';
 
 /**
- * Spec 010 US1 (T046) — listens to /ws/crm for `notification.new` and
- * `notification.unread_count` events and routes them into NotificationsService signals.
+ * Spec 010 US1 (T046) — bridges the singleton CrmWebSocketService (Spec 007) to the
+ * NotificationsService signals, so the bell and list update in real time.
  *
- * Reconnect: native WebSocket auto-reconnect not built-in; we implement a simple
- * exponential backoff + on reconnect we refresh the unread count via REST (research §R15).
+ * No own WebSocket connection — piggybacks on the existing /ws/crm singleton.
+ * On reconnect, the unread count is refreshed via REST (research §R15).
  */
 @Injectable({ providedIn: 'root' })
-export class NotificationStreamService implements OnDestroy {
+export class NotificationStreamService {
   private readonly notifications = inject(NotificationsService);
-  private readonly token = inject(TokenService);
+  private readonly ws = inject(CrmWebSocketService);
 
-  private ws: WebSocket | null = null;
-  private reconnectAttempts = 0;
-  private destroyed = false;
+  private started = false;
+  private lastConnected = false;
 
   start(): void {
-    this.destroyed = false;
-    this.connect();
-  }
+    if (this.started) return;
+    this.started = true;
 
-  ngOnDestroy(): void {
-    this.destroyed = true;
-    this.ws?.close();
-    this.ws = null;
-  }
+    this.ws.connect();
 
-  private connect(): void {
-    if (this.destroyed) return;
-    const accessToken = this.token.getAccessToken();
-    if (!accessToken) {
-      // No token yet; try again after a short delay.
-      this.scheduleReconnect();
-      return;
-    }
+    // New notification → prepend + bump local counter (server also pushes count separately).
+    effect(() => {
+      const incoming = this.ws.notificationNew();
+      if (!incoming) return;
+      this.notifications.prepend(incoming);
+      this.notifications.unreadCount.update((c) => Math.min(c + 1, 99));
+    });
 
-    const url = `${environment.wsUrl}/ws/crm?token=${encodeURIComponent(accessToken)}`;
-    const ws = new WebSocket(url);
-    this.ws = ws;
+    // Authoritative unread count from server.
+    effect(() => {
+      const count = this.ws.notificationUnreadCount();
+      if (count == null) return;
+      this.notifications.setUnreadCount(count);
+    });
 
-    ws.onopen = () => {
-      this.reconnectAttempts = 0;
-      // Reconcile state in case events were missed while disconnected.
-      this.notifications.refreshUnreadCount().catch(() => { /* tolerate */ });
-    };
-
-    ws.onmessage = (event) => this.handleMessage(event.data);
-
-    ws.onclose = () => {
-      this.ws = null;
-      this.scheduleReconnect();
-    };
-
-    ws.onerror = () => {
-      // Let onclose handle the reconnect.
-    };
-  }
-
-  private handleMessage(raw: unknown): void {
-    if (typeof raw !== 'string') return;
-    let parsed: WsEnvelope | null = null;
-    try { parsed = JSON.parse(raw) as WsEnvelope; } catch { return; }
-    if (!parsed || typeof parsed.type !== 'string') return;
-
-    switch (parsed.type) {
-      case 'notification.new': {
-        const n = parsed.payload as NotificationDto;
-        this.notifications.prepend(n);
-        this.notifications.unreadCount.update((c) => Math.min(c + 1, 99));
-        break;
+    // Reconcile on reconnect (events while disconnected are not replayed).
+    effect(() => {
+      const connected = this.ws.connected();
+      if (connected && !this.lastConnected) {
+        this.notifications.refreshUnreadCount().catch(() => { /* tolerate */ });
       }
-      case 'notification.unread_count': {
-        const p = parsed.payload as { count: number };
-        if (typeof p?.count === 'number') this.notifications.setUnreadCount(p.count);
-        break;
-      }
-    }
-  }
-
-  private scheduleReconnect(): void {
-    if (this.destroyed) return;
-    this.reconnectAttempts = Math.min(this.reconnectAttempts + 1, 6);
-    const delayMs = Math.min(1000 * 2 ** this.reconnectAttempts, 30_000);
-    setTimeout(() => this.connect(), delayMs);
+      this.lastConnected = connected;
+    });
   }
 }

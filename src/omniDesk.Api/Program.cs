@@ -290,6 +290,9 @@ builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.AttendantPr
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.TenantSettingsRepository>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.WebSockets.NotificationEventPublisher>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.SupervisorLookupService>();
+// Spec 010 US2 — Web Push (browser).
+builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Push.VapidKeyProvider>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Push.WebPushDispatcher>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.INotificationService,
     omniDesk.Api.Features.Notifications.NotificationService>();
 // Spec 010 US1 — Notifications endpoint dependencies (queries + commands)
@@ -461,6 +464,12 @@ var notifications = api.MapGroup("/notifications")
                        .AddEndpointFilter<ImpersonationAuditFilter>();
 notifications.MapNotificationsEndpoints();
 notifications.MapPreferencesEndpoints();
+
+// Spec 010 US2 — Web Push: VAPID public key + subscribe/unsubscribe
+var pushApi = api.MapGroup("/push")
+                 .RequireAuthorization()
+                 .AddEndpointFilter<ImpersonationAuditFilter>();
+pushApi.MapPushEndpoints();
 
 // Spec 010 Phase 9 — tenant-admin notification settings
 var notificationSettings = api.MapGroup("/notification-settings")

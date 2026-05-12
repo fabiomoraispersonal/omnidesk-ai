@@ -1,7 +1,13 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Notifications;
 using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.Authorization;
 using omniDesk.Api.Infrastructure.Notifications;
+using omniDesk.Api.Infrastructure.Persistence;
+using omniDesk.Api.Infrastructure.Push;
 using omniDesk.Api.Infrastructure.WebSockets;
+using StackExchange.Redis;
 
 namespace omniDesk.Api.Features.Notifications;
 
@@ -15,9 +21,18 @@ public class NotificationService(
     NotificationRepository repo,
     NotificationEventPublisher publisher,
     SupervisorLookupService supervisors,
+    AttendantPreferencesRepository prefsRepo,
+    WebPushDispatcher push,
+    IConnectionMultiplexer redis,
+    AppDbContext db,
     ITenantSlugAccessor slug,
     ILogger<NotificationService> logger) : INotificationService
 {
+    private static readonly JsonSerializerOptions PushJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
     public Task NotifyTicketAssignedAsync(
         Guid attendantId, Guid ticketId, string protocol, CancellationToken ct) =>
         DispatchAsync(attendantId,
@@ -165,27 +180,124 @@ public class NotificationService(
 
         var tenantSlug = slug.Slug;
 
+        // The WS endpoint subscribes to {slug}:crm:user:{userId} (Spec 007), so resolve userId
+        // from attendantId before publishing. Single lightweight projection query.
+        Guid? userId = null;
         try
         {
-            await publisher.PublishNewAsync(tenantSlug, attendantId, new
-            {
-                id = notification.Id,
-                event_type = notification.EventType,
-                title = notification.Title,
-                body = notification.Body,
-                entity_type = notification.EntityType,
-                entity_id = notification.EntityId,
-                created_at = notification.CreatedAt,
-            });
-
-            var unread = await repo.CountUnreadAsync(attendantId, ct);
-            await publisher.PublishUnreadCountAsync(tenantSlug, attendantId, Math.Min(unread, 99));
+            userId = await db.Attendants
+                .AsNoTracking()
+                .Where(a => a.Id == attendantId)
+                .Select(a => (Guid?)a.UserId)
+                .FirstOrDefaultAsync(ct);
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex,
-                "Notification WS publish failed (persisted ok): attendant {AttId} id {NotificationId}.",
+                "Attendant userId lookup failed: attendant {AttId}.", attendantId);
+        }
+
+        if (userId.HasValue)
+        {
+            try
+            {
+                await publisher.PublishNewAsync(tenantSlug, userId.Value, new
+                {
+                    id = notification.Id,
+                    event_type = notification.EventType,
+                    title = notification.Title,
+                    body = notification.Body,
+                    entity_type = notification.EntityType,
+                    entity_id = notification.EntityId,
+                    created_at = notification.CreatedAt,
+                });
+
+                var unread = await repo.CountUnreadAsync(attendantId, ct);
+                await publisher.PublishUnreadCountAsync(tenantSlug, userId.Value, Math.Min(unread, 99));
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "Notification WS publish failed (persisted ok): attendant {AttId} id {NotificationId}.",
+                    attendantId, notification.Id);
+            }
+        }
+
+        // Spec 010 US2 — push dispatch (gated by prefs + silence rule). Best-effort, fire-and-forget.
+        try
+        {
+            await TryDispatchPushAsync(attendantId, notification, tenantSlug, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Notification push dispatch failed: attendant {AttId} id {NotificationId}.",
                 attendantId, notification.Id);
+        }
+    }
+
+    /// <summary>
+    /// Push fan-out: applies the attendant preferences gate (FR-015) AND the silence rule (FR-010)
+    /// before invoking <see cref="WebPushDispatcher"/>. In-app row is already persisted.
+    /// </summary>
+    private async Task TryDispatchPushAsync(
+        Guid attendantId, Notification notification, string tenantSlug, CancellationToken ct)
+    {
+        if (!push.IsEnabled) return;
+
+        // 1) Preferences gate.
+        var prefs = await prefsRepo.GetAsync(attendantId, ct);
+        if (!prefs.ShouldPush(notification.EventType)) return;
+
+        // 2) Silence rule: if the attendant is viewing the same ticket the event is about,
+        //    suppress push for the two "live conversation" event types only. The in-app row
+        //    is still persisted; only the OS-level push is skipped.
+        if ((notification.EventType == NotificationEventTypes.TicketNewMessage
+             || notification.EventType == NotificationEventTypes.TicketClientReplied)
+            && notification.EntityType == NotificationEntityTypes.Ticket)
+        {
+            try
+            {
+                var activeKey = RedisKeys.AttendantActiveTicket(tenantSlug, attendantId);
+                var active = await redis.GetDatabase().StringGetAsync(activeKey);
+                if (active.HasValue
+                    && Guid.TryParse(active.ToString(), out var openTicketId)
+                    && openTicketId == notification.EntityId)
+                {
+                    return; // Silence — attendant is already looking at this ticket.
+                }
+            }
+            catch (Exception ex)
+            {
+                // Redis hiccup — fall through and push as normal (conservative).
+                logger.LogDebug(ex, "Silence-rule Redis lookup failed; pushing anyway.");
+            }
+        }
+
+        // 3) Build payload and fan-out to all subscriptions of the attendant.
+        var payload = JsonSerializer.Serialize(new
+        {
+            title = notification.Title,
+            body  = Trim(notification.Body, 120),
+            icon  = "/icon-192.png",
+            badge = "/badge-72.png",
+            tag   = $"{notification.EntityType}-{notification.EntityId}",
+            data  = new
+            {
+                url             = notification.EntityType == NotificationEntityTypes.Ticket
+                                  ? $"/tickets/{notification.EntityId}"
+                                  : $"/conversations/{notification.EntityId}",
+                notification_id = notification.Id,
+                event_type      = notification.EventType,
+            },
+        }, PushJsonOptions);
+
+        var delivered = await push.SendToAttendantAsync(attendantId, payload, ct);
+        if (delivered > 0)
+        {
+            logger.LogDebug(
+                "Push delivered to {Count} subscriptions for attendant {AttId} (event {Event}).",
+                delivered, attendantId, notification.EventType);
         }
     }
 

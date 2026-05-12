@@ -26,6 +26,17 @@ export type WaSessionWindowState =
   | { status: 'expiring'; expiresAt: string; minutesRemaining: number }
   | { status: 'expired'; expiredAt: string };
 
+/** Spec 010 US1 — payload of `notification.new` event from the backend. */
+export interface NotificationWsPayload {
+  id: string;
+  event_type: string;
+  title: string;
+  body: string;
+  entity_type: 'ticket' | 'conversation';
+  entity_id: string;
+  created_at: string;
+}
+
 /**
  * Spec 007 US3 — singleton WebSocket subscription to /ws/crm. JWT lives in an
  * httpOnly cookie (Spec 002), so the browser sends it automatically — no token
@@ -40,6 +51,12 @@ export class CrmWebSocketService {
 
   // Spec 009 US2 — signal updated for every ticket WS event received.
   readonly ticketEvents = signal<TicketWsEvent | null>(null);
+
+  // Spec 010 US1 — signal updated when a `notification.new` arrives over the WS.
+  readonly notificationNew = signal<NotificationWsPayload | null>(null);
+
+  // Spec 010 US1 — signal updated when the live unread counter changes.
+  readonly notificationUnreadCount = signal<number | null>(null);
 
   // Spec 008 US3 — map message_id → status atual para renderizar ícones de delivery.
   readonly waMessageStatuses = signal<ReadonlyMap<string, WaMessageStatusState>>(new Map());
@@ -127,7 +144,26 @@ export class CrmWebSocketService {
       case 'ticket.sla_breached':
         this.ticketEvents.set(event as unknown as TicketWsEvent);
         break;
+      // Spec 010 US1 — notification feed events for the bell.
+      case 'notification.new':
+        this.notificationNew.set(
+          (event as unknown as { payload: NotificationWsPayload }).payload);
+        break;
+      case 'notification.unread_count': {
+        const p = (event as unknown as { payload: { count: number } }).payload;
+        if (typeof p?.count === 'number') this.notificationUnreadCount.set(p.count);
+        break;
+      }
     }
+  }
+
+  /**
+   * Spec 010 US2 T058/T063 — send a typed client→server message. Used by ticket-detail
+   * to emit <c>attendant.viewing_ticket</c> heartbeats. No-op when not connected.
+   */
+  send(message: object): void {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+    try { this.socket.send(JSON.stringify(message)); } catch { /* swallow */ }
   }
 
   private applyWaMessageStatus(payload: { conversation_id: string; message_id: string; status: string;
