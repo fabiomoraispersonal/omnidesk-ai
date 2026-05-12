@@ -61,6 +61,9 @@
 
     <!-- Email (transactional) -->
     <PackageReference Include="SendGrid" Version="9.29.3" />
+
+    <!-- Web Push (Spec 010 — browser push notifications, RFC 8030 + VAPID) -->
+    <PackageReference Include="WebPush" Version="1.0.12" />
   </ItemGroup>
 
 </Project>

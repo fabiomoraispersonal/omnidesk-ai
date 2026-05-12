@@ -280,9 +280,16 @@ builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.UpdateTicketCo
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Notes.AddTicketNoteCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.TransferTicketCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.CreateManualTicketCommand>();
-// Spec 009 Polish T180 — Notification service (no-op V1; Spec 010 provides real impl)
+// Spec 010 — Notifications (real impl replaces Spec 009's NoOp stub).
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.NotificationRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.PushSubscriptionRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.AttendantPreferencesRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.TenantSettingsRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.WebSockets.NotificationEventPublisher>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.SupervisorLookupService>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.INotificationService,
-    omniDesk.Api.Features.Notifications.NoOpNotificationService>();
+    omniDesk.Api.Features.Notifications.NotificationService>();
 // Spec 009 US9 — Pipeline config
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
