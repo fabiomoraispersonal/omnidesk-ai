@@ -117,6 +117,7 @@ builder.Services.AddSingleton<AttendantHubHandler>();
 builder.Services.AddScoped<EligibleAttendantsQuery>();
 builder.Services.AddScoped<TicketAssignmentService>();
 builder.Services.AddScoped<omniDesk.Api.Features.Distribution.Commands.TransferTicketCommandHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.Distribution.AttendantAvailabilityHandler>();
 builder.Services.AddScoped<omniDesk.Api.Features.Attendants.UpdateAttendantStatusService>();
 builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Departments.Validators.CreateDepartmentValidator>();
 

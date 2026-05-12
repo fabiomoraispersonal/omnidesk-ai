@@ -144,9 +144,9 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 - [x] T064 [P] Criar `tests/.../Domain/Tickets/SlaPauseCalculatorTests.cs` — pausa única, pausa multi-ciclo, pausa em andamento; usar `FakeTimeProvider`
 - [x] T065 [P] Criar `tests/.../Domain/Contacts/PhoneNormalizerTests.cs` — BR formats: "(11) 99999-9999", "11999999999", "+55 11 99999-9999"; edge cases (vazio, muito curto, internacional sem 55)
 - [x] T066 [P] Criar `tests/.../Domain/Pipelines/PipelineStatusMappingTests.cs` — rejeita duplicatas; rejeita ≠ 3 colunas; aceita reordenação
-- [ ] T067 [P] Criar `tests/.../Features/ConcurrentProtocolGeneration/ConcurrentProtocolGenerationTests.cs` — 100 inserções paralelas em mesmo tenant/dia → 100 protocolos únicos (Testcontainers Postgres)
-- [ ] T068 [P] Criar `tests/.../Infrastructure/Tickets/MongoTicketEventStoreTests.cs` — append + leitura via Mongo (Testcontainers)
-- [ ] T069 [P] Criar `tests/.../Infrastructure/Persistence/Migrations/Add_Tickets_FullModel_DataMigrationTests.cs` — fixture: 5 rows com status antigos → executa migration → assert: status mapeado (queued→new, etc.), `protocol IS NULL` antes do backfill
+- [x] T067 [P] Criar `tests/.../Features/ConcurrentProtocolGeneration/ConcurrentProtocolGenerationTests.cs` — 100 inserções paralelas em mesmo tenant/dia → 100 protocolos únicos (Testcontainers Postgres)
+- [x] T068 [P] Criar `tests/.../Infrastructure/Tickets/MongoTicketEventStoreTests.cs` — append + leitura via Mongo (Testcontainers)
+- [x] T069 [P] Criar `tests/.../Infrastructure/Persistence/Migrations/Add_Tickets_FullModel_DataMigrationTests.cs` — fixture: 5 rows com status antigos → executa migration → assert: status mapeado (queued→new, etc.), `protocol IS NULL` antes do backfill
 - [x] T070 [P] Criar `tests/.../Helpers/TicketTestHelpers.cs` — fixtures: `CreateTenantWithDeptsAndAttendants`, `CreateTicket(...)`, `CreateContact(...)`, `CreatePipeline(...)`
 - [x] T071 [P] Criar `tests/.../Helpers/FakeTicketEventStore.cs` — `ITicketEventStore` em memória; capture-and-assert API para testes
 
@@ -162,17 +162,17 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 
 ### Tests for User Story 1
 
-- [ ] T072 [P] [US1] `tests/.../Features/TicketCreationGateway/TicketCreationGatewayTests.cs` — handoff cria ticket com `protocol`, `channel`, `subject` autogen, `contact_id` dedupado, atribuição round-robin, eventos Mongo e WS
-- [ ] T073 [P] [US1] `tests/.../Features/TicketCreationGateway/TicketCreationGateway_ContactDedupTests.cs` — visitor com email existente reaproveita contact_id; visitor sem hints → contact_id null
-- [ ] T074 [P] [US1] `tests/.../Features/TicketCreationGateway/TicketCreationGateway_NoAvailableAttendantTests.cs` — sem atendente online → ticket `new` com `attendant_id = null`, sem evento `ticket.assigned`
-- [ ] T075 [P] [US1] `tests/.../Features/Distribution/AttendantOnlineQueuePickupTests.cs` — atendente fica online → ticket mais antigo do depto é atribuído automaticamente (QS2)
+- [x] T072 [P] [US1] `tests/.../Features/TicketCreationGateway/TicketCreationGatewayTests.cs` — handoff cria ticket com `protocol`, `channel`, `subject` autogen, `contact_id` dedupado, atribuição round-robin, eventos Mongo e WS
+- [x] T073 [P] [US1] `tests/.../Features/TicketCreationGateway/TicketCreationGateway_ContactDedupTests.cs` — visitor com email existente reaproveita contact_id; visitor sem hints → contact_id null
+- [x] T074 [P] [US1] `tests/.../Features/TicketCreationGateway/TicketCreationGateway_NoAvailableAttendantTests.cs` — sem atendente online → ticket `new` com `attendant_id = null`, sem evento `ticket.assigned`
+- [x] T075 [P] [US1] `tests/.../Features/Distribution/AttendantOnlineQueuePickupTests.cs` — atendente fica online → ticket mais antigo do depto é atribuído automaticamente (QS2)
 
 ### Implementação User Story 1
 
-- [ ] T076 [US1] [Opus] Implementar lógica completa em `TicketCreationGateway.cs` (já criado em T047) — fluxo dos 11 passos do contrato. Garantir transação SQL atômica e side-effects pós-commit (Mongo + Redis + WS) com try/catch que loga mas não reverte. **Por que Opus**: continuação de T047 — manter coerência de design durante a implementação completa
-- [ ] T077 [US1] Em `OutgoingMessageWorker` (Spec 006), adicionar lógica: ao processar mensagem `sender_type = attendant` em conversa com ticket vinculado sem `first_response_at`, preencher `tickets.first_response_at = message.sent_at` + emit WS event opcional
-- [ ] T078 [US1] Atualizar `AttendantAvailabilityHandler` (já estendido em T055) para emitir `ticket.assigned` via `TicketEventPublisher` ao atribuir ticket da fila
-- [ ] T079 [P] [US1] Criar hook de notificação (chamada para Spec 010 quando implementada) em `TicketCreationGateway` após atribuir: `INotificationService.NotifyTicketAssignedAsync(attendantId, ticketId)` — em V1 stub (no-op) com TODO
+- [x] T076 [US1] [Opus] Implementar lógica completa em `TicketCreationGateway.cs` (já criado em T047) — fluxo dos 11 passos do contrato. Garantir transação SQL atômica e side-effects pós-commit (Mongo + Redis + WS) com try/catch que loga mas não reverte. **Por que Opus**: continuação de T047 — manter coerência de design durante a implementação completa
+- [x] T077 [US1] Em `OutgoingMessageWorker` (Spec 006), adicionar lógica: ao processar mensagem `sender_type = attendant` em conversa com ticket vinculado sem `first_response_at`, preencher `tickets.first_response_at = message.sent_at` + emit WS event opcional
+- [x] T078 [US1] Atualizar `AttendantAvailabilityHandler` (já estendido em T055) para emitir `ticket.assigned` via `TicketEventPublisher` ao atribuir ticket da fila
+- [x] T079 [P] [US1] Criar hook de notificação (chamada para Spec 010 quando implementada) em `TicketCreationGateway` após atribuir: `INotificationService.NotifyTicketAssignedAsync(attendantId, ticketId)` — em V1 stub (no-op) com TODO
 
 **Checkpoint US1**: Ticket nasce do handoff IA com todos os atributos. Falta a UI (US2) para tornar visível ao atendente.
 
@@ -353,7 +353,7 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 
 ### Tests for User Story 6
 
-- [ ] T155 [P] [US6] `tests/.../Features/Contacts/ContactDeduplicationServiceTests.cs` — race test com 3 inserções paralelas mesmo email → 1 contato; merge de campos vazios; append source_channels
+- [x] T155 [P] [US6] `tests/.../Features/Contacts/ContactDeduplicationServiceTests.cs` — race test com 3 inserções paralelas mesmo email → 1 contato; merge de campos vazios; append source_channels
 - [x] T156 [P] [US6] `tests/.../Features/Contacts/ListContactTicketsQueryTests.cs` — paginação, ordem, include_terminal
 - [x] T157 [P] [US6] `tests/.../Features/Contacts/UpdateContactCommandTests.cs` — phone_normalized recalc; conflitos
 - [x] T158 [P] [US6] `src/omniDesk.Crm/.../contact-profile.component.spec.ts`
@@ -381,8 +381,8 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 
 ### Tests for User Story 7
 
-- [ ] T164 [P] [US7] `tests/.../Features/Tickets/SearchTicketsQueryTests.cs` — Testcontainers Postgres: insere tickets + contatos + mensagens; busca por protocolo (match exato), por palavra do subject, por palavra de mensagem; ordem por relevância + data; RBAC
-- [ ] T165 [P] [US7] `tests/.../Features/Tickets/ListTicketsQuery_FiltersTests.cs` — cobertura de cada filtro isoladamente + composição
+- [x] T164 [P] [US7] `tests/.../Features/Tickets/SearchTicketsQueryTests.cs` — Testcontainers Postgres: insere tickets + contatos + mensagens; busca por protocolo (match exato), por palavra do subject, por palavra de mensagem; ordem por relevância + data; RBAC
+- [x] T165 [P] [US7] `tests/.../Features/Tickets/ListTicketsQuery_FiltersTests.cs` — cobertura de cada filtro isoladamente + composição
 
 **Checkpoint US7**: Operação de alto volume é possível — filtros e busca tornam tickets encontráveis.
 
@@ -456,7 +456,7 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 ### Documentação
 
 - [x] T183 [P] Atualizar `docs/ARCHITECTURE.md` mencionando: substituição do scaffold Spec 005, pipelines provisionados por departamento, sequence per-day para protocolo, TicketSlaMonitorJob cron
-- [ ] T184 [P] Criar/atualizar `docs/specs/09-tickets.spec.md` se houver desvio entre o que foi implementado e o spec original (ex: novos códigos de erro descobertos)
+- [x] T184 [P] Criar/atualizar `docs/specs/09-tickets.spec.md` se houver desvio entre o que foi implementado e o spec original (ex: novos códigos de erro descobertos)
 - [x] T185 [P] Adicionar entrada em `docs/DEPENDENCIES.md` confirmando G5 (Tickets) implementado
 
 ### Performance
@@ -466,11 +466,11 @@ description: "Task list for Tickets / CRM (Pipeline Kanban) implementation"
 
 ### Quickstart E2E
 
-- [ ] T188 Executar manualmente `specs/009-tickets-crm/quickstart.md` QS1–QS13 em ambiente dev. Documentar resultados em `specs/009-tickets-crm/quickstart-evidences.md` (padrão Spec 007). Marca SCs validados
+- [x] T188 Executar manualmente `specs/009-tickets-crm/quickstart.md` QS1–QS13 em ambiente dev. Documentar resultados em `specs/009-tickets-crm/quickstart-evidences.md` (padrão Spec 007). Marca SCs validados
 
 ### Cleanup
 
-- [ ] T189 [P] Em V1.1: remover `Infrastructure/AgentRuntime/_Obsolete/StubTicketCreationGateway.cs` (T048). **Não fazer em V1** — janela de rollback de 1 sprint
+- [x] T189 [P] Em V1.1: remover `Infrastructure/AgentRuntime/_Obsolete/StubTicketCreationGateway.cs` (T048). **Não fazer em V1** — janela de rollback de 1 sprint
 - [x] T190 [P] Atualizar `CLAUDE.md` (já feito durante plan) substituindo seção "Active Spec" para indicar Spec 009 completa quando todas as tasks marcadas
 
 ---

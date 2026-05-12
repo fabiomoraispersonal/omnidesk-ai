@@ -26,6 +26,34 @@ public class MongoTicketEventStore(IMongoClient mongo) : ITicketEventStore
         }
     }
 
+    public async Task<List<TicketEvent>> GetByTicketAsync(string tenantSlug, Guid ticketId, CancellationToken ct = default)
+    {
+        var dbName  = $"tenant_{tenantSlug.Replace('-', '_')}";
+        var db      = mongo.GetDatabase(dbName);
+        var col     = db.GetCollection<TicketEventDocument>($"{tenantSlug}_ticket_events");
+        var filter  = Builders<TicketEventDocument>.Filter.Eq(d => d.TicketId, ticketId);
+        var sort    = Builders<TicketEventDocument>.Sort.Ascending(d => d.Timestamp);
+        var docs    = await col.Find(filter).Sort(sort).ToListAsync(ct);
+        return docs.Select(d => new TicketEvent(
+            d.TenantSlug, d.TicketId, d.Protocol,
+            d.EventType, d.ActorType, d.Timestamp)
+        {
+            ActorId        = d.ActorId,
+            ActorName      = d.ActorName,
+            From           = d.From,
+            To             = d.To,
+            DepartmentFromId = d.DepartmentFromId,
+            DepartmentToId   = d.DepartmentToId,
+            AttendantFromId  = d.AttendantFromId,
+            AttendantToId    = d.AttendantToId,
+            TagAdded       = d.TagAdded,
+            TagRemoved     = d.TagRemoved,
+            NoteId         = d.NoteId,
+            SlaType        = d.SlaType,
+            Reason         = d.Reason,
+        }).ToList();
+    }
+
     // Internal document model matching the MongoDB schema in data-model.md §8.
     private sealed record TicketEventDocument
     {

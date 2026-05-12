@@ -11,10 +11,19 @@ public class FakeTicketEventStore : ITicketEventStore
 {
     public List<TicketEvent> Events { get; } = new();
 
-    public Task AppendAsync(TicketEvent ticketEvent, CancellationToken ct)
+    public Task AppendAsync(TicketEvent ticketEvent, CancellationToken ct = default)
     {
         Events.Add(ticketEvent);
         return Task.CompletedTask;
+    }
+
+    public Task<List<TicketEvent>> GetByTicketAsync(string tenantSlug, Guid ticketId, CancellationToken ct = default)
+    {
+        var result = Events
+            .Where(e => e.TenantSlug == tenantSlug && e.TicketId == ticketId)
+            .OrderBy(e => e.Timestamp)
+            .ToList();
+        return Task.FromResult(result);
     }
 
     /// Returns the last appended event, or null if none have been appended.

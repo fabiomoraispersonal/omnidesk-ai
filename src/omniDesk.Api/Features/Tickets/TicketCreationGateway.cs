@@ -6,6 +6,7 @@ using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Features.AgentRuntime;
 using omniDesk.Api.Features.Contacts;
 using omniDesk.Api.Features.Distribution;
+using omniDesk.Api.Features.Notifications;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Tickets;
@@ -25,7 +26,8 @@ public class TicketCreationGateway(
     TicketAssignmentService assignmentService,
     ContactDeduplicationService contactDedup,
     ITicketEventStore eventStore,
-    TicketEventPublisher eventPublisher) : ITicketCreationGateway
+    TicketEventPublisher eventPublisher,
+    INotificationService notifications) : ITicketCreationGateway
 {
     private static readonly Serilog.ILogger Logger = Log.ForContext<TicketCreationGateway>();
 
@@ -141,7 +143,20 @@ public class TicketCreationGateway(
         await AppendMongoEventsAsync(tenantSlug, finalTicket, request, ct);
         await PublishWebSocketEventsAsync(tenantSlug, finalTicket, request, ct);
 
-        // Step 10: Notification stub (Spec 010 will take over)
+        // Step 10: Notification (Spec 010 implements; V1 is no-op stub — T079)
+        if (finalTicket.AttendantId.HasValue)
+        {
+            try
+            {
+                await notifications.NotifyTicketAssignedAsync(
+                    finalTicket.AttendantId.Value, finalTicket.Id, finalTicket.Protocol!, ct);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warning(ex, "Notification failed for ticket {TicketId}; ignored.", finalTicket.Id);
+            }
+        }
+
         Logger.Information(
             "TicketCreationGateway: created {Protocol} in dept {DeptName} " +
             "via handoff from agent {AgentId} thread {ThreadId}, " +
