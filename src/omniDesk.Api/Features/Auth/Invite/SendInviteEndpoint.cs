@@ -86,7 +86,9 @@ public static class SendInviteEndpoint
         await inviteTokens.CreateAsync(invite, ct);
 
         var tenantSlug = principal.FindFirst("tenant_slug")?.Value ?? "app";
-        var baseUrl = config["FRONTEND_CRM_BASE_URL"] ?? $"https://{tenantSlug}.omnicare.ia.br";
+        var baseUrl = config["Frontend:CrmBaseUrl"]
+            ?? config["FRONTEND_CRM_BASE_URL"]
+            ?? $"https://{tenantSlug}.omnicare.ia.br";
         var inviteLink = $"{baseUrl}/aceitar-convite?token={rawToken}";
 
         await email.SendInviteAsync(emailNorm, tenantSlug, inviteLink, ct);

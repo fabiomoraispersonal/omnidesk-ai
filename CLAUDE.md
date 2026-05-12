@@ -304,6 +304,10 @@ Mensagem recebida (webhook / WebSocket)
 | `check_availability` | Consulta horários disponíveis |
 | `create_appointment` | Cria agendamento |
 
+### Restrições por canal
+
+- **WhatsApp (Spec 008 FR-016)**: a IA **NUNCA** envia mensagens-template. Templates aprovados pela Meta são exclusivos do atendente humano. Enforcement em duas camadas: (1) `IConversationGateway.EnqueueOutgoingAsync` recebe apenas `OutgoingMessage` agnóstico (sem campo template); (2) `WaOutgoingGuard.Validate` rejeita explicitamente `MessageSenderType.AiAgent + WaOutboundMessageType.Template`. Se a janela de 24h expirar durante uma conversa atendida pela IA, o sistema escala humano automaticamente (`wa.session_expired` event + handoff).
+
 ---
 
 ## 9. Filas Redis (Hangfire)
@@ -472,9 +476,42 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 007 — Live Chat (Widget)** — em planejamento. Plano em [specs/007-live-chat-widget/plan.md](specs/007-live-chat-widget/plan.md). Branch `007-live-chat-widget`. Pré-requisitos: Specs 002, 005, 006 (todas COMPLETE).
+**Spec 008 — WhatsApp** — 136/149 tasks done (~91%) — funcionalmente completa, pronta para PR/merge. Branch `008-whatsapp-channel`.
 
-Substitui os stubs `ChannelStubGateway` e a tabela transitória `ai_threads` da Spec 006 com `LiveChatConversationGateway` + `tenant_{slug}.conversations`/`messages` reais. Entrega: widget vanilla TS (`src/omniDesk.Widget/`), backend (4 tabelas tenant-scoped + `public.tenants.widget_token`), CRM Angular (config + multi-conv inbox), 2 jobs Hangfire (abandonment/inactivity).
+Segundo adapter de canal (após Live Chat 007), implementa Princípio §III Channel Agnosticism. Reusa 100% do pipeline conversacional da 006/007. Entrega: 2 tabelas tenant-scoped (`whatsapp_config`, `whatsapp_templates`) + 2 colunas em `conversations`; 1 collection MongoDB; webhook público com HMAC-SHA256 + verify_token; 4 jobs Hangfire (session expiring notifier, token revoked detector, template status poller, media download); CRM Angular completo (whatsapp-config + whatsapp-templates + ícones delivery + banner janela 24h + template-picker dialog + audio player); AES-256-GCM reusado (Spec 003); zero NuGet novo.
 
-Próximo passo: `/speckit-tasks` para gerar `tasks.md`.
+**Cobertura de testes**: 46 unit tests passing + 6 arquivos integration tests (27 specs) prontos para CI com Testcontainers (T045 webhook, T061 secrets leak, T077 send, T090 session sweep, T105 templates CRUD, T106 template status handler). Tasks restantes (13) são integration tests redundantes (8) + polish manual que requer ambiente externo (5) — post-merge.
+
+Ver [tasks.md](specs/008-whatsapp-channel/tasks.md) e [acceptance.md](specs/008-whatsapp-channel/checklists/acceptance.md) para status detalhado.
 <!-- SPECKIT END -->
+
+## Configuração da API (.NET)
+
+**Não usamos `.env`** — a API consome configuração via `IConfiguration` na ordem padrão .NET:
+
+1. `appsettings.json` — defaults committados (sem segredos).
+2. `appsettings.{Environment}.json` — overrides por ambiente. `appsettings.Development.json` é committado com defaults locais.
+3. `Properties/launchSettings.json` — apenas `ASPNETCORE_ENVIRONMENT` e URL de bind para `dotnet run`.
+4. **User-secrets** (`dotnet user-secrets`) — segredos em dev (JWT keys, `OpenAI:ApiKey`, MinIO, SendGrid).
+5. **Variáveis de ambiente** — produção (host/container).
+
+### Setup local rápido
+
+```bash
+cd src/omniDesk.Api
+dotnet user-secrets init
+dotnet user-secrets set "Jwt:PrivateKeyPem" "$(cat dev-jwt-private.pem)"
+dotnet user-secrets set "Jwt:PublicKeyPem"  "$(cat dev-jwt-public.pem)"
+dotnet user-secrets set "OpenAI:ApiKey"     "sk-..."
+dotnet run
+```
+
+### Chaves novas (Spec 006)
+
+- `Cors:AllowedOrigins` (substitui `CORS_ALLOWED_ORIGINS`)
+- `Frontend:CrmBaseUrl` (substitui `FRONTEND_CRM_BASE_URL`)
+- `Ai:DefaultModel`, `Ai:RunTimeoutSeconds`, `Ai:RunMaxRetries`, `Ai:RunRetryBackoffSeconds`, `Ai:PlaygroundTtlSeconds`, `Ai:GlobalAllowedModels`
+
+### Compatibilidade
+
+Código existente que ainda lê `Environment.GetEnvironmentVariable("...")` (JWT, MinIO, SendGrid, MongoDB, Hangfire Redis) **continua funcionando** — vars exportadas no shell ou em user-secrets via mapeamento (`Foo__Bar` ↔ `Foo:Bar`) são honradas. Migração desses leitores para `IConfiguration` direto é cleanup futuro.

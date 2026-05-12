@@ -42,6 +42,7 @@ using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Features.LiveChat.Adapters;
 using omniDesk.Api.Features.LiveChat.Config;
+using omniDesk.Api.Features.WhatsApp.Config;
 using omniDesk.Api.Features.LiveChat.Inbox;
 using omniDesk.Api.Features.LiveChat.Public;
 using omniDesk.Api.Features.LiveChat.Uploads;
@@ -56,6 +57,21 @@ builder.Host.UseSerilog((ctx, services, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
     .Enrich.FromLogContext()
     .Enrich.With(services.GetRequiredService<ImpersonationAuditEnricher>())
+    // Spec 008 FR-034 — segredos WhatsApp NUNCA em texto plano em logs.
+    .Destructure.ByTransforming<omniDesk.Api.Domain.WhatsApp.WhatsAppConfig>(c => new
+    {
+        c.TenantId,
+        c.IsEnabled,
+        c.PhoneNumber,
+        c.DisplayName,
+        c.WabaId,
+        c.PhoneNumberId,
+        AccessTokenCiphertext = c.HasAccessToken ? "***" : null,
+        AppSecretCiphertext   = c.HasAppSecret   ? "***" : null,
+        WebhookVerifyTokenSet = !string.IsNullOrEmpty(c.WebhookVerifyToken),
+        c.BusinessHoursEnabled,
+        c.UpdatedAt,
+    })
     .WriteTo.Console(outputTemplate:
         "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"));
 
@@ -178,6 +194,55 @@ builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.LiveC
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.SendAttendantMessageCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Inbox.Commands.ResolveConversationCommand>();
 builder.Services.AddScoped<omniDesk.Api.Hubs.CrmWebSocketEndpoint>();
+
+// Spec 008 — WhatsApp: repositories
+builder.Services.AddScoped<omniDesk.Api.Domain.WhatsApp.IWhatsAppConfigRepository, omniDesk.Api.Infrastructure.WhatsApp.WhatsAppConfigRepository>();
+builder.Services.AddScoped<omniDesk.Api.Domain.WhatsApp.IWhatsAppTemplateRepository, omniDesk.Api.Infrastructure.WhatsApp.WhatsAppTemplateRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.WhatsApp.IWaMessageStatusesRepository, omniDesk.Api.Infrastructure.WhatsApp.WaMessageStatusesRepository>();
+builder.Services.AddSingleton<omniDesk.Api.Features.WhatsApp.Webhook.MetaWebhookSignatureValidator>();
+builder.Services.AddHttpClient<omniDesk.Api.Infrastructure.WhatsApp.WhatsAppMetaClient>(client =>
+{
+    var baseUrl = builder.Configuration["WhatsApp:GraphApiBaseUrl"] ?? "https://graph.facebook.com/v19.0";
+    if (!baseUrl.EndsWith('/')) baseUrl += "/";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(omniDesk.Api.Infrastructure.WhatsApp.MetaApi.Defaults.SendTimeoutSeconds);
+});
+
+// Spec 008 US1 — webhook + adapters + job
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookTenantResolver>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookProcessorJob>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppIncomingAdapter>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppOutgoingAdapter>();
+builder.Services.AddSingleton(TimeProvider.System);
+
+// Spec 008 US2 — CRM config (queries + commands + validator)
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Queries.GetWhatsAppConfigQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Commands.UpdateWhatsAppConfigCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Config.Commands.ToggleWhatsAppChannelCommand>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.WhatsApp.Config.Validators.UpdateWhatsAppConfigValidator>();
+
+// Spec 008 US3 — Send + guards + token revoked detector
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.SessionWindowGuard>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.WaOutgoingGuard>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Send.Commands.SendWhatsAppMessageCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaTokenRevokedDetectorJob>();
+
+// Spec 008 US4 — Session window sweep job
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaSessionExpiringNotifierJob>();
+
+// Spec 008 US5 — Templates CRUD + submit + webhook status handler + poller
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Queries.ListTemplatesQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.CreateTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.UpdateTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.SubmitTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Templates.Commands.DeleteTemplateCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaTemplateStatusHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaTemplateStatusPollerJob>();
+builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.WhatsApp.Templates.Validators.CreateTemplateValidator>();
+
+// Spec 008 US6 — Media download job (Meta GET media → MimeTypeDetector → MinIO).
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaMediaDownloadJob>();
+
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -193,7 +258,8 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var origins = builder.Configuration["CORS_ALLOWED_ORIGINS"]
+        var origins = builder.Configuration["Cors:AllowedOrigins"]
+            ?? builder.Configuration["CORS_ALLOWED_ORIGINS"]
             ?? "http://localhost:4200,http://localhost:4201";
 
         policy.WithOrigins(origins.Split(',', StringSplitOptions.RemoveEmptyEntries))
@@ -209,6 +275,13 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseCors();
+
+// Spec 008 — captura raw body APENAS na rota de webhook WhatsApp para HMAC-SHA256
+// (deve rodar antes de Authentication/Authorization para que o handler tenha o byte[]).
+app.UseWhen(
+    ctx => ctx.Request.Path.StartsWithSegments("/api/public/whatsapp/webhook", StringComparison.OrdinalIgnoreCase),
+    branch => branch.UseMiddleware<omniDesk.Api.Features.WhatsApp.Webhook.RawBodyCaptureMiddleware>());
+
 app.UseAuthentication();
 app.UseAuthorization();
 // Spec 004 (R7) — capture authorization denials with PT-BR body and Warning log.
@@ -235,6 +308,18 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Features.LiveChat.Jobs.AbandonmentSweepJob
     "0 * * * *");
 RecurringJob.AddOrUpdate<omniDesk.Api.Features.LiveChat.Jobs.InactivitySweepJob>(
     "live-chat-inactivity-sweep",
+    job => job.RunAsync(CancellationToken.None),
+    "0 * * * *");
+
+// Spec 008 US4 — emite wa.session_expiring / wa.session_expired via WS (cron */5min).
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.WhatsApp.Jobs.WaSessionExpiringNotifierJob>(
+    "wa-session-expiring-notifier",
+    job => job.RunAsync(CancellationToken.None),
+    "*/5 * * * *");
+
+// Spec 008 US5 — fallback poller para template status (cron @hourly).
+RecurringJob.AddOrUpdate<omniDesk.Api.Features.WhatsApp.Jobs.WaTemplateStatusPollerJob>(
+    "wa-template-status-poller",
     job => job.RunAsync(CancellationToken.None),
     "0 * * * *");
 
@@ -326,6 +411,27 @@ conversations.MapInboxConversationEndpoints();
 var widgetPublic = api.MapGroup("/public/widget");
 widgetPublic.MapWidgetPublicEndpoints();
 widgetPublic.MapWidgetUpload();
+
+// Spec 008 — Public WhatsApp webhook (HMAC validation; no user auth).
+omniDesk.Api.Features.WhatsApp.Webhook.WhatsAppWebhookEndpoints.MapWhatsAppWebhookEndpoints(app);
+
+// Spec 008 US2 — CRM config (JWT auth + RBAC policies).
+var whatsappConfig = api.MapGroup("/whatsapp/config")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+whatsappConfig.MapWhatsAppConfigEndpoints();
+
+// Spec 008 US3 — Atendente envia mensagem (texto livre dentro da janela 24h).
+var whatsappSend = api.MapGroup("/whatsapp/send")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+omniDesk.Api.Features.WhatsApp.Send.WhatsAppSendEndpoint.MapWhatsAppSendEndpoint(whatsappSend);
+
+// Spec 008 US5 — Templates CRUD (JWT auth; CRUD requer CanManageTemplates).
+var whatsappTemplates = api.MapGroup("/whatsapp/templates")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+omniDesk.Api.Features.WhatsApp.Templates.WhatsAppTemplatesEndpoints.MapWhatsAppTemplatesEndpoints(whatsappTemplates);
 
 // Spec 007 — CRM admin config surface (JWT auth).
 var widgetConfig = api.MapGroup("/widget/config")

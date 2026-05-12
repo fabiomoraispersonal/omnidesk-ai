@@ -1,7 +1,20 @@
 # Spec 08 — WhatsApp
 **Versão:** 1.0
-**Status:** Aprovado
+**Status:** SUPERSEDED — consulte [specs/008-whatsapp-channel/](../../specs/008-whatsapp-channel/)
 **Última atualização:** 2026-05
+
+> ⚠️ **Este documento é histórico.** A spec ativa do canal WhatsApp foi migrada para o
+> formato speckit em [`specs/008-whatsapp-channel/`](../../specs/008-whatsapp-channel/),
+> que mantém:
+> - [`spec.md`](../../specs/008-whatsapp-channel/spec.md) — requisitos + user stories
+> - [`plan.md`](../../specs/008-whatsapp-channel/plan.md) — Constitution Check + design
+> - [`research.md`](../../specs/008-whatsapp-channel/research.md) — R1–R10 decisões
+> - [`data-model.md`](../../specs/008-whatsapp-channel/data-model.md) — entidades + migrations
+> - [`contracts/`](../../specs/008-whatsapp-channel/contracts/) — 6 contratos (webhook, config, templates, Meta Graph, adapters, WS events)
+> - [`tasks.md`](../../specs/008-whatsapp-channel/tasks.md) — 149 tarefas, progresso por user story
+>
+> O conteúdo abaixo foi a versão inicial usada como input para `/speckit-specify`. Mantida
+> para histórico — não edite. Atualizações vão no novo formato.
 
 ---
 

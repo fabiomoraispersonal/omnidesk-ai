@@ -36,6 +36,14 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.Property(m => m.IsRead).HasColumnName("is_read").HasDefaultValue(false);
         builder.Property(m => m.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
 
+        // Spec 008 — Meta WhatsApp message ID (NULL para live_chat).
+        builder.Property(m => m.WaMessageId).HasColumnName("wa_message_id").HasMaxLength(80);
+
+        builder.HasIndex(m => m.WaMessageId)
+            .IsUnique()
+            .HasFilter("wa_message_id IS NOT NULL")
+            .HasDatabaseName("ux_messages_wa_message_id");
+
         builder.HasIndex(m => new { m.ConversationId, m.CreatedAt })
             .HasDatabaseName("idx_messages_conversation_id_created");
 

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/omniDesk.Api/omniDesk.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="src/omniDesk.Api/tests/omniDesk.Api.Tests/omniDesk.Api.Tests.csproj" />
+  </Folder>
+</Solution>

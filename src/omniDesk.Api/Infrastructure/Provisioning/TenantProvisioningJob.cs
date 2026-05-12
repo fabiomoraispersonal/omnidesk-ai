@@ -53,6 +53,9 @@ public class TenantProvisioningJob(
             // Step 2c: Initialize widget_config row for tenant (Spec 007 — defaults per FR-027)
             await ProvisionWidgetConfigAsync(tenant, ct);
 
+            // Step 2d: Initialize whatsapp_config row for tenant (Spec 008 — disabled by default)
+            await ProvisionWhatsAppConfigAsync(tenant, ct);
+
             // Step 3: MinIO bucket
             await minioProvisioner.CreateBucketAsync(tenant.Slug, ct);
 
@@ -171,6 +174,23 @@ public class TenantProvisioningJob(
                    'Olá! Como posso ajudar?', 'bottom_right', false, 8, 24, now()
             WHERE NOT EXISTS (
                 SELECT 1 FROM "{schemaName}".widget_config WHERE tenant_id = '{tenant.Id}'
+            )
+            """, ct);
+    }
+
+    private async Task ProvisionWhatsAppConfigAsync(Tenant tenant, CancellationToken ct)
+    {
+        var schemaName = tenant.SchemaName;
+        // Webhook verify token: 32 bytes random, base64-encoded (length ~44).
+        // Imutável após gerado — Meta usa apenas no handshake inicial do webhook.
+        var verifyToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+        await db.Database.ExecuteSqlRawAsync($"""
+            INSERT INTO "{schemaName}".whatsapp_config
+                (tenant_id, is_enabled, webhook_verify_token, business_hours_enabled, created_at, updated_at)
+            SELECT '{tenant.Id}', false, '{EscapeSql(verifyToken)}', false, now(), now()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "{schemaName}".whatsapp_config WHERE tenant_id = '{tenant.Id}'
             )
             """, ct);
     }

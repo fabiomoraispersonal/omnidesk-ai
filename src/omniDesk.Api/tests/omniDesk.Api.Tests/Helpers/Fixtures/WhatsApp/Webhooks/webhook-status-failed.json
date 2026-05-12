@@ -1,0 +1,38 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_TEST",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "5511999999999",
+              "phone_number_id": "123456789012345"
+            },
+            "statuses": [
+              {
+                "id": "wamid.HBgLNTUxMTk4ODg4Nzc3FQIAEhggREVDREVDREVDREVDREVDREVDREVDREVD",
+                "status": "failed",
+                "timestamp": "1717418700",
+                "recipient_id": "5511988887777",
+                "errors": [
+                  {
+                    "code": 131047,
+                    "title": "Re-engagement message",
+                    "message": "Mensagens fora da janela de 24h exigem template aprovado.",
+                    "error_data": {
+                      "details": "More than 24 hours have passed since the recipient last replied to the sender number."
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

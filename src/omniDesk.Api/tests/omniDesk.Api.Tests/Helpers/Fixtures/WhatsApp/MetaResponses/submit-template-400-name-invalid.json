@@ -1,0 +1,9 @@
+{
+  "error": {
+    "message": "Template name is invalid: must be lowercase, alphanumeric and underscores only.",
+    "type": "GraphMethodException",
+    "code": 100,
+    "error_subcode": 2388023,
+    "fbtrace_id": "ZZYYXXWWVVUUTTSSRRQQPPOO"
+  }
+}

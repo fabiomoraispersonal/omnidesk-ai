@@ -1,0 +1,12 @@
+{
+  "data": [
+    {
+      "name": "lembrete_consulta_clinicaabc",
+      "language": "pt_BR",
+      "status": "APPROVED",
+      "id": "1234567890123456",
+      "category": "UTILITY"
+    }
+  ],
+  "paging": { "cursors": { "before": "MAZDZD", "after": "MAZDZD" } }
+}

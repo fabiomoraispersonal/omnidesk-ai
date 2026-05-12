@@ -44,6 +44,20 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'configuracoes/whatsapp',
+    loadComponent: () =>
+      import('./features/whatsapp-config/whatsapp-config.component').then(
+        (m) => m.WhatsAppConfigComponent,
+      ),
+  },
+  {
+    path: 'configuracoes/whatsapp/templates',
+    loadComponent: () =>
+      import('./features/whatsapp-templates/whatsapp-templates.component').then(
+        (m) => m.WhatsAppTemplatesComponent,
+      ),
+  },
+  {
     path: 'live-chat',
     loadComponent: () =>
       import('./features/live-chat-inbox/live-chat-inbox.component').then(

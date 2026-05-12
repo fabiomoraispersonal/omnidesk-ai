@@ -1,0 +1,40 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_TEST",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "5511999999999",
+              "phone_number_id": "123456789012345"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Sticker User" },
+                "wa_id": "5511944443333"
+              }
+            ],
+            "messages": [
+              {
+                "from": "5511944443333",
+                "id": "wamid.HBgLNTUxMTk0NDQ0MzMzMxUCABIYIFNUSUNLRVJTVElDS0VSU1RJQ0tFUlNUSUNLRVI",
+                "timestamp": "1717418800",
+                "type": "sticker",
+                "sticker": {
+                  "id": "media_id_sticker_001",
+                  "mime_type": "image/webp",
+                  "sha256": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff",
+                  "animated": false
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

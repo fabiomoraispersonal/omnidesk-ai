@@ -1,0 +1,40 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_TEST",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "5511999999999",
+              "phone_number_id": "123456789012345"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Ana Pereira" },
+                "wa_id": "5511955554444"
+              }
+            ],
+            "messages": [
+              {
+                "from": "5511955554444",
+                "id": "wamid.HBgLNTUxMTk1NTU1NDQ0NBUCABIYIEFVRElPQVVESU9BVURJT0FVRElPQVVESU9B",
+                "timestamp": "1717418700",
+                "type": "audio",
+                "audio": {
+                  "id": "media_id_audio_001",
+                  "mime_type": "audio/ogg; codecs=opus",
+                  "sha256": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+                  "voice": true
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

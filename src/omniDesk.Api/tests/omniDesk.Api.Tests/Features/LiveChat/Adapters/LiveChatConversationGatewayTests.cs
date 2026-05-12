@@ -128,7 +128,7 @@ public class LiveChatConversationGatewayTests : IAsyncLifetime
         var slug = new TestSlugAccessor(LiveChatTestcontainerFixture.TenantSlug);
         var outgoing = new LiveChatOutgoingAdapter(_db, _redis, slug,
             NullLogger<LiveChatOutgoingAdapter>.Instance);
-        return new LiveChatConversationGateway(_db, outgoing);
+        return new LiveChatConversationGateway(_db, outgoing, waOutgoing: null!);
     }
 
     private async Task<Conversation> SeedConversationAsync()

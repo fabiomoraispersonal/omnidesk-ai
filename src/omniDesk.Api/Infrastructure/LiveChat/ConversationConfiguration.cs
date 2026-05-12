@@ -57,6 +57,10 @@ public class ConversationConfiguration : IEntityTypeConfiguration<Conversation>
         builder.Property(c => c.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
         builder.Property(c => c.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
 
+        // Spec 008 — WhatsApp-specific columns (NULL for live_chat conversations).
+        builder.Property(c => c.WaContactPhone).HasColumnName("wa_contact_phone").HasMaxLength(20);
+        builder.Property(c => c.WaSessionExpiresAt).HasColumnName("wa_session_expires_at");
+
         builder.Ignore(c => c.IsHandedOffToHuman);
         builder.Ignore(c => c.IsActive);
 

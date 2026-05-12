@@ -109,6 +109,9 @@ public class TenantSchemaFixture : IAsyncLifetime
             "Add_AiAgents_AiSettings.sql",
             "Add_Ai_Handoff_Snapshots.sql",
             "Add_LiveChat_Tables.sql",
+            "Add_WhatsApp_Tables.sql",
+            "Add_WhatsApp_Conversation_Fields.sql",
+            "Add_WhatsApp_Message_Fields.sql",
         };
         foreach (var name in tenantMigrations)
         {
