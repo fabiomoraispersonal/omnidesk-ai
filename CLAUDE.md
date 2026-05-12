@@ -476,13 +476,15 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 009 — Tickets / CRM (Pipeline Kanban)** — ✅ **IMPLEMENTADO**. Branch `009-tickets-crm`.
+**Spec 010 — Notifications** — 📐 **PLAN APROVADO**. Branch `010-notifications`.
 
-173/190 tasks entregues (17 pendentes = Testcontainers tests que requerem Docker, QS manual, cleanup V1.1). API + Angular compilam limpos; 84 unit tests passando.
+Artefatos de plano: [plan.md](specs/010-notifications/plan.md), [research.md](specs/010-notifications/research.md), [data-model.md](specs/010-notifications/data-model.md), [contracts/](specs/010-notifications/contracts/), [quickstart.md](specs/010-notifications/quickstart.md).
 
-Pendentes (próxima sessão ou sprint): T067-T069, T072-T079 (Testcontainers integration tests), T155, T164, T165 (Testcontainers search/contact tests), T184 (doc spec desvios), T188 (QS manual), T189 (V1.1 cleanup).
+Cobre: in-app bell + browser push (8 event types), preferências por atendente, WhatsApp `appointment_reminder` job (cron por tenant), envio manual de template, configurações por tenant. Constitution Check ✅ sem violações. Depende de Spec 009 (implementada) e Spec 11 Agenda (paralelizável via adapter stub `IAppointmentReadRepository`).
 
-Próxima spec: **010 — Notifications** (depende de 009). Branch `010-notifications`.
+Próximo passo: `/speckit-tasks` para gerar `tasks.md` executável.
+
+Spec 009 — Tickets/CRM: ✅ implementado e mergeado. 17 tasks pendentes documentadas (Testcontainers + QS manual + V1.1 cleanup).
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)
