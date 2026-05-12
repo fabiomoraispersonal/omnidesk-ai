@@ -269,6 +269,7 @@ builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.BackfillTicketProtoc
 builder.Services.AddScoped<omniDesk.Api.Features.Contacts.ContactBackfillJob>();
 // Spec 009 US3 — SLA monitoring jobs
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.TicketSlaMonitorJob>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.TicketQueueMonitorJob>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.WaitingClientResumerJob>();
 // Spec 009 US2 — queries and commands
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Queries.SearchTicketsQuery>();
@@ -296,6 +297,13 @@ builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Queries.ListNotif
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Queries.UnreadCountQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAsReadCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAllAsReadCommand>();
+// Spec 010 US6 — per-attendant preferences
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.UpdatePreferencesCommand>();
+// Spec 010 Phase 9 — tenant settings + scheduler bridge (US4 replaces NoOp)
+builder.Services.AddScoped<
+    omniDesk.Api.Features.Notifications.Schedulers.IAppointmentReminderScheduler,
+    omniDesk.Api.Features.Notifications.Schedulers.NoOpAppointmentReminderScheduler>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.UpdateTenantSettingsCommand>();
 // Spec 009 US9 — Pipeline config
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
@@ -394,6 +402,13 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.TicketSlaMonitorJob>(
     job => job.RunAsync(CancellationToken.None),
     Cron.Minutely());
 
+// Spec 010 US3 T070 — Queue monitor: runs every minute, notifies supervisors when
+// a ticket sits in `new` without attendant for ≥ 5 min (FR-009 fixed threshold).
+RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.TicketQueueMonitorJob>(
+    "queue-monitor",
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Minutely());
+
 await app.SeedDatabaseAsync();
 
 var api = app.MapGroup("/api");
@@ -440,11 +455,18 @@ TransferTicketEndpoint.Map(tickets);
 // Spec 009 US2 — CRM ticket management (list, detail, update, status, resolve, cancel, notes)
 tickets.MapTicketEndpoints();
 
-// Spec 010 US1 — Notifications (in-app feed)
+// Spec 010 US1 — Notifications (in-app feed) + US6 (per-attendant preferences)
 var notifications = api.MapGroup("/notifications")
                        .RequireAuthorization()
                        .AddEndpointFilter<ImpersonationAuditFilter>();
 notifications.MapNotificationsEndpoints();
+notifications.MapPreferencesEndpoints();
+
+// Spec 010 Phase 9 — tenant-admin notification settings
+var notificationSettings = api.MapGroup("/notification-settings")
+                              .RequireAuthorization()
+                              .AddEndpointFilter<ImpersonationAuditFilter>();
+notificationSettings.MapTenantSettingsEndpoints();
 
 // Spec 009 US9 — Pipeline config
 var pipelines = api.MapGroup("/pipelines")

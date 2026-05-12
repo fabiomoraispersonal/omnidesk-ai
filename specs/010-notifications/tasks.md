@@ -186,12 +186,12 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Implementation for User Story 3
 
-- [ ] T066 [P] [US3] Criar `src/omniDesk.Api/Features/Notifications/Handlers/TicketSlaWarningHandler.cs` — assinatura: hook no `TicketSlaMonitorJob` (Spec 009) que após `EmitWarningAsync` chama `INotificationService.NotifySlaWarningAsync(attendantId, ...)`. Apenas atendente (não supervisor) recebe warning
-- [ ] T067 [US3] Criar `src/omniDesk.Api/Features/Notifications/Handlers/TicketSlaBreachedHandler.cs` — hook no `TicketSlaMonitorJob` após `EmitBreachAsync` chama `INotificationService.NotifySlaBreachedAsync(ticketId, protocol, departmentId, attendantId?)`. Service fan-out conforme T027/T028
-- [ ] T068 [US3] Estender `src/omniDesk.Api/Infrastructure/Jobs/TicketSlaMonitorJob.cs` (Spec 009) adicionando chamadas a `INotificationService.NotifySlaWarningAsync` e `NotifySlaBreachedAsync` logo após os emits WS existentes. Try/catch — falha de notificação não pode travar o job
-- [ ] T069 [Opus] [US3] Criar `src/omniDesk.Api/Infrastructure/Jobs/TicketQueueMonitorJob.cs` — cron `* * * * *`. Para cada tenant ativo: query SQL bruto `SELECT id, department_id, protocol FROM tenant_{slug}.tickets WHERE status='new' AND attendant_id IS NULL AND deleted_at IS NULL AND created_at <= NOW() - INTERVAL '5 minutes'`. Para cada row: `SETNX {slug}:queue_alert:{ticket_id} 1 EX 3600`; se ganhou, `INotificationService.NotifyTicketQueuedAsync(ticketId, protocol, departmentId)`. **Por que Opus**: scan multi-tenant + idempotência via Redis NX + try/catch granular por tenant para isolar falhas
-- [ ] T070 [US3] Registrar em Program.cs: `RecurringJob.AddOrUpdate<TicketQueueMonitorJob>("ticket-queue-monitor", j => j.RunAsync(default), "* * * * *", TimeZoneInfo.Utc)`
-- [ ] T071 [US3] Estender `Handlers/TicketQueuedHandler.cs` análogo aos outros — apenas validação E2E (a lógica vive no service + job)
+- [x] T066 [P] [US3] Criar `src/omniDesk.Api/Features/Notifications/Handlers/TicketSlaWarningHandler.cs` — assinatura: hook no `TicketSlaMonitorJob` (Spec 009) que após `EmitWarningAsync` chama `INotificationService.NotifySlaWarningAsync(attendantId, ...)`. Apenas atendente (não supervisor) recebe warning
+- [x] T067 [US3] Criar `src/omniDesk.Api/Features/Notifications/Handlers/TicketSlaBreachedHandler.cs` — hook no `TicketSlaMonitorJob` após `EmitBreachAsync` chama `INotificationService.NotifySlaBreachedAsync(ticketId, protocol, departmentId, attendantId?)`. Service fan-out conforme T027/T028
+- [x] T068 [US3] Estender `src/omniDesk.Api/Infrastructure/Jobs/TicketSlaMonitorJob.cs` (Spec 009) adicionando chamadas a `INotificationService.NotifySlaWarningAsync` e `NotifySlaBreachedAsync` logo após os emits WS existentes. Try/catch — falha de notificação não pode travar o job
+- [x] T069 [Opus] [US3] Criar `src/omniDesk.Api/Infrastructure/Jobs/TicketQueueMonitorJob.cs` — cron `* * * * *`. Para cada tenant ativo: query SQL bruto `SELECT id, department_id, protocol FROM tenant_{slug}.tickets WHERE status='new' AND attendant_id IS NULL AND deleted_at IS NULL AND created_at <= NOW() - INTERVAL '5 minutes'`. Para cada row: `SETNX {slug}:queue_alert:{ticket_id} 1 EX 3600`; se ganhou, `INotificationService.NotifyTicketQueuedAsync(ticketId, protocol, departmentId)`. **Por que Opus**: scan multi-tenant + idempotência via Redis NX + try/catch granular por tenant para isolar falhas
+- [x] T070 [US3] Registrar em Program.cs: `RecurringJob.AddOrUpdate<TicketQueueMonitorJob>("ticket-queue-monitor", j => j.RunAsync(default), "* * * * *", TimeZoneInfo.Utc)`
+- [x] T071 [US3] Estender `Handlers/TicketQueuedHandler.cs` análogo aos outros — apenas validação E2E (a lógica vive no service + job)
 
 **Checkpoint**: ✅ User Story 3 completa. Alertas operacionais entregando para supervisores + atendentes.
 
@@ -260,11 +260,11 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Implementation for User Story 6
 
-- [ ] T086 [P] [US6] Criar `src/omniDesk.Api/Features/Notifications/Commands/UpdatePreferencesCommand.cs` com `ExecuteAsync(attendantId, pushEnabled, eventPushFlags, ct)`. Valida chaves em `NotificationEventTypes.AllowedValues`. Upsert via `AttendantPreferencesRepository`
-- [ ] T087 [US6] Criar `src/omniDesk.Api/Features/Notifications/PreferencesEndpoints.cs` com `GET /api/notifications/preferences` (retorna shape completo conforme contracts/preferences-api.md, preenchendo `true` para chaves ausentes) e `PUT /api/notifications/preferences`. Registrar em Program.cs
+- [x] T086 [P] [US6] Criar `src/omniDesk.Api/Features/Notifications/Commands/UpdatePreferencesCommand.cs` com `ExecuteAsync(attendantId, pushEnabled, eventPushFlags, ct)`. Valida chaves em `NotificationEventTypes.AllowedValues`. Upsert via `AttendantPreferencesRepository`
+- [x] T087 [US6] Criar `src/omniDesk.Api/Features/Notifications/PreferencesEndpoints.cs` com `GET /api/notifications/preferences` (retorna shape completo conforme contracts/preferences-api.md, preenchendo `true` para chaves ausentes) e `PUT /api/notifications/preferences`. Registrar em Program.cs
 - [ ] T088 [US6] Atualizar `NotificationService.SendPushAsync` (interno, T057) para consultar prefs **antes de cada push**: se `pushEnabled=false` → skip; se `eventPushFlags[event_type] == false` → skip. Garantir que in-app **sempre** persiste (a checagem é só sobre push)
-- [ ] T089 [P] [US6] Criar `src/omniDesk.Crm/src/app/features/notifications/preferences-page.component.{ts,html,scss,spec.ts}` — formulário Reactive com toggle `push_enabled` + 8 checkboxes (um por event_type, label PT-BR). Carrega `GET /api/notifications/preferences` em `ngOnInit`. Save → `PUT`. Toast de sucesso. Rota `/preferences` em `app.routes.ts` lazy-load
-- [ ] T090 [US6] Adicionar link "Preferências" no menu de usuário (`src/omniDesk.Crm/src/app/layout/header/header.component.html`) navegando para `/preferences`
+- [x] T089 [P] [US6] Criar `src/omniDesk.Crm/src/app/features/notifications/preferences-page.component.{ts,html,scss,spec.ts}` — formulário Reactive com toggle `push_enabled` + 8 checkboxes (um por event_type, label PT-BR). Carrega `GET /api/notifications/preferences` em `ngOnInit`. Save → `PUT`. Toast de sucesso. Rota `/preferences` em `app.routes.ts` lazy-load
+- [x] T090 [US6] Adicionar link "Preferências" no menu de usuário (`src/omniDesk.Crm/src/app/layout/header/header.component.html`) navegando para `/preferences`
 
 **Checkpoint**: ✅ User Story 6 completa. Atendente controla push por evento.
 
@@ -275,12 +275,12 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 **Purpose**: Tela de admin para `follow_up_enabled`, `reminder_enabled`, `reminder_time`. Disparada por completar US4; o follow-up opt-in (FR-026) é parcialmente independente mas vive na mesma tela.
 
 - [ ] T091 [P] Criar `tests/.../Features/Notifications/TenantSettingsEndpointsTests.cs` — GET retorna defaults se row ausente; PUT como TenantAdmin upserta + chama scheduler; PUT como Attendant retorna 403; PUT com `reminder_time` inválido retorna 422
-- [ ] T092 [P] Criar `src/omniDesk.Api/Features/Notifications/Commands/UpdateTenantSettingsCommand.cs` — upsert via `TenantSettingsRepository` + chama `AppointmentReminderScheduler.ApplyAsync(tenantId, settings)`
-- [ ] T093 Criar `src/omniDesk.Api/Features/Notifications/TenantSettingsEndpoints.cs` com `GET /api/notification-settings` e `PUT /api/notification-settings`. Policy `TenantAdmin` (existente em `Infrastructure/Authentication/`). Registrar em Program.cs
+- [x] T092 [P] Criar `src/omniDesk.Api/Features/Notifications/Commands/UpdateTenantSettingsCommand.cs` — upsert via `TenantSettingsRepository` + chama `AppointmentReminderScheduler.ApplyAsync(tenantId, settings)`
+- [x] T093 Criar `src/omniDesk.Api/Features/Notifications/TenantSettingsEndpoints.cs` com `GET /api/notification-settings` e `PUT /api/notification-settings`. Policy `TenantAdmin` (existente em `Infrastructure/Authentication/`). Registrar em Program.cs
 - [ ] T094 Atualizar `src/omniDesk.Api/Features/Tickets/Commands/ResolveTicketCommand.cs` (ou equivalente que encerra ticket, Spec 009) para — se `tenant_notification_settings.follow_up_enabled = true` e ticket tem WA conversation e template `follow_up` aprovado e contato com phone — enqueue follow-up via `OutgoingMessagePublisher` com `sender_type=system`, `template=follow_up`. Reusa `WhatsAppOutgoingAdapter`. Falha gera log warning (não trava resolve)
 - [ ] T095 Atualizar `src/omniDesk.Api/Features/Tickets/Commands/ResolveTicketCommand.cs` (ou equivalente) para também resetar `tickets.has_reminder_alert = false` no fechamento (FR-021)
-- [ ] T096 [P] Criar `src/omniDesk.Crm/src/app/features/notification-settings/settings-page.component.{ts,html,scss,spec.ts}` — 3 controles (2 toggles + 1 time picker PrimeNG `Calendar timeOnly`). GET/PUT contra `/api/notification-settings`. Guard `TenantAdminGuard` na rota `/settings/notifications`
-- [ ] T097 Atualizar `src/omniDesk.Crm/src/app/app.routes.ts` adicionando rotas lazy-loaded `/preferences` (US6) e `/settings/notifications` (US-cross)
+- [x] T096 [P] Criar `src/omniDesk.Crm/src/app/features/notification-settings/settings-page.component.{ts,html,scss,spec.ts}` — 3 controles (2 toggles + 1 time picker PrimeNG `Calendar timeOnly`). GET/PUT contra `/api/notification-settings`. Guard `TenantAdminGuard` na rota `/settings/notifications`
+- [x] T097 Atualizar `src/omniDesk.Crm/src/app/app.routes.ts` adicionando rotas lazy-loaded `/preferences` (US6) e `/settings/notifications` (US-cross)
 
 **Checkpoint**: ✅ Configurações por tenant funcionais; follow-up automático opt-in funcional.
 

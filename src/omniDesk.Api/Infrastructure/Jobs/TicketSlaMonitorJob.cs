@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Tenants;
 using omniDesk.Api.Domain.Tickets;
+using omniDesk.Api.Features.Notifications;
 using omniDesk.Api.Features.Tickets;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.WebSockets;
@@ -18,6 +19,7 @@ public class TicketSlaMonitorJob(
     IConnectionMultiplexer redis,
     ITicketEventStore eventStore,
     TicketEventPublisher publisher,
+    INotificationService notifications,
     IConfiguration config,
     ILogger<TicketSlaMonitorJob> logger)
 {
@@ -145,6 +147,21 @@ public class TicketSlaMonitorJob(
         {
             logger.LogWarning(ex, "SlaMonitor: WS publish warning failed for ticket {Id}.", row.Id);
         }
+
+        // Spec 010 US3 — warning notification (atendente only, FR table 2.2).
+        if (row.AttendantId.HasValue && row.Protocol is not null)
+        {
+            try
+            {
+                await notifications.NotifySlaWarningAsync(
+                    row.AttendantId.Value, row.Id, row.Protocol, slaType, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "SlaMonitor: notification (warning) failed for ticket {Id}.", row.Id);
+            }
+        }
     }
 
     private async Task EmitBreachAsync(
@@ -190,6 +207,21 @@ public class TicketSlaMonitorJob(
         {
             logger.LogWarning(ex, "SlaMonitor: WS publish breach failed for ticket {Id}.", row.Id);
         }
+
+        // Spec 010 US3 — breach notification (fan-out: assigned attendant + supervisors of department).
+        if (row.Protocol is not null)
+        {
+            try
+            {
+                await notifications.NotifySlaBreachedAsync(
+                    row.Id, row.Protocol, row.DepartmentId, row.AttendantId, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "SlaMonitor: notification (breach) failed for ticket {Id}.", row.Id);
+            }
+        }
     }
 
     private async Task<List<TicketSlaRow>> LoadActiveTicketsAsync(string schema, CancellationToken ct)
@@ -197,6 +229,7 @@ public class TicketSlaMonitorJob(
         var sql = $"""
             SELECT id,
                    department_id,
+                   attendant_id,
                    protocol,
                    created_at,
                    sla_first_response_deadline,
@@ -228,13 +261,14 @@ public class TicketSlaMonitorJob(
                 {
                     Id                        = reader.GetGuid(0),
                     DepartmentId              = reader.GetGuid(1),
-                    Protocol                  = reader.IsDBNull(2) ? null : reader.GetString(2),
-                    CreatedAt                 = reader.GetFieldValue<DateTimeOffset>(3),
-                    SlaFirstResponseDeadline  = reader.IsDBNull(4) ? null : reader.GetFieldValue<DateTimeOffset>(4),
-                    SlaResolutionDeadline     = reader.IsDBNull(5) ? null : reader.GetFieldValue<DateTimeOffset>(5),
-                    SlaPausedDurationMinutes  = reader.GetInt32(6),
-                    WaitingClientSince        = reader.IsDBNull(7) ? null : reader.GetFieldValue<DateTimeOffset>(7),
-                    FirstResponseAt           = reader.IsDBNull(8) ? null : reader.GetFieldValue<DateTimeOffset>(8),
+                    AttendantId               = reader.IsDBNull(2) ? null : reader.GetGuid(2),
+                    Protocol                  = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    CreatedAt                 = reader.GetFieldValue<DateTimeOffset>(4),
+                    SlaFirstResponseDeadline  = reader.IsDBNull(5) ? null : reader.GetFieldValue<DateTimeOffset>(5),
+                    SlaResolutionDeadline     = reader.IsDBNull(6) ? null : reader.GetFieldValue<DateTimeOffset>(6),
+                    SlaPausedDurationMinutes  = reader.GetInt32(7),
+                    WaitingClientSince        = reader.IsDBNull(8) ? null : reader.GetFieldValue<DateTimeOffset>(8),
+                    FirstResponseAt           = reader.IsDBNull(9) ? null : reader.GetFieldValue<DateTimeOffset>(9),
                 });
             }
             return rows;
@@ -249,6 +283,7 @@ public class TicketSlaMonitorJob(
     {
         public Guid Id                               { get; set; }
         public Guid DepartmentId                     { get; set; }
+        public Guid? AttendantId                     { get; set; }
         public string? Protocol                      { get; set; }
         public DateTimeOffset CreatedAt              { get; set; }
         public DateTimeOffset? SlaFirstResponseDeadline  { get; set; }

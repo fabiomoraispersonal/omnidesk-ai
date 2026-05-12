@@ -105,5 +105,22 @@ export const routes: Routes = [
         (m) => m.LiveChatInboxComponent,
       ),
   },
+  // Spec 010 US6 — Notification preferences (per-attendant)
+  {
+    path: 'preferences',
+    loadComponent: () =>
+      import('./features/notifications/preferences-page.component').then(
+        (m) => m.NotificationPreferencesPageComponent,
+      ),
+  },
+  // Spec 010 Phase 9 — Tenant Notification Settings (admin only)
+  {
+    path: 'settings/notifications',
+    canActivate: [roleGuard('tenant_admin')],
+    loadComponent: () =>
+      import('./features/notification-settings/settings-page.component').then(
+        (m) => m.NotificationSettingsPageComponent,
+      ),
+  },
   { path: '', redirectTo: 'kanban', pathMatch: 'full' },
 ];
