@@ -925,3 +925,74 @@ IConversationGateway = LiveChatConversationGateway (channel-aware desde 008)
 - **`name` snake_case auto**: `TemplateNameGenerator.Generate(type, slug)` produz `lembrete_consulta_clinicaabc`, `confirmacao_consulta_clinicaabc`, etc. Único por tenant (partial unique index).
 - **Logging mascarado** (FR-034): Serilog `Destructure.ByTransforming<WhatsAppConfig>` substitui access_token/app_secret por `"***"` em todos os sinks.
 - **Reabertura janela**: `WhatsAppIncomingAdapter` limpa flags Redis `WaExpiringEmitted`/`WaExpiredEmitted` ao receber nova mensagem do cliente. Cron seguinte volta a emitir caso a nova janela se aproxime do limite.
+
+
+## Notifications (Spec 010)
+
+Operational alerts to attendants/supervisors and proactive WhatsApp messaging to customers.
+
+### Componentes principais
+
+```
+Event (Spec 009 SLA monitor, Spec 007 message arrival, Spec 010 queue monitor, ...)
+  → NotificationService (Features/Notifications/)
+     ├── NotificationRepository.AddAsync                    (tenant_{slug}.notifications)
+     ├── NotificationEventPublisher.PublishNewAsync         ({slug}:crm:user:{userId})
+     ├── NotificationEventPublisher.PublishUnreadCountAsync
+     ├── prefs gate (AttendantNotificationPreferences)
+     ├── silence rule ({slug}:attendant_active_ticket:{attId})
+     └── WebPushDispatcher.SendToAttendantAsync             (browser push via VAPID)
+  → SupervisorLookupService (fan-out: TenantAdmin + Supervisor of dept; cached 60s)
+  → NotificationMetrics counters
+```
+
+### Tabelas tenant-scoped
+
+| Tabela | Propósito |
+|---|---|
+| `notifications` | feed in-app; `archived_at IS NULL` filtra ativos; partial index `(attendant_id, is_read, created_at DESC) WHERE archived_at IS NULL` |
+| `push_subscriptions` | endpoint UNIQUE; auto-deleta em 410/404 do push service |
+| `attendant_notification_preferences` | `push_enabled boolean` + `event_push_flags jsonb` (chave ausente = true) |
+
+### Tabela em `public`
+
+| Tabela | Propósito |
+|---|---|
+| `tenant_notification_settings` | follow-up toggle + reminder toggle + `reminder_time` (HH:mm tenant TZ) |
+
+### Jobs Hangfire
+
+| Job | Cron | Responsabilidade |
+|---|---|---|
+| `TicketSlaMonitorJob` (Spec 009) | `* * * * *` | Já existente; agora também invoca `NotifySlaWarningAsync` / `NotifySlaBreachedAsync` |
+| `TicketQueueMonitorJob` (Spec 010) | `* * * * *` | Tickets em `new` sem atendente ≥ 5min → fan-out a supervisores via Redis NX (TTL 1h) |
+| `NotificationArchiverJob` (Spec 010) | `0 3 * * *` | Soft-delete (`archived_at = NOW()`) de notifications > 90 dias |
+
+### Web Push
+
+- Biblioteca: **`WebPush` NuGet** (RFC 8030 + VAPID).
+- VAPID keys: `Push:VapidSubject`/`VapidPublicKey`/`VapidPrivateKey` (user-secrets em dev, env vars em prod). `VapidKeyProvider.IsConfigured` → dispatcher gracefully no-op quando faltam.
+- HTTP `410 Gone` / `404 Not Found` da push service → `PushSubscriptionRepository.DeleteByEndpointAsync`. Outros erros logam warning sem retry.
+- Payload truncado em 120 chars (body); in-app preserva integral.
+- Service Worker próprio (`src/sw-notifications.js`) — **não** Angular SW (sem cache); registrado por `WebPushService.register()`.
+
+### Silence rule (FR-010)
+
+Frontend `TicketDetailComponent` emite `{ type: "attendant.viewing_ticket", ticket_id }` no mount + heartbeat 30s + null no destroy. `CrmWebSocketEndpoint` escreve `{slug}:attendant_active_ticket:{attendantId}` com TTL 60s. `NotificationService` checa o flag para `ticket.new_message` / `ticket.client_replied` do mesmo ticket — push é silenciado; in-app **sempre** persiste.
+
+### Decisões registradas
+
+- **Channel routing**: notifications usam `{slug}:crm:user:{userId}` (canal pessoal de Spec 007 já consumido por `CrmWebSocketEndpoint`), não um canal novo `:ws:attendant:`. UserId é resolvido a partir do attendantId via projeção EF.
+- **Preferences gate**: `event_push_flags` em jsonb, default-on (chave ausente = `true`). Permite adicionar novos event types sem opt-in retroativo (research §R4).
+- **Supervisor resolution (R6)**: a Constituição preâmbulo só falava de `tenant_admin`. Spec 005 introduziu `Roles.Supervisor`. Spec 010 reconhece ambos: `Roles.TenantAdmin` cobre o tenant inteiro; `Roles.Supervisor` é escopado por departamento via `attendant_departments`.
+- **`IAppointmentReminderScheduler` stub V1**: tela de Settings (Phase 9) e command UpdateTenantSettings invocam o scheduler; impl real chega na US4 quando o `AppointmentReminderJob` ficar pronto. Hoje é `NoOpAppointmentReminderScheduler`.
+- **NoOp service retirado**: o `NoOpNotificationService` que Spec 009 deixou foi movido para `tests/Helpers/` como `NoOpNotificationService` (test stub) e substituído em produção por `NotificationService` real. Spec 009 call sites (`TicketCreationGateway`, etc.) não mudaram de assinatura.
+
+### Métricas (`Infrastructure/Metrics/NotificationMetrics.cs`)
+
+Counters via `System.Diagnostics.Metrics`:
+- `notifications_delivered_total{event_type}`
+- `notifications_push_failed_total`
+- `reminders_sent_total{tenant_slug}` (incrementado pelo AppointmentReminderJob — US4)
+- `reminders_failed_total{reason}`
+

@@ -270,6 +270,7 @@ builder.Services.AddScoped<omniDesk.Api.Features.Contacts.ContactBackfillJob>();
 // Spec 009 US3 — SLA monitoring jobs
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.TicketSlaMonitorJob>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.TicketQueueMonitorJob>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.NotificationArchiverJob>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.WaitingClientResumerJob>();
 // Spec 009 US2 — queries and commands
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Queries.SearchTicketsQuery>();
@@ -307,6 +308,11 @@ builder.Services.AddScoped<
     omniDesk.Api.Features.Notifications.Schedulers.IAppointmentReminderScheduler,
     omniDesk.Api.Features.Notifications.Schedulers.NoOpAppointmentReminderScheduler>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.UpdateTenantSettingsCommand>();
+// Spec 010 US5 — Manual WhatsApp template send from ticket detail.
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.SendManualTemplateCommand>();
+// Spec 010 Polish T100 — metrics. AddMetrics() registers IMeterFactory.
+builder.Services.AddMetrics();
+builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Metrics.NotificationMetrics>();
 // Spec 009 US9 — Pipeline config
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
@@ -412,6 +418,13 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.TicketQueueMonitorJob>
     job => job.RunAsync(CancellationToken.None),
     Cron.Minutely());
 
+// Spec 010 Polish T098 — Notification archiver: 3 AM UTC daily, soft-deletes rows
+// older than Notifications:ArchiveRetentionDays (default 90). FR-007.
+RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.NotificationArchiverJob>(
+    "notifications-archiver",
+    job => job.RunAsync(CancellationToken.None),
+    "0 3 * * *");
+
 await app.SeedDatabaseAsync();
 
 var api = app.MapGroup("/api");
@@ -457,6 +470,9 @@ TransferTicketEndpoint.Map(tickets);
 
 // Spec 009 US2 — CRM ticket management (list, detail, update, status, resolve, cancel, notes)
 tickets.MapTicketEndpoints();
+
+// Spec 010 US5 — POST /api/tickets/{id}/send-template
+tickets.MapSendTemplateEndpoint();
 
 // Spec 010 US1 — Notifications (in-app feed) + US6 (per-attendant preferences)
 var notifications = api.MapGroup("/notifications")

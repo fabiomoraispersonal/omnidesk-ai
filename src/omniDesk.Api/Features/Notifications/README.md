@@ -40,6 +40,10 @@ dotnet user-secrets set "Push:VapidPublicKey"  "<public>"
 dotnet user-secrets set "Push:VapidPrivateKey" "<private>"
 ```
 
+If `Push:VapidPublicKey` is empty, the dispatcher logs `WebPushDispatcher: VAPID
+not configured` and gracefully skips push delivery. In-app notifications still
+work — push is a strictly additive channel.
+
 ## Event types
 
 `NotificationEventTypes` (`Domain/Notifications/`) defines the 8 closed-set strings:

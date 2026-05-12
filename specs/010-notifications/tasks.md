@@ -239,10 +239,10 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Implementation for User Story 5
 
-- [ ] T081 [P] [US5] Criar `src/omniDesk.Api/Features/Tickets/Commands/SendManualTemplateCommand.cs` com `ExecuteAsync(ticketId, attendantId, templateId, variables, ct)`. Validações conforme contracts/manual-template-api.md (semantic error codes). Render usando engine do Spec 008 (`WhatsAppTemplateRenderer` se existe — senão criar wrapper que substitui `{{var}}` simples). Enqueue via `OutgoingMessagePublisher` com `sender_type=attendant`, `message_type=template`. Side effect: se `template.name == "appointment_reminder"` e `ticket.has_reminder_alert == true` → UPDATE para `false` na mesma transação
-- [ ] T082 [US5] Criar `src/omniDesk.Api/Features/Tickets/SendTemplateEndpoint.cs` com `POST /api/tickets/{id}/send-template`. Registrar no group de tickets em Program.cs (já existe). Validador FluentValidation para variables não vazias
-- [ ] T083 [P] [US5] Criar `src/omniDesk.Crm/src/app/features/whatsapp-templates/send-template-modal.component.{ts,html,scss,spec.ts}` — modal PrimeNG `Dialog` recebendo `@Input() ticketId`. `ngOnInit`: GET templates approved da Spec 008. Form Reactive com FormArray para variáveis baseado no template selecionado. Preview ao vivo (substituição client-side de `{{var}}` por valor — research §R12). Botão "Enviar" → `POST /api/tickets/{id}/send-template`. Toast de sucesso/erro
-- [ ] T084 [US5] Estender `src/omniDesk.Crm/src/app/features/ticket-detail/ticket-detail.component.{ts,html}` — botão "Enviar template" no painel direito. Abre `SendTemplateModalComponent` com `ticketId`. Após sucesso, recarrega thread de mensagens
+- [x] T081 [P] [US5] Criar `src/omniDesk.Api/Features/Tickets/Commands/SendManualTemplateCommand.cs` com `ExecuteAsync(ticketId, attendantId, templateId, variables, ct)`. Validações conforme contracts/manual-template-api.md (semantic error codes). Render usando engine do Spec 008 (`WhatsAppTemplateRenderer` se existe — senão criar wrapper que substitui `{{var}}` simples). Enqueue via `OutgoingMessagePublisher` com `sender_type=attendant`, `message_type=template`. Side effect: se `template.name == "appointment_reminder"` e `ticket.has_reminder_alert == true` → UPDATE para `false` na mesma transação
+- [x] T082 [US5] Criar `src/omniDesk.Api/Features/Tickets/SendTemplateEndpoint.cs` com `POST /api/tickets/{id}/send-template`. Registrar no group de tickets em Program.cs (já existe). Validador FluentValidation para variables não vazias
+- [x] T083 [P] [US5] Criar `src/omniDesk.Crm/src/app/features/whatsapp-templates/send-template-modal.component.{ts,html,scss,spec.ts}` — modal PrimeNG `Dialog` recebendo `@Input() ticketId`. `ngOnInit`: GET templates approved da Spec 008. Form Reactive com FormArray para variáveis baseado no template selecionado. Preview ao vivo (substituição client-side de `{{var}}` por valor — research §R12). Botão "Enviar" → `POST /api/tickets/{id}/send-template`. Toast de sucesso/erro
+- [x] T084 [US5] Estender `src/omniDesk.Crm/src/app/features/ticket-detail/ticket-detail.component.{ts,html}` — botão "Enviar template" no painel direito. Abre `SendTemplateModalComponent` com `ticketId`. Após sucesso, recarrega thread de mensagens
 
 **Checkpoint**: ✅ User Story 5 completa. Template manual funcional.
 
@@ -288,16 +288,16 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T098 [P] Criar `src/omniDesk.Api/Infrastructure/Jobs/NotificationArchiverJob.cs` — cron `0 3 * * *`. Para cada tenant ativo: `UPDATE tenant_{slug}.notifications SET archived_at = NOW() WHERE created_at < NOW() - INTERVAL @days DAY AND archived_at IS NULL` (usar `Notifications:ArchiveRetentionDays`). Registrar via `RecurringJob.AddOrUpdate("notifications-archiver", ..., "0 3 * * *", Utc)`
-- [ ] T099 [P] Criar `tests/.../Infrastructure/Jobs/NotificationArchiverJobTests.cs` — 100 rows, 60 > 90 dias → exatamente 60 archived; runs idempotentes (segundo run não altera nada)
-- [ ] T100 [P] Adicionar métricas em `Infrastructure/Metrics/` (se existe — senão `NotificationMetrics.cs`): `notifications_delivered_total{event_type}`, `notifications_push_failed_total{reason}`, `push_subscriptions_active`, `reminders_sent_total{tenant_slug}`, `reminders_failed_total{reason}`. Incrementar nos pontos relevantes
+- [x] T098 [P] Criar `src/omniDesk.Api/Infrastructure/Jobs/NotificationArchiverJob.cs` — cron `0 3 * * *`. Para cada tenant ativo: `UPDATE tenant_{slug}.notifications SET archived_at = NOW() WHERE created_at < NOW() - INTERVAL @days DAY AND archived_at IS NULL` (usar `Notifications:ArchiveRetentionDays`). Registrar via `RecurringJob.AddOrUpdate("notifications-archiver", ..., "0 3 * * *", Utc)`
+- [x] T099 [P] Criar `tests/.../Infrastructure/Jobs/NotificationArchiverJobTests.cs` — 100 rows, 60 > 90 dias → exatamente 60 archived; runs idempotentes (segundo run não altera nada)
+- [x] T100 [P] Adicionar métricas em `Infrastructure/Metrics/` (se existe — senão `NotificationMetrics.cs`): `notifications_delivered_total{event_type}`, `notifications_push_failed_total{reason}`, `push_subscriptions_active`, `reminders_sent_total{tenant_slug}`, `reminders_failed_total{reason}`. Incrementar nos pontos relevantes
 - [ ] T101 [P] Adicionar testes de concorrência: `tests/.../Features/Notifications/ConcurrentNotificationTests.cs` — disparar 50 `NotifyTicketAssignedAsync` em paralelo para 5 attendants; assert 50 rows totais, 50 WS publishes, sem deadlock
 - [ ] T102 [P] Auditoria de segurança: confirmar que `NotificationsEndpoints` SEMPRE filtra por `attendant_id = current_user`; nenhum endpoint retorna notification de outro atendente; tests no `NotificationsEndpointTests` (T033) já cobrem — adicionar caso adicional de cross-tenant attempt
-- [ ] T103 [P] Documentar em `docs/ARCHITECTURE.md` na seção de Notifications: tabelas, fluxo de push, idempotência do reminder, decisão R6 sobre supervisor, link para ADRs se aplicável
-- [ ] T104 [P] Documentar em `docs/DEPENDENCIES.md` que Spec 010 depende de Spec 009 (✅ ok) e Spec 11 Agenda (paralelizada via adapter — `NullAppointmentReadRepository` é o stub default)
-- [ ] T105 Atualizar `src/omniDesk.Api/Features/Notifications/README.md` (criado em T006) com setup VAPID resumido + link para quickstart.md
+- [x] T103 [P] Documentar em `docs/ARCHITECTURE.md` na seção de Notifications: tabelas, fluxo de push, idempotência do reminder, decisão R6 sobre supervisor, link para ADRs se aplicável
+- [x] T104 [P] Documentar em `docs/DEPENDENCIES.md` que Spec 010 depende de Spec 009 (✅ ok) e Spec 11 Agenda (paralelizada via adapter — `NullAppointmentReadRepository` é o stub default)
+- [x] T105 Atualizar `src/omniDesk.Api/Features/Notifications/README.md` (criado em T006) com setup VAPID resumido + link para quickstart.md
 - [ ] T106 Validar manual via quickstart.md §4–9 (in-app, push, silence rule, reminder job, queue monitor, manual template) em dev local. Ticket items conforme spec.md §"Critérios de Aceite". Documentar resultados em `specs/010-notifications/quickstart-run-{date}.md`
-- [ ] T107 Cleanup: remover `NoOpNotificationService` do código de produção definitivamente (após confirmar via grep que só vive em `tests/Helpers/`)
+- [x] T107 Cleanup: remover `NoOpNotificationService` do código de produção definitivamente (após confirmar via grep que só vive em `tests/Helpers/`)
 
 ---
 

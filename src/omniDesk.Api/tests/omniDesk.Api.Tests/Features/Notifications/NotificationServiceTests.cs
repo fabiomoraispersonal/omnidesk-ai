@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Npgsql;
 using omniDesk.Api.Domain.Notifications;
 using omniDesk.Api.Features.Notifications;
 using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.Metrics;
 using omniDesk.Api.Infrastructure.Notifications;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Push;
@@ -92,6 +94,7 @@ public class NotificationServiceTests : IAsyncLifetime
         var dispatcher = new WebPushDispatcher(
             vapid, pushRepo, NullLogger<WebPushDispatcher>.Instance);
         var slug = new TestSlugAccessor(TenantSchemaFixture.TenantSlug);
+        var metrics = new NotificationMetrics(new TestMeterFactory());
         return new NotificationService(
             new NotificationRepository(db),
             publisher,
@@ -100,6 +103,7 @@ public class NotificationServiceTests : IAsyncLifetime
             dispatcher,
             _redis!,
             db,
+            metrics,
             slug,
             NullLogger<NotificationService>.Instance);
     }
@@ -140,5 +144,12 @@ public class NotificationServiceTests : IAsyncLifetime
     private sealed class TestSlugAccessor(string slug) : ITenantSlugAccessor
     {
         public string Slug { get; } = slug;
+    }
+
+    private sealed class TestMeterFactory : IMeterFactory
+    {
+        public System.Diagnostics.Metrics.Meter Create(System.Diagnostics.Metrics.MeterOptions options) =>
+            new(options);
+        public void Dispose() { }
     }
 }

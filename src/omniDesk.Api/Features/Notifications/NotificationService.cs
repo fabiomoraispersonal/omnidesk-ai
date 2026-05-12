@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Notifications;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.Authorization;
+using omniDesk.Api.Infrastructure.Metrics;
 using omniDesk.Api.Infrastructure.Notifications;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Push;
@@ -25,6 +27,7 @@ public class NotificationService(
     WebPushDispatcher push,
     IConnectionMultiplexer redis,
     AppDbContext db,
+    NotificationMetrics metrics,
     ITenantSlugAccessor slug,
     ILogger<NotificationService> logger) : INotificationService
 {
@@ -169,6 +172,8 @@ public class NotificationService(
         try
         {
             await repo.AddAsync(notification, ct);
+            metrics.NotificationsDelivered.Add(1,
+                new KeyValuePair<string, object?>("event_type", eventType));
         }
         catch (Exception ex)
         {

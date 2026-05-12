@@ -58,7 +58,7 @@ flowchart TD
 | **07** | Live Chat | 05, 06 — ✅ COMPLETE (V1: backend, widget, CRM config, CRM inbox, lifecycle jobs, attachments) |
 | **08** | WhatsApp | 02, 03, 04, 06, 07 — ✅ BACKEND COMPLETE (US1-US6 entregues; Polish parcial; frontend Angular + integration tests Testcontainers pendentes). Detalhes em [specs/008-whatsapp-channel/tasks.md](../specs/008-whatsapp-channel/tasks.md). |
 | **09** | Tickets | 05, 07, 08 |
-| **10** | Notifications | 08, 09 |
+| **10** | Notifications | 08, 09 — Spec 11 (Agenda) é dependência **reversa**: Spec 010 US4 (AppointmentReminderJob) consome agendamentos via `IAppointmentReadRepository`. Hoje a impl é `NullAppointmentReadRepository`; quando Spec 11 mergear `tenant_{slug}.appointments`, trocar pela impl real (research §R3). Phase 9 já provê o `IAppointmentReminderScheduler` stub. |
 | **11** | Agenda | 05, 10 |
 | **12** | Audit | 02, 09 |
 
