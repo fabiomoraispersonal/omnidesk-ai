@@ -39,6 +39,7 @@ using omniDesk.Api.Infrastructure.Distribution;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
+using omniDesk.Api.Features.Notifications;
 using omniDesk.Api.Features.Tickets;
 using omniDesk.Api.Features.Tickets.Notes;
 using omniDesk.Api.Features.Pipelines;
@@ -290,6 +291,11 @@ builder.Services.AddScoped<omniDesk.Api.Infrastructure.WebSockets.NotificationEv
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.SupervisorLookupService>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.INotificationService,
     omniDesk.Api.Features.Notifications.NotificationService>();
+// Spec 010 US1 — Notifications endpoint dependencies (queries + commands)
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Queries.ListNotificationsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Queries.UnreadCountQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAsReadCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAllAsReadCommand>();
 // Spec 009 US9 — Pipeline config
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
@@ -433,6 +439,12 @@ TransferTicketEndpoint.Map(tickets);
 
 // Spec 009 US2 — CRM ticket management (list, detail, update, status, resolve, cancel, notes)
 tickets.MapTicketEndpoints();
+
+// Spec 010 US1 — Notifications (in-app feed)
+var notifications = api.MapGroup("/notifications")
+                       .RequireAuthorization()
+                       .AddEndpointFilter<ImpersonationAuditFilter>();
+notifications.MapNotificationsEndpoints();
 
 // Spec 009 US9 — Pipeline config
 var pipelines = api.MapGroup("/pipelines")
