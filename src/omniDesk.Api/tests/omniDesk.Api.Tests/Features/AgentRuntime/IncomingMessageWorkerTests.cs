@@ -122,7 +122,12 @@ public class IncomingMessageWorkerTests : IAsyncLifetime
     private IncomingMessageWorker BuildWorker()
     {
         var orchestrator = BuildOrchestrator();
-        return new IncomingMessageWorker(orchestrator, _db!, _redis!, NullLogger<IncomingMessageWorker>.Instance);
+        return new IncomingMessageWorker(
+            orchestrator,
+            _db!,
+            _redis!,
+            new omniDesk.Api.Tests.Helpers.NoOpNotificationService(),
+            NullLogger<IncomingMessageWorker>.Instance);
     }
 
     private AgentOrchestrator BuildOrchestrator()

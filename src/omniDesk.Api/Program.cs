@@ -40,6 +40,7 @@ using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
 using omniDesk.Api.Features.Notifications;
+using omniDesk.Api.Features.Notifications.Schedulers;
 using omniDesk.Api.Features.Tickets;
 using omniDesk.Api.Features.Tickets.Notes;
 using omniDesk.Api.Features.Pipelines;
@@ -303,11 +304,17 @@ builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAsRe
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAllAsReadCommand>();
 // Spec 010 US6 — per-attendant preferences
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.UpdatePreferencesCommand>();
-// Spec 010 Phase 9 — tenant settings + scheduler bridge (US4 replaces NoOp)
+// Spec 010 US4 — real AppointmentReminderScheduler (replaces Phase 9 NoOp).
 builder.Services.AddScoped<
     omniDesk.Api.Features.Notifications.Schedulers.IAppointmentReminderScheduler,
-    omniDesk.Api.Features.Notifications.Schedulers.NoOpAppointmentReminderScheduler>();
+    omniDesk.Api.Features.Notifications.Schedulers.AppointmentReminderScheduler>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.UpdateTenantSettingsCommand>();
+// Spec 010 US4 — appointment data source + reminder job + failure handler.
+builder.Services.AddScoped<
+    omniDesk.Api.Infrastructure.Appointments.IAppointmentReadRepository,
+    omniDesk.Api.Infrastructure.Appointments.AppointmentReadRepository>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Handlers.ReminderFailedHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.AppointmentReminderJob>();
 // Spec 010 US5 — Manual WhatsApp template send from ticket detail.
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.SendManualTemplateCommand>();
 // Spec 010 Polish T100 — metrics. AddMetrics() registers IMeterFactory.
@@ -426,6 +433,10 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.NotificationArchiverJo
     "0 3 * * *");
 
 await app.SeedDatabaseAsync();
+
+// Spec 010 US4 T079 — restore per-tenant appointment-reminder cron jobs on startup.
+// Idempotent: AddOrUpdate replaces existing definitions; RemoveIfExists is a no-op when absent.
+await app.RestoreAppointmentReminderSchedulesAsync();
 
 var api = app.MapGroup("/api");
 

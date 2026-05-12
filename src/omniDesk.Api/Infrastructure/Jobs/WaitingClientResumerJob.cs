@@ -1,6 +1,7 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Tickets;
+using omniDesk.Api.Features.Notifications;
 using omniDesk.Api.Features.Tickets;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.WebSockets;
@@ -18,6 +19,7 @@ public class WaitingClientResumerJob(
     AppDbContext db,
     ITicketEventStore eventStore,
     TicketEventPublisher publisher,
+    INotificationService notifications,
     ILogger<WaitingClientResumerJob> logger)
 {
     [Queue("default")]
@@ -95,5 +97,32 @@ public class WaitingClientResumerJob(
         logger.LogInformation(
             "WaitingClientResumer: ticket {Protocol} resumed in_progress (tenant {Slug}).",
             ticket.Protocol, tenantSlug);
+
+        // Spec 010 US1 T044 — notify the responsible attendant that the client replied.
+        // Best-effort: failures must not affect the ticket transition.
+        if (ticket.AttendantId.HasValue && ticket.Protocol is not null)
+        {
+            try
+            {
+                var contactName = await ResolveContactNameAsync(ticket, ct);
+                await notifications.NotifyClientRepliedAsync(
+                    ticket.AttendantId.Value, ticket.Id, ticket.Protocol, contactName, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "WaitingClientResumer: NotifyClientReplied failed for ticket {Id}.", ticketId);
+            }
+        }
+    }
+
+    private async Task<string> ResolveContactNameAsync(Ticket ticket, CancellationToken ct)
+    {
+        if (!ticket.ContactId.HasValue) return "Cliente";
+        var name = await db.Contacts.AsNoTracking()
+            .Where(c => c.Id == ticket.ContactId.Value)
+            .Select(c => c.Name)
+            .FirstOrDefaultAsync(ct);
+        return string.IsNullOrWhiteSpace(name) ? "Cliente" : name;
     }
 }

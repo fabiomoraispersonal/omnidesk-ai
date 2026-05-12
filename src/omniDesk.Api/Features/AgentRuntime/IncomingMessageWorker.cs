@@ -1,6 +1,7 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Tickets;
+using omniDesk.Api.Features.Notifications;
 using omniDesk.Api.Infrastructure.Jobs;
 using omniDesk.Api.Infrastructure.Persistence;
 using StackExchange.Redis;
@@ -15,17 +16,20 @@ public class IncomingMessageWorker
     private readonly AgentOrchestrator _orchestrator;
     private readonly AppDbContext _db;
     private readonly IConnectionMultiplexer _redis;
+    private readonly INotificationService _notifications;
     private readonly ILogger<IncomingMessageWorker> _logger;
 
     public IncomingMessageWorker(
         AgentOrchestrator orchestrator,
         AppDbContext db,
         IConnectionMultiplexer redis,
+        INotificationService notifications,
         ILogger<IncomingMessageWorker> logger)
     {
         _orchestrator = orchestrator;
         _db = db;
         _redis = redis;
+        _notifications = notifications;
         _logger = logger;
     }
 
@@ -61,10 +65,69 @@ public class IncomingMessageWorker
             await MaybeEnqueueWaitingClientResumerAsync(message, ct);
 
             await _orchestrator.ProcessAsync(message, ct);
+
+            // Spec 010 US1 T043: notify the assigned attendant that a new customer message
+            // arrived on their ticket. Best-effort — must not block message processing.
+            await MaybeNotifyNewMessageAsync(message, ct);
         }
         finally
         {
             await redis.KeyDeleteAsync(lockKey);
+        }
+    }
+
+    private async Task MaybeNotifyNewMessageAsync(IncomingMessage message, CancellationToken ct)
+    {
+        if (!Guid.TryParse(message.ExternalConversationRef, out var convId)) return;
+
+        try
+        {
+            // Look up the ticket linked to this conversation. We only notify when:
+            //   - The conversation has a linked ticket (handoff already happened).
+            //   - The ticket has an assigned attendant (otherwise nothing to address).
+            //   - The ticket is not in a terminal state (resolved/cancelled).
+            var row = await _db.Conversations
+                .AsNoTracking()
+                .Where(c => c.Id == convId && c.TicketId != null)
+                .Join(_db.Tickets.AsNoTracking(),
+                      c => c.TicketId, t => t.Id,
+                      (c, t) => new
+                      {
+                          TicketId    = t.Id,
+                          AttendantId = t.AttendantId,
+                          Protocol    = t.Protocol,
+                          ContactId   = t.ContactId,
+                          Status      = t.Status,
+                          DeletedAt   = t.DeletedAt,
+                      })
+                .FirstOrDefaultAsync(ct);
+
+            if (row is null) return;
+            if (row.DeletedAt != null) return;
+            if (row.Status == TicketStatus.Resolved || row.Status == TicketStatus.Cancelled) return;
+            if (row.AttendantId is null) return;
+            if (row.Protocol is null) return;
+
+            var contactName = row.ContactId.HasValue
+                ? (await _db.Contacts.AsNoTracking()
+                       .Where(c => c.Id == row.ContactId.Value)
+                       .Select(c => c.Name)
+                       .FirstOrDefaultAsync(ct)) ?? "Cliente"
+                : "Cliente";
+
+            var snippet = string.IsNullOrEmpty(message.Content)
+                ? string.Empty
+                : message.Content.Length <= 200 ? message.Content : message.Content[..200];
+
+            await _notifications.NotifyNewMessageAsync(
+                row.AttendantId.Value, row.TicketId, row.Protocol,
+                contactName, snippet, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "IncomingMessageWorker: NotifyNewMessage failed for conv {Ref}; ignored.",
+                message.ExternalConversationRef);
         }
     }
 
