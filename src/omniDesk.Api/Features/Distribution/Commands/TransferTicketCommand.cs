@@ -66,7 +66,7 @@ public class TransferTicketCommandHandler
         if (ticket is null) return new TransferResult(TransferOutcome.TicketNotFound, null, Guid.Empty);
 
         var nowUtc = DateTimeOffset.UtcNow;
-        var fromAttendantId = ticket.AssignedAttendantId;
+        var fromAttendantId = ticket.AttendantId;
         var fromDepartmentId = ticket.DepartmentId;
 
         // Decide destination
@@ -124,9 +124,9 @@ public class TransferTicketCommandHandler
 
         // Update ticket fields atomically
         ticket.DepartmentId = targetDepartmentId;
-        ticket.AssignedAttendantId = targetAttendantId;
+        ticket.AttendantId = targetAttendantId;
         ticket.AssignedAt = targetAttendantId is null ? null : nowUtc;
-        ticket.Status = targetAttendantId is null ? TicketStatus.Queued : TicketStatus.Assigned;
+        ticket.Status = targetAttendantId is null ? TicketStatus.New : TicketStatus.InProgress;
         ticket.UpdatedAt = nowUtc;
         // FR-026: cross-department transfer recalculates SLA from now.
         if (departmentChanged) ticket.SlaStartedAt = nowUtc;

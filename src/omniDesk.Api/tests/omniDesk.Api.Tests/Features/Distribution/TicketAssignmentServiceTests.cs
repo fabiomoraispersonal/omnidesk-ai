@@ -34,7 +34,8 @@ public class TicketAssignmentServiceTests : IClassFixture<TestWebApplicationFact
         var (slug, dept, attendantIds) = await SeedDeptWithAttendantsAsync(db, presence, online: 3);
         var service = new TicketAssignmentService(
             db, new TicketLock(redis), new RoundRobinCursorRedis(redis),
-            new EligibleAttendantsQuery(db, presence), bus, NullLogger<TicketAssignmentService>.Instance);
+            new EligibleAttendantsQuery(db, presence), bus,
+            new TicketEventPublisher(redis), NullLogger<TicketAssignmentService>.Instance);
 
         // Generate 6 tickets and assign round-robin
         for (var i = 0; i < 6; i++)
@@ -46,8 +47,8 @@ public class TicketAssignmentServiceTests : IClassFixture<TestWebApplicationFact
         }
 
         var counts = await db.Tickets.AsNoTracking()
-            .Where(t => t.DepartmentId == dept.Id && t.AssignedAttendantId != null)
-            .GroupBy(t => t.AssignedAttendantId!.Value)
+            .Where(t => t.DepartmentId == dept.Id && t.AttendantId != null)
+            .GroupBy(t => t.AttendantId!.Value)
             .Select(g => new { Id = g.Key, C = g.Count() })
             .ToDictionaryAsync(x => x.Id, x => x.C);
 
@@ -68,7 +69,8 @@ public class TicketAssignmentServiceTests : IClassFixture<TestWebApplicationFact
         var (slug, dept, _) = await SeedDeptWithAttendantsAsync(db, presence, online: 0);
         var service = new TicketAssignmentService(
             db, new TicketLock(redis), new RoundRobinCursorRedis(redis),
-            new EligibleAttendantsQuery(db, presence), bus, NullLogger<TicketAssignmentService>.Instance);
+            new EligibleAttendantsQuery(db, presence), bus,
+            new TicketEventPublisher(redis), NullLogger<TicketAssignmentService>.Instance);
 
         var ticket = await CreateTicketAsync(db, dept.Id);
         var result = await service.AssignAsync(slug,
@@ -93,7 +95,8 @@ public class TicketAssignmentServiceTests : IClassFixture<TestWebApplicationFact
             .ExecuteUpdateAsync(s => s.SetProperty(a => a.ActiveTicketCount, 5));
         var service = new TicketAssignmentService(
             db, new TicketLock(redis), new RoundRobinCursorRedis(redis),
-            new EligibleAttendantsQuery(db, presence), bus, NullLogger<TicketAssignmentService>.Instance);
+            new EligibleAttendantsQuery(db, presence), bus,
+            new TicketEventPublisher(redis), NullLogger<TicketAssignmentService>.Instance);
 
         var ticket = await CreateTicketAsync(db, dept.Id);
         var result = await service.AssignAsync(slug,
@@ -111,7 +114,7 @@ public class TicketAssignmentServiceTests : IClassFixture<TestWebApplicationFact
             Number = Random.Shared.Next(1000, 999999),
             Subject = "Test",
             DepartmentId = deptId,
-            Status = TicketStatus.Queued,
+            Status = TicketStatus.New,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
         };

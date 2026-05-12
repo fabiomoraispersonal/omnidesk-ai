@@ -476,17 +476,13 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 009 — Tickets / CRM (Pipeline Kanban)** — Plan em andamento. Branch `009-tickets-crm`.
+**Spec 009 — Tickets / CRM (Pipeline Kanban)** — ✅ **IMPLEMENTADO**. Branch `009-tickets-crm`.
 
-Módulo central do CRM. Substitui o scaffold mínimo de `tickets` da Spec 005 pela versão V2 completa: protocolo `TK-YYYYMMDD-XXXXX` (sequence Postgres per-tenant per-day, R1), 5 status (`new`/`in_progress`/`waiting_client`/`resolved`/`cancelled`), SLA com **pausa em `waiting_client`** (R3), transferência com recálculo de SLA, deduplicação automática de contatos por e-mail/telefone (R9, Redis lock + unique partial), perfil do contato com histórico paginado, filtros + busca full-text (tsvector GIN, R4), anotações internas append-only, pipeline Kanban configurável (renomear/reordenar/colorir 3 colunas fixas).
+173/190 tasks entregues (17 pendentes = Testcontainers tests que requerem Docker, QS manual, cleanup V1.1). API + Angular compilam limpos; 84 unit tests passando.
 
-Reaproveita: pipeline conversacional 006 (`IncomingMessageWorker`/`OutgoingMessageWorker`), distribuição 005 (round-robin), WebSocket `/ws/crm` 007 (6 eventos novos), `ai_handoff_snapshots` 006 (audit do handoff). Substitui `StubTicketCreationGateway` por `TicketCreationGateway` real. Zero NuGet novo.
+Pendentes (próxima sessão ou sprint): T067-T069, T072-T079 (Testcontainers integration tests), T155, T164, T165 (Testcontainers search/contact tests), T184 (doc spec desvios), T188 (QS manual), T189 (V1.1 cleanup).
 
-Entrega: 4 tabelas tenant-scoped novas (`contacts`, `ticket_notes`, `pipelines`, `pipeline_columns`); expansão de `tickets` (17 colunas + rename de status enum); 2 colunas (`visitors.contact_id`, `conversations.ticket_id`); 1 collection Mongo (`{slug}_ticket_events`); 2 jobs Hangfire (`TicketSlaMonitorJob` cron */1min + `WaitingClientResumerJob`); CRM Angular completo (`tickets-kanban` com drag-drop CDK, `ticket-detail` 2 painéis, `contacts` perfil, `pipeline-config`).
-
-Artefatos: [spec.md](specs/009-tickets-crm/spec.md) (9 user stories P1×2/P2×4/P3×3, 42 FRs, 13 SCs), [plan.md](specs/009-tickets-crm/plan.md), [research.md](specs/009-tickets-crm/research.md) (R1–R14 decisões), [data-model.md](specs/009-tickets-crm/data-model.md), [contracts/](specs/009-tickets-crm/contracts/) (7 contratos), [quickstart.md](specs/009-tickets-crm/quickstart.md) (QS1–QS13).
-
-Próximo: `/speckit-tasks` para gerar tasks.md.
+Próxima spec: **010 — Notifications** (depende de 009). Branch `010-notifications`.
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)

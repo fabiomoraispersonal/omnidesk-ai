@@ -26,4 +26,12 @@ public class VisitorRepository(AppDbContext db) : IVisitorRepository
         visitor.Phone = phone;
         await db.SaveChangesAsync(ct);
     }
+
+    public async Task SetContactIdAsync(Guid visitorId, Guid contactId, CancellationToken ct)
+    {
+        var visitor = await db.Visitors.FirstOrDefaultAsync(v => v.Id == visitorId, ct)
+            ?? throw new InvalidOperationException($"Visitor {visitorId} not found");
+        visitor.ContactId = contactId;
+        await db.SaveChangesAsync(ct);
+    }
 }

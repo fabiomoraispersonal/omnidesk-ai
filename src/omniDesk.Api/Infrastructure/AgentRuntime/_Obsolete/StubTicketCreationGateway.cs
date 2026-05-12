@@ -47,7 +47,7 @@ public class StubTicketCreationGateway : ITicketCreationGateway
             Id = Guid.NewGuid(),
             Subject = subject,
             DepartmentId = request.DepartmentId,
-            Status = TicketStatus.Queued,
+            Status = TicketStatus.New,
             SlaStartedAt = DateTimeOffset.UtcNow,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -85,7 +85,8 @@ public class StubTicketCreationGateway : ITicketCreationGateway
             "AI handoff ticket {TicketId} created in department {DepartmentName} from thread {ThreadId}",
             ticket.Id, department.Name, request.ThreadId);
 
-        return new TicketHandoffResult(ticket.Id, $"TKT-{ticket.Number}", department.Name, ticket.Status.ToWireValue());
+        return new TicketHandoffResult(ticket.Id, $"TKT-{ticket.Number}",
+            department.Id, department.Name, null, ticket.Status.ToWireValue(), null);
     }
 }
 

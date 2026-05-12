@@ -1,0 +1,232 @@
+// Spec 009 US2 — Ticket detail page: 2-panel layout (timeline + side panel).
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { TicketDetailService } from './services/ticket-detail.service';
+import { TicketsService } from '../tickets-kanban/services/tickets.service';
+import { ConversationTimelineComponent } from '../../shared/components/conversation-timeline/conversation-timeline.component';
+import { InternalNotesSectionComponent } from './components/internal-notes-section.component';
+import { TicketSidePanelComponent } from './components/ticket-side-panel.component';
+
+@Component({
+  selector: 'app-ticket-detail',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    InputTextareaModule,
+    ToastModule,
+    ConversationTimelineComponent,
+    InternalNotesSectionComponent,
+    TicketSidePanelComponent,
+  ],
+  providers: [MessageService],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <p-toast></p-toast>
+
+    @if (detailService.loading()) {
+      <div class="detail-loading" aria-busy="true">
+        <div class="shimmer skeleton-header"></div>
+        <div class="detail-panels">
+          <div class="shimmer skeleton-panel"></div>
+          <div class="shimmer skeleton-side"></div>
+        </div>
+      </div>
+    } @else if (detailService.detail(); as ticket) {
+      <div class="detail-page">
+        <!-- Page header -->
+        <header class="detail-header">
+          <button
+            pButton
+            icon="pi pi-arrow-left"
+            class="p-button-text p-button-sm"
+            (click)="goBack()"
+            aria-label="Voltar ao Kanban"
+          ></button>
+          <h1 class="detail-title">{{ ticket.protocol }}</h1>
+          <span class="detail-subject">{{ ticket.subject }}</span>
+        </header>
+
+        <!-- 2-panel layout -->
+        <div class="detail-panels">
+          <!-- Left panel: conversation + notes + reply -->
+          <section class="panel-left">
+            <app-conversation-timeline [messages]="ticket.conversation" />
+
+            <!-- Reply area (placeholder — full send in US4/US5) -->
+            <div class="reply-area">
+              <textarea
+                pInputTextarea
+                [(ngModel)]="replyContent"
+                placeholder="Responder ao cliente... (em breve)"
+                rows="3"
+                disabled
+                class="reply-textarea"
+              ></textarea>
+            </div>
+
+            <!-- Internal notes -->
+            <app-internal-notes-section
+              [notes]="ticket.notes"
+              [ticketId]="ticket.id"
+            />
+          </section>
+
+          <!-- Right panel: metadata + actions -->
+          <app-ticket-side-panel
+            [ticket]="ticket"
+            (resolved)="onResolved()"
+            (cancelled)="onCancelled()"
+            class="panel-right"
+          />
+        </div>
+      </div>
+    } @else {
+      <div class="detail-error">
+        <p>Ticket não encontrado.</p>
+        <button pButton label="Voltar" class="p-button-text" (click)="goBack()"></button>
+      </div>
+    }
+  `,
+  styles: [`
+    .detail-page {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Loading skeleton */
+    .detail-loading { padding: 20px; display: flex; flex-direction: column; gap: 16px; height: 100%; }
+    .skeleton-header { height: 56px; border-radius: 8px; }
+    .skeleton-panel  { flex: 1; border-radius: 8px; }
+    .skeleton-side   { width: 300px; border-radius: 8px; }
+
+    @keyframes shimmer {
+      0%   { background-position: -800px 0; }
+      100% { background-position: 800px 0; }
+    }
+    .shimmer {
+      background: linear-gradient(90deg, #EDE7DF 25%, #F4F1EC 50%, #EDE7DF 75%);
+      background-size: 1600px 100%;
+      animation: shimmer 1.4s infinite linear;
+    }
+
+    /* Header */
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .detail-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2F2F2F;
+      margin: 0;
+      font-family: monospace;
+    }
+    .detail-subject {
+      font-size: 13px;
+      color: #7A7A7A;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Panels */
+    .detail-panels {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    .panel-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .panel-right {
+      width: 320px;
+      flex-shrink: 0;
+    }
+
+    .reply-area {
+      padding: 8px 16px;
+      border-top: 1px solid #EDE7DF;
+      border-bottom: 1px solid #EDE7DF;
+      background: #F4F1EC;
+      flex-shrink: 0;
+    }
+    .reply-textarea { width: 100%; }
+
+    .detail-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 12px;
+      color: #7A7A7A;
+    }
+  `],
+})
+export class TicketDetailComponent implements OnInit {
+  readonly detailService = inject(TicketDetailService);
+  private readonly ticketsService = inject(TicketsService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+
+  replyContent = '';
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) void this.detailService.load(id);
+  }
+
+  goBack(): void {
+    void this.router.navigate(['/kanban']);
+  }
+
+  onResolved(): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Ticket encerrado',
+      detail: 'O ticket foi resolvido com sucesso.',
+      life: 3000,
+    });
+    setTimeout(() => void this.router.navigate(['/kanban']), 1500);
+  }
+
+  onCancelled(): void {
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Ticket cancelado',
+      life: 3000,
+    });
+    setTimeout(() => void this.router.navigate(['/kanban']), 1500);
+  }
+}

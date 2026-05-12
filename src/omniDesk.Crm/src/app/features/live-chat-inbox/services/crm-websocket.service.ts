@@ -8,6 +8,7 @@ import {
   WaSessionExpiredPayload,
   WaSessionExpiringPayload,
 } from './inbox.types';
+import { TicketWsEvent } from '../../tickets-kanban/services/tickets.service';
 
 /** Estado local de status de delivery por message_id. */
 export interface WaMessageStatusState {
@@ -36,6 +37,9 @@ export class CrmWebSocketService {
   private readonly notify = inject(BrowserNotificationService);
 
   readonly connected = signal(false);
+
+  // Spec 009 US2 — signal updated for every ticket WS event received.
+  readonly ticketEvents = signal<TicketWsEvent | null>(null);
 
   // Spec 008 US3 — map message_id → status atual para renderizar ícones de delivery.
   readonly waMessageStatuses = signal<ReadonlyMap<string, WaMessageStatusState>>(new Map());
@@ -113,6 +117,15 @@ export class CrmWebSocketService {
         break;
       case 'wa.session_expired':
         this.applyWaSessionExpired(event.payload);
+        break;
+      // Spec 009 US2 — ticket events forwarded to the ticketEvents signal.
+      case 'ticket.created':
+      case 'ticket.assigned':
+      case 'ticket.status_changed':
+      case 'ticket.transferred':
+      case 'ticket.sla_warning':
+      case 'ticket.sla_breached':
+        this.ticketEvents.set(event as unknown as TicketWsEvent);
         break;
     }
   }

@@ -11,6 +11,7 @@ public class Visitor
     public string? Name { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
+    public Guid? ContactId { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 
@@ -19,4 +20,5 @@ public interface IVisitorRepository
     Task<Visitor?> GetByAnonymousIdAsync(Guid anonymousId, CancellationToken ct);
     Task<Visitor> CreateAsync(Visitor visitor, CancellationToken ct);
     Task UpdateIdentificationAsync(Guid visitorId, string? name, string? email, string? phone, CancellationToken ct);
+    Task SetContactIdAsync(Guid visitorId, Guid contactId, CancellationToken ct);
 }

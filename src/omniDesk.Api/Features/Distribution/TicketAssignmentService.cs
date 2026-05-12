@@ -34,6 +34,7 @@ public class TicketAssignmentService
     private readonly RoundRobinCursorRedis _cursor;
     private readonly EligibleAttendantsQuery _eligible;
     private readonly DepartmentEventBus _bus;
+    private readonly TicketEventPublisher _ticketEvents;
     private readonly ILogger<TicketAssignmentService> _logger;
 
     public TicketAssignmentService(
@@ -42,6 +43,7 @@ public class TicketAssignmentService
         RoundRobinCursorRedis cursor,
         EligibleAttendantsQuery eligible,
         DepartmentEventBus bus,
+        TicketEventPublisher ticketEvents,
         ILogger<TicketAssignmentService> logger)
     {
         _db = db;
@@ -49,6 +51,7 @@ public class TicketAssignmentService
         _cursor = cursor;
         _eligible = eligible;
         _bus = bus;
+        _ticketEvents = ticketEvents;
         _logger = logger;
     }
 
@@ -69,7 +72,7 @@ public class TicketAssignmentService
         if (ticket is null) throw new InvalidOperationException($"Ticket {request.TicketId} not found.");
 
         // Idempotency: if already assigned, return without modification.
-        if (ticket.AssignedAttendantId is { } current)
+        if (ticket.AttendantId is { } current)
         {
             return new AssignmentResult(AssignmentOutcome.AlreadyAssignedToOther, current, null);
         }
@@ -95,7 +98,7 @@ public class TicketAssignmentService
             else
                 reason = QueueReason.OutsideBusinessHoursNoOneOnline;
 
-            ticket.Status = TicketStatus.Queued;
+            ticket.Status = TicketStatus.New;
             ticket.UpdatedAt = nowUtc;
             await _db.SaveChangesAsync(ct);
 
@@ -127,11 +130,14 @@ public class TicketAssignmentService
             return new AssignmentResult(AssignmentOutcome.Queued, null, QueueReason.AllAtCapacity);
         }
 
-        ticket.AssignedAttendantId = chosen.Id;
+        ticket.AttendantId = chosen.Id;
         ticket.AssignedAt = nowUtc;
-        ticket.Status = TicketStatus.Assigned;
+        ticket.Status = TicketStatus.InProgress;
         ticket.UpdatedAt = nowUtc;
         if (ticket.SlaStartedAt is null) ticket.SlaStartedAt = nowUtc;
+        // T051: set SLA first-response deadline if department has SLA configured.
+        if (dept.SlaFirstResponseMinutes is { } slaMin)
+            ticket.SlaFirstResponseDeadline = nowUtc.AddMinutes(slaMin);
         await _db.SaveChangesAsync(ct);
 
         var assignmentMethod = request.Reason == AssignmentReason.ManualPickup ? "manual" : "auto";
@@ -154,6 +160,24 @@ public class TicketAssignmentService
             assignment_method = assignmentMethod,
             assigned_at = nowUtc,
         });
+
+        // CRM WebSocket event (Spec 009 channels: crm:dept + crm:supervisor)
+        try
+        {
+            await _ticketEvents.PublishAssignedAsync(tenantSlug, ticket.DepartmentId, new
+            {
+                ticket_id    = ticket.Id,
+                protocol     = ticket.Protocol,
+                attendant_id = chosen.Id,
+                department_id = ticket.DepartmentId,
+                assignment_method = assignmentMethod,
+                assigned_at  = nowUtc,
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish CRM ticket.assigned for ticket {TicketId}", ticket.Id);
+        }
 
         return new AssignmentResult(AssignmentOutcome.Assigned, chosen.Id, null);
     }

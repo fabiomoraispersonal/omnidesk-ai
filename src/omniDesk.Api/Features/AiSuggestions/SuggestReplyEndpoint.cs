@@ -71,7 +71,7 @@ public static class SuggestReplyEndpoint
                 error = new { code = "CONVERSATION_NOT_FOUND", message = "Conversa não encontrada." }
             });
 
-        if (ticket.AssignedAttendantId != attendant.Id)
+        if (ticket.AttendantId != attendant.Id)
         {
             // Allow supervisors with CanViewAllConversations to also suggest.
             // The proper check happens via the Spec 004 policy when implemented.

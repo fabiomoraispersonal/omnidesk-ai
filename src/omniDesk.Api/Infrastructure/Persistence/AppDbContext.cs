@@ -10,6 +10,8 @@ using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Domain.PasswordResetTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Tenants;
+using omniDesk.Api.Domain.Contacts;
+using omniDesk.Api.Domain.Pipelines;
 using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Domain.TotpRecoveryCodes;
 using omniDesk.Api.Domain.Users;
@@ -36,6 +38,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AttendantStatusEntry> AttendantStatuses => Set<AttendantStatusEntry>();
     public DbSet<CannedResponse> CannedResponses => Set<CannedResponse>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
+
+    // Spec 009 — Tickets/CRM (tenant_{slug} schema; resolved at runtime).
+    public DbSet<Contact> Contacts => Set<Contact>();
+    public DbSet<TicketNote> TicketNotes => Set<TicketNote>();
+    public DbSet<Pipeline> Pipelines => Set<Pipeline>();
+    public DbSet<PipelineColumn> PipelineColumns => Set<PipelineColumn>();
 
     // Spec 006 — Agentes de IA (tenant_{slug} schema; resolved at runtime).
     public DbSet<AiAgent> AiAgents => Set<AiAgent>();

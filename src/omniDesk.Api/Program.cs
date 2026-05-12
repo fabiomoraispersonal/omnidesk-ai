@@ -39,6 +39,10 @@ using omniDesk.Api.Infrastructure.Distribution;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
+using omniDesk.Api.Features.Tickets;
+using omniDesk.Api.Features.Tickets.Notes;
+using omniDesk.Api.Features.Pipelines;
+using omniDesk.Api.Features.Contacts;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Features.LiveChat.Adapters;
 using omniDesk.Api.Features.LiveChat.Config;
@@ -57,6 +61,15 @@ builder.Host.UseSerilog((ctx, services, lc) => lc
     .ReadFrom.Configuration(ctx.Configuration)
     .Enrich.FromLogContext()
     .Enrich.With(services.GetRequiredService<ImpersonationAuditEnricher>())
+    // Spec 009 US8 T167 — ticket_notes content is internal; never log the note body.
+    .Destructure.ByTransforming<omniDesk.Api.Domain.Tickets.TicketNote>(n => new
+    {
+        n.Id,
+        n.TicketId,
+        n.AttendantId,
+        n.CreatedAt,
+        // content omitted — internal note body must not appear in logs
+    })
     // Spec 008 FR-034 — segredos WhatsApp NUNCA em texto plano em logs.
     .Destructure.ByTransforming<omniDesk.Api.Domain.WhatsApp.WhatsAppConfig>(c => new
     {
@@ -156,7 +169,7 @@ builder.Services.AddScoped<AgentOrchestrator>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Adapters.LiveChatOutgoingAdapter>();
 builder.Services.AddScoped<omniDesk.Api.Features.LiveChat.Adapters.LiveChatIncomingAdapter>();
 builder.Services.AddScoped<IConversationGateway, omniDesk.Api.Features.LiveChat.Adapters.LiveChatConversationGateway>();
-builder.Services.AddScoped<ITicketCreationGateway, StubTicketCreationGateway>();
+builder.Services.AddScoped<ITicketCreationGateway, omniDesk.Api.Features.Tickets.TicketCreationGateway>();
 builder.Services.AddScoped<IncomingMessagePublisher>();
 builder.Services.AddScoped<OutgoingMessagePublisher>();
 builder.Services.AddScoped<IncomingMessageWorker>();
@@ -243,6 +256,44 @@ builder.Services.AddValidatorsFromAssemblyContaining<omniDesk.Api.Features.Whats
 // Spec 008 US6 — Media download job (Meta GET media → MimeTypeDetector → MinIO).
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.WaMediaDownloadJob>();
 
+// Spec 009 — Tickets/CRM services
+builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.PipelineProvisioningService>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Tickets.TicketProtocolService>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.WebSockets.TicketEventPublisher>();
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.ContactDeduplicationService>();
+builder.Services.AddScoped<omniDesk.Api.Domain.Tickets.ITicketEventStore, omniDesk.Api.Infrastructure.Tickets.MongoTicketEventStore>();
+// Backfill jobs (manual trigger only — no cron; run via Hangfire dashboard post-deploy)
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.BackfillTicketProtocolJob>();
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.ContactBackfillJob>();
+// Spec 009 US3 — SLA monitoring jobs
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.TicketSlaMonitorJob>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.WaitingClientResumerJob>();
+// Spec 009 US2 — queries and commands
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Queries.SearchTicketsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Queries.ListTicketsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Queries.GetTicketDetailQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.ChangeTicketStatusCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.ResolveTicketCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.CancelTicketCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.UpdateTicketCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Notes.AddTicketNoteCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.TransferTicketCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.CreateManualTicketCommand>();
+// Spec 009 Polish T180 — Notification service (no-op V1; Spec 010 provides real impl)
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.INotificationService,
+    omniDesk.Api.Features.Notifications.NoOpNotificationService>();
+// Spec 009 US9 — Pipeline config
+builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Commands.UpdatePipelineColumnsCommand>();
+// Spec 009 US6 — Contact profile
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Queries.ListContactsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Queries.GetContactQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Queries.ListContactTicketsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Queries.ListContactConversationsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Commands.CreateContactCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Commands.UpdateContactCommand>();
+
 builder.Services
     .AddAuthentication()
     .AddScheme<WidgetTokenAuthenticationOptions, WidgetTokenAuthHandler>(
@@ -323,6 +374,12 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Features.WhatsApp.Jobs.WaTemplateStatusPol
     job => job.RunAsync(CancellationToken.None),
     "0 * * * *");
 
+// Spec 009 US3 — SLA monitor: runs every minute across all active tenants.
+RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.TicketSlaMonitorJob>(
+    "sla-monitor",
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Minutely());
+
 await app.SeedDatabaseAsync();
 
 var api = app.MapGroup("/api");
@@ -365,6 +422,21 @@ var tickets = api.MapGroup("/tickets")
                  .AddEndpointFilter<ImpersonationAuditFilter>();
 PickupTicketEndpoint.Map(tickets);
 TransferTicketEndpoint.Map(tickets);
+
+// Spec 009 US2 — CRM ticket management (list, detail, update, status, resolve, cancel, notes)
+tickets.MapTicketEndpoints();
+
+// Spec 009 US9 — Pipeline config
+var pipelines = api.MapGroup("/pipelines")
+                   .RequireAuthorization()
+                   .AddEndpointFilter<ImpersonationAuditFilter>();
+pipelines.MapPipelineEndpoints();
+
+// Spec 009 US6 — Contact profile
+var contacts = api.MapGroup("/contacts")
+                  .RequireAuthorization()
+                  .AddEndpointFilter<ImpersonationAuditFilter>();
+contacts.MapContactEndpoints();
 
 var internalTickets = api.MapGroup("/internal/tickets")
                          .RequireAuthorization()

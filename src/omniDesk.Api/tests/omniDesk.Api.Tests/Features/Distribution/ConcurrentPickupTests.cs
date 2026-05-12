@@ -83,7 +83,7 @@ public class ConcurrentPickupTests : IClassFixture<TestWebApplicationFactory>
         var ticket = new Ticket
         {
             Id = Guid.NewGuid(), Number = Random.Shared.Next(1000, 999999),
-            Subject = "Duel", DepartmentId = dept.Id, Status = TicketStatus.Queued,
+            Subject = "Duel", DepartmentId = dept.Id, Status = TicketStatus.New,
             CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow,
         };
         db.Tickets.Add(ticket);

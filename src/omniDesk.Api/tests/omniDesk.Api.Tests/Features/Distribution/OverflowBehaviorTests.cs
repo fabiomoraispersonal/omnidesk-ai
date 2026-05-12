@@ -119,7 +119,7 @@ public class OverflowBehaviorTests : IClassFixture<TestWebApplicationFactory>
         var ticket = new Ticket
         {
             Id = Guid.NewGuid(), Number = Random.Shared.Next(1000, 999999),
-            Subject = "T", DepartmentId = dept.Id, Status = TicketStatus.Queued,
+            Subject = "T", DepartmentId = dept.Id, Status = TicketStatus.New,
             CreatedAt = nowUtc, UpdatedAt = nowUtc,
         };
         db.Tickets.Add(ticket);
@@ -128,7 +128,7 @@ public class OverflowBehaviorTests : IClassFixture<TestWebApplicationFactory>
         var service = new TicketAssignmentService(
             db, new TicketLock(redis), new RoundRobinCursorRedis(redis),
             new EligibleAttendantsQuery(db, presence), bus,
-            NullLogger<TicketAssignmentService>.Instance);
+            new TicketEventPublisher(redis), NullLogger<TicketAssignmentService>.Instance);
 
         return await service.AssignAsync(slug,
             new AssignTicketRequest(ticket.Id, dept.Id, AssignmentReason.AiHandoff));
