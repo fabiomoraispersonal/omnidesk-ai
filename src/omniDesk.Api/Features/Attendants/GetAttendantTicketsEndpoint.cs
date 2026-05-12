@@ -50,9 +50,9 @@ public static class GetAttendantTicketsEndpoint
         var ticketsAndDepts = await (
             from t in db.Tickets.AsNoTracking()
             join d in db.Departments.AsNoTracking() on t.DepartmentId equals d.Id
-            where t.AssignedAttendantId == id
+            where t.AttendantId == id
                   && t.Status != TicketStatus.Resolved
-                  && t.Status != TicketStatus.Closed
+                  && t.Status != TicketStatus.Cancelled
             select new { Ticket = t, Department = d }
         ).ToListAsync(ct);
 

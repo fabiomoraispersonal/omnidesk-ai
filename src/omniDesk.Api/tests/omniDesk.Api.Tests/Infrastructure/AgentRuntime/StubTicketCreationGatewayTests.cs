@@ -57,19 +57,25 @@ public class StubTicketCreationGatewayTests : IAsyncLifetime
 
         var result = await gateway.CreateTicketFromAiHandoffAsync(
             new TicketHandoffRequest(
-                threadId, dept.Id, "Cliente solicitou humano",
-                Guid.NewGuid(),
-                new[]
+                ConversationId: threadId,
+                ThreadId: threadId,
+                DepartmentId: dept.Id,
+                Reason: "Cliente solicitou humano",
+                OriginatingAgentId: Guid.NewGuid(),
+                Channel: omniDesk.Api.Domain.Tickets.TicketChannel.LiveChat,
+                ContactHints: null,
+                SubjectSuggestion: null,
+                History: new[]
                 {
                     new ConversationMessage("user", "Olá", DateTimeOffset.UtcNow),
                     new ConversationMessage("assistant", "Em que posso ajudar?", DateTimeOffset.UtcNow),
                 },
-                "livechat:abc-123"),
+                ExternalConversationRef: "livechat:abc-123"),
             CancellationToken.None);
 
-        Assert.Equal("queued", result.Status);
+        Assert.Equal("new", result.Status);
         Assert.Equal("Comercial", result.DepartmentName);
-        Assert.StartsWith("TKT-", result.TicketNumber);
+        Assert.StartsWith("TKT-", result.Protocol);
 
         var ticket = await _db!.Tickets.FirstAsync(t => t.Id == result.TicketId);
         Assert.Equal(dept.Id, ticket.DepartmentId);
@@ -98,7 +104,8 @@ public class StubTicketCreationGatewayTests : IAsyncLifetime
 
         var longReason = new string('x', 400);
         var result = await gateway.CreateTicketFromAiHandoffAsync(
-            new TicketHandoffRequest(threadId, dept.Id, longReason, null,
+            new TicketHandoffRequest(threadId, threadId, dept.Id, longReason, null,
+                omniDesk.Api.Domain.Tickets.TicketChannel.LiveChat, null, null,
                 Array.Empty<ConversationMessage>(), "livechat:long"),
             CancellationToken.None);
 
@@ -120,7 +127,8 @@ public class StubTicketCreationGatewayTests : IAsyncLifetime
         await sub.SubscribeAsync(channel, (_, value) => received.TrySetResult(value!));
 
         await gateway.CreateTicketFromAiHandoffAsync(
-            new TicketHandoffRequest(threadId, dept.Id, "humano", null,
+            new TicketHandoffRequest(threadId, threadId, dept.Id, "humano", null,
+                omniDesk.Api.Domain.Tickets.TicketChannel.LiveChat, null, null,
                 Array.Empty<ConversationMessage>(), "livechat:evt"),
             CancellationToken.None);
 
@@ -138,7 +146,8 @@ public class StubTicketCreationGatewayTests : IAsyncLifetime
 
         await Assert.ThrowsAsync<DepartmentNotFoundException>(() =>
             gateway.CreateTicketFromAiHandoffAsync(
-                new TicketHandoffRequest(threadId, Guid.NewGuid(), "x", null,
+                new TicketHandoffRequest(threadId, threadId, Guid.NewGuid(), "x", null,
+                    omniDesk.Api.Domain.Tickets.TicketChannel.LiveChat, null, null,
                     Array.Empty<ConversationMessage>(), "livechat:404"),
                 CancellationToken.None));
     }

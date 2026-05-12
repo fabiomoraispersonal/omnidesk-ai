@@ -1,0 +1,76 @@
+<p-toast></p-toast>
+
+<div class="kanban-page">
+  <!-- Toolbar -->
+  <header class="kanban-toolbar">
+    <h1 class="kanban-title">Tickets</h1>
+
+    <!-- Advanced filters (US7) -->
+    <app-kanban-filters
+      (filterChange)="onAdvancedFilterChange($event)"
+    ></app-kanban-filters>
+
+    <!-- Search bar (US7) -->
+    <app-search-bar
+      (searched)="onSearchChange($event)"
+    ></app-search-bar>
+
+    <!-- New ticket button (US5) -->
+    <p-button
+      label="+ Novo Ticket"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      (onClick)="openNewTicketDialog()"
+    ></p-button>
+  </header>
+
+  <!-- New ticket dialog (US5 — T137) -->
+  <app-new-ticket-dialog
+    #newTicketDialog
+    (created)="onTicketCreated($event)"
+  ></app-new-ticket-dialog>
+
+  <!-- Content: search results list OR Kanban board -->
+  @if (loading()) {
+    <!-- Skeleton loader -->
+    <div class="kanban-skeleton" aria-busy="true" aria-label="Carregando tickets...">
+      @for (col of [1, 2, 3]; track col) {
+        <div class="skeleton-column">
+          <div class="skeleton-header shimmer"></div>
+          @for (card of [1, 2, 3]; track card) {
+            <div class="skeleton-card shimmer"></div>
+          }
+        </div>
+      }
+    </div>
+  } @else if (searchActive()) {
+    <!-- Search results list (US7 T163) -->
+    <div class="search-results">
+      @if (searchResults().length === 0) {
+        <p class="search-empty">Nenhum ticket encontrado para "{{ filters().q }}".</p>
+      } @else {
+        <ul class="result-list">
+          @for (ticket of searchResults(); track ticket.id) {
+            <li class="result-card" (click)="onTicketClicked(ticket.id)" role="button" tabindex="0">
+              <span class="res-protocol">{{ ticket.protocol }}</span>
+              <span class="res-subject">{{ ticket.subject }}</span>
+              <span class="res-status status-{{ ticket.status }}">{{ ticket.status }}</span>
+              <span class="res-contact">{{ ticket.contact?.name }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  } @else {
+    <div class="kanban-board" cdkDropListGroup>
+      @for (column of columns(); track column.id) {
+        <app-kanban-column
+          [column]="column"
+          (dropped)="onDrop($event)"
+          (ticketClicked)="onTicketClicked($event)"
+        />
+      }
+    </div>
+  }
+</div>

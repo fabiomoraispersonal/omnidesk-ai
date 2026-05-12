@@ -67,7 +67,7 @@ public static class PickupTicketEndpoint
                 success = false,
                 error = new { code = "TICKET_NOT_FOUND", message = "Ticket não encontrado." }
             });
-        if (ticket.Status == TicketStatus.Resolved || ticket.Status == TicketStatus.Closed)
+        if (ticket.Status == TicketStatus.Resolved || ticket.Status == TicketStatus.Cancelled)
             return Results.UnprocessableEntity(new
             {
                 success = false,
@@ -82,7 +82,7 @@ public static class PickupTicketEndpoint
 
         var nowUtc = DateTimeOffset.UtcNow;
 
-        if (ticket.AssignedAttendantId == attendant.Id)
+        if (ticket.AttendantId == attendant.Id)
         {
             // Idempotent — already mine.
             return Results.Ok(new
@@ -92,8 +92,8 @@ public static class PickupTicketEndpoint
             });
         }
 
-        var hadPrevious = ticket.AssignedAttendantId is Guid;
-        var previousId = ticket.AssignedAttendantId;
+        var hadPrevious = ticket.AttendantId is Guid;
+        var previousId = ticket.AttendantId;
 
         if (hadPrevious)
         {
@@ -114,9 +114,9 @@ public static class PickupTicketEndpoint
                 error = new { code = "AT_CAPACITY", message = "Você já atingiu o limite de atendimentos simultâneos." }
             });
 
-        ticket.AssignedAttendantId = attendant.Id;
+        ticket.AttendantId = attendant.Id;
         ticket.AssignedAt = nowUtc;
-        ticket.Status = TicketStatus.Assigned;
+        ticket.Status = TicketStatus.InProgress;
         ticket.UpdatedAt = nowUtc;
         if (ticket.SlaStartedAt is null) ticket.SlaStartedAt = nowUtc;
         await db.SaveChangesAsync(ct);

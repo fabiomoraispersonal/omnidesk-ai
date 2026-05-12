@@ -1,0 +1,120 @@
+/* Spec 009 US2 — Kanban page layout */
+
+.kanban-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 20px;
+  gap: 16px;
+  overflow: hidden;
+  background: var(--color-surface-50, #F4F1EC);
+}
+
+/* Toolbar */
+.kanban-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.kanban-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary, #2F2F2F);
+  margin: 0;
+}
+
+.kanban-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Kanban board */
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+}
+
+/* Skeleton loader */
+.kanban-skeleton {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+
+.skeleton-column {
+  width: 300px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-header {
+  height: 42px;
+  border-radius: 8px;
+}
+
+.skeleton-card {
+  height: 110px;
+  border-radius: 8px;
+}
+
+/* Search results list (US7 T163) */
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.search-empty {
+  color: var(--color-text-muted, #7a7a7a);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+.result-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: var(--color-surface-100, #EDE7DF); }
+
+  .res-protocol { font-size: 12px; color: var(--color-text-muted, #7a7a7a); white-space: nowrap; }
+  .res-subject { font-size: 14px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .res-status { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #e0e0e0; white-space: nowrap; }
+  .res-contact { font-size: 12px; color: var(--color-text-muted, #7a7a7a); white-space: nowrap; }
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #EDE7DF 25%, #F4F1EC 50%, #EDE7DF 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}

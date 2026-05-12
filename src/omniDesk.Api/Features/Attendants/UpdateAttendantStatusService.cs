@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Attendants;
 using omniDesk.Api.Domain.Authorization;
+using omniDesk.Api.Features.Distribution;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
@@ -18,14 +19,17 @@ public class UpdateAttendantStatusService
     private readonly PresenceCache _cache;
     private readonly PresenceLogger _logger;
     private readonly DepartmentEventBus _bus;
+    private readonly AttendantAvailabilityHandler _availability;
 
     public UpdateAttendantStatusService(
-        AppDbContext db, PresenceCache cache, PresenceLogger logger, DepartmentEventBus bus)
+        AppDbContext db, PresenceCache cache, PresenceLogger logger, DepartmentEventBus bus,
+        AttendantAvailabilityHandler availability)
     {
         _db = db;
         _cache = cache;
         _logger = logger;
         _bus = bus;
+        _availability = availability;
     }
 
     public async Task<AttendantStatusEntry?> ApplyAsync(
@@ -95,6 +99,10 @@ public class UpdateAttendantStatusService
         await _bus.PublishToTenantAsync(tenantSlug, "attendant.status_changed", payload);
         foreach (var deptId in deptIds)
             await _bus.PublishToDepartmentAsync(tenantSlug, deptId, "attendant.status_changed", payload);
+
+        // T055/T078: when coming online, pick up the oldest queued ticket if capacity allows
+        if (fromStatus != AttendanceStatus.Online && toStatus == AttendanceStatus.Online)
+            _ = _availability.OnAttendantOnlineAsync(tenantSlug, attendantId, ct);
 
         return existing;
     }

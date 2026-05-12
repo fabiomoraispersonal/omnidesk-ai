@@ -196,7 +196,15 @@ Request: https://clinica-abc.omnideskcm.com.br/api/tickets
 - `tenant_configs` — configurações por tenant (webhook URLs, chaves de API)
 
 **Schema `tenant_{slug}` (por cliente):**
-- Todas as demais tabelas: users, departments, agents, tickets, conversations, messages, appointments, pipelines, etc.
+- Todas as demais tabelas: users, departments, agents, tickets, contacts, ticket_notes, conversations, messages, appointments, pipelines, pipeline_columns, etc.
+
+**Spec 009 — Tickets/CRM (V2):**
+- Substitui scaffold Spec 005 pela versão completa. Destaques de design:
+  - Protocolo `TK-YYYYMMDD-XXXXX` via Postgres sequence per-tenant per-day (atômica, sem gap).
+  - 5 status (`new/in_progress/waiting_client/resolved/cancelled`); SLA **pausa automática** em `waiting_client`, retoma em `in_progress` via `WaitingClientResumerJob` (on-demand Hangfire).
+  - `TicketSlaMonitorJob`: cron `*/1min`, multi-tenant, idempotência Redis (SET NX, 24h TTL). Emite WS `ticket.sla_warning` (80%) e `ticket.sla_breached` (100%).
+  - Pipelines provisionados automaticamente por departamento via `PipelineProvisioningService` (3 colunas fixas, configuráveis via US9).
+  - Contatos deduplicados por e-mail/telefone com lock Redis + índice partial único Postgres.
 
 ### 4.3 Convenções EF Core
 

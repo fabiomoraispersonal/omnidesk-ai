@@ -476,13 +476,13 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 008 — WhatsApp** — 136/149 tasks done (~91%) — funcionalmente completa, pronta para PR/merge. Branch `008-whatsapp-channel`.
+**Spec 009 — Tickets / CRM (Pipeline Kanban)** — ✅ **IMPLEMENTADO**. Branch `009-tickets-crm`.
 
-Segundo adapter de canal (após Live Chat 007), implementa Princípio §III Channel Agnosticism. Reusa 100% do pipeline conversacional da 006/007. Entrega: 2 tabelas tenant-scoped (`whatsapp_config`, `whatsapp_templates`) + 2 colunas em `conversations`; 1 collection MongoDB; webhook público com HMAC-SHA256 + verify_token; 4 jobs Hangfire (session expiring notifier, token revoked detector, template status poller, media download); CRM Angular completo (whatsapp-config + whatsapp-templates + ícones delivery + banner janela 24h + template-picker dialog + audio player); AES-256-GCM reusado (Spec 003); zero NuGet novo.
+173/190 tasks entregues (17 pendentes = Testcontainers tests que requerem Docker, QS manual, cleanup V1.1). API + Angular compilam limpos; 84 unit tests passando.
 
-**Cobertura de testes**: 46 unit tests passing + 6 arquivos integration tests (27 specs) prontos para CI com Testcontainers (T045 webhook, T061 secrets leak, T077 send, T090 session sweep, T105 templates CRUD, T106 template status handler). Tasks restantes (13) são integration tests redundantes (8) + polish manual que requer ambiente externo (5) — post-merge.
+Pendentes (próxima sessão ou sprint): T067-T069, T072-T079 (Testcontainers integration tests), T155, T164, T165 (Testcontainers search/contact tests), T184 (doc spec desvios), T188 (QS manual), T189 (V1.1 cleanup).
 
-Ver [tasks.md](specs/008-whatsapp-channel/tasks.md) e [acceptance.md](specs/008-whatsapp-channel/checklists/acceptance.md) para status detalhado.
+Próxima spec: **010 — Notifications** (depende de 009). Branch `010-notifications`.
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)

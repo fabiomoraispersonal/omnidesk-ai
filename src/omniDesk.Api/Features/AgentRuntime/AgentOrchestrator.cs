@@ -63,6 +63,11 @@ public class AgentOrchestrator
     {
         _tenantContext.Set(message.TenantSlug, message.TenantId);
 
+        // Spec 009 US8 — Internal notes isolation (T166).
+        // AI context is built ONLY from conversation_messages (via GetRecentMessagesAsync below).
+        // ticket_notes are strictly internal: never passed to OpenAI, never sent over any channel.
+        // This is enforced by the ContextBuilder which has no access to TicketNote entities.
+
         // 1. Resolve credentials (per-execution, supports tenant key vs global).
         var credentials = await _keyResolver.ResolveAsync(message.TenantId, ct);
         if (string.IsNullOrEmpty(credentials.ApiKey))
@@ -267,8 +272,16 @@ public class AgentOrchestrator
         var historyMessages = await _conversation.GetRecentMessagesAsync(thread.Id, 100, ct);
         await _ticketGateway.CreateTicketFromAiHandoffAsync(
             new TicketHandoffRequest(
-                thread.Id, departmentId.Value, "Falha técnica no agente de IA",
-                currentAgent.Id, historyMessages, message.ExternalConversationRef),
+                ConversationId: thread.Id,
+                ThreadId: thread.Id,
+                DepartmentId: departmentId.Value,
+                Reason: "Falha técnica no agente de IA",
+                OriginatingAgentId: currentAgent.Id,
+                Channel: omniDesk.Api.Domain.Tickets.TicketChannel.LiveChat,
+                ContactHints: null,
+                SubjectSuggestion: null,
+                History: historyMessages,
+                ExternalConversationRef: message.ExternalConversationRef),
             ct);
 
         await _conversation.MarkHandedOffAsync(thread.Id, ct);

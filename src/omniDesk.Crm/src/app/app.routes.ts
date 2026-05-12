@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from './core/authorization/role.guard';
 
 export const routes: Routes = [
   {
@@ -64,5 +65,45 @@ export const routes: Routes = [
         (m) => m.LiveChatInboxComponent,
       ),
   },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  // Spec 009 US2 — Tickets / Kanban routes
+  {
+    path: 'kanban',
+    loadComponent: () =>
+      import('./features/tickets-kanban/tickets-kanban.component').then(
+        (m) => m.TicketsKanbanComponent,
+      ),
+  },
+  {
+    path: 'tickets/:id',
+    loadComponent: () =>
+      import('./features/ticket-detail/ticket-detail.component').then(
+        (m) => m.TicketDetailComponent,
+      ),
+  },
+  // Spec 009 US9 — Pipeline config (tenant_admin only)
+  {
+    path: 'settings/pipelines/:departmentId',
+    canActivate: [roleGuard('tenant_admin')],
+    loadComponent: () =>
+      import('./features/pipeline-config/pipeline-config.component').then(
+        (m) => m.PipelineConfigComponent,
+      ),
+  },
+  // Spec 009 US6 — Contact profile
+  {
+    path: 'contacts/:id',
+    loadComponent: () =>
+      import('./features/contacts/contact-profile.component').then(
+        (m) => m.ContactProfileComponent,
+      ),
+  },
+  // Alias: keep /conversations working (Spec 007)
+  {
+    path: 'conversations',
+    loadComponent: () =>
+      import('./features/live-chat-inbox/live-chat-inbox.component').then(
+        (m) => m.LiveChatInboxComponent,
+      ),
+  },
+  { path: '', redirectTo: 'kanban', pathMatch: 'full' },
 ];

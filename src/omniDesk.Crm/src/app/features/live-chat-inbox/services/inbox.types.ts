@@ -11,6 +11,8 @@ export interface ConversationSummary {
   last_message_at: string;
   created_at: string;
   channel: string;
+  /** Spec 009 — populated when this conversation is linked to a ticket. */
+  ticket_id: string | null;
 }
 
 export interface InboxMessage {

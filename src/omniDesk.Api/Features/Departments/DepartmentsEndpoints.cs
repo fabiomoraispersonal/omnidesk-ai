@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Domain.Departments;
 using omniDesk.Api.Features.Departments.Validators;
+using omniDesk.Api.Features.Pipelines;
 using omniDesk.Api.Infrastructure.Persistence;
 
 namespace omniDesk.Api.Features.Departments;
@@ -55,6 +56,7 @@ public static class DepartmentsEndpoints
         CreateDepartmentRequest request,
         AppDbContext db,
         IValidator<CreateDepartmentRequest> validator,
+        PipelineProvisioningService pipelineProvisioner,
         CancellationToken ct)
     {
         var validation = await validator.ValidateAsync(request, ct);
@@ -90,6 +92,8 @@ public static class DepartmentsEndpoints
         department.SetBusinessHours(hours);
         db.Departments.Add(department);
         await db.SaveChangesAsync(ct);
+
+        await pipelineProvisioner.EnsurePipelineForDepartmentAsync(department.Id, ct);
 
         return Results.Created($"/api/departments/{department.Id}",
             new { success = true, data = ToResponse(department, 0, 0) });

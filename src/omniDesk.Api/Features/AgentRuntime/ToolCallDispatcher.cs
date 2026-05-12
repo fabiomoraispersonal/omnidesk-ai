@@ -123,12 +123,16 @@ public class ToolCallDispatcher
         var history = await _conversation.GetRecentMessagesAsync(ctx.ThreadId, 100, ct);
         var ticket = await _ticketGateway.CreateTicketFromAiHandoffAsync(
             new TicketHandoffRequest(
-                ctx.ThreadId,
-                departmentId.Value,
-                reason,
-                ctx.CurrentAgent?.Id,
-                history,
-                ctx.ExternalConversationRef),
+                ConversationId: ctx.ThreadId,
+                ThreadId: ctx.ThreadId,
+                DepartmentId: departmentId.Value,
+                Reason: reason,
+                OriginatingAgentId: ctx.CurrentAgent?.Id,
+                Channel: omniDesk.Api.Domain.Tickets.TicketChannel.LiveChat,
+                ContactHints: null,
+                SubjectSuggestion: null,
+                History: history,
+                ExternalConversationRef: ctx.ExternalConversationRef),
             ct);
 
         await _conversation.MarkHandedOffAsync(ctx.ThreadId, ct);
@@ -137,7 +141,7 @@ public class ToolCallDispatcher
         {
             success = true,
             ticket_id = ticket.TicketId,
-            ticket_number = ticket.TicketNumber,
+            ticket_number = ticket.Protocol,
             department_name = ticket.DepartmentName,
             instruction_for_agent =
                 $"Envie ao cliente: 'Vou transferir você para nossa equipe de {ticket.DepartmentName}. Aguarde um momento.'",

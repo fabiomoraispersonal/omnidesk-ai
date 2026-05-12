@@ -39,7 +39,7 @@ public class TransferTicketTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(attB.Id, result.AssignedAttendantId);
 
         var refreshed = await db.Tickets.AsNoTracking().FirstAsync(t => t.Id == ticket.Id);
-        Assert.Equal(attB.Id, refreshed.AssignedAttendantId);
+        Assert.Equal(attB.Id, refreshed.AttendantId);
 
         var counters = await db.Attendants.AsNoTracking()
             .Where(a => a.Id == attA.Id || a.Id == attB.Id)
@@ -69,7 +69,7 @@ public class TransferTicketTests : IClassFixture<TestWebApplicationFactory>
 
         var refreshed = await db.Tickets.AsNoTracking().FirstAsync(t => t.Id == ticket.Id);
         Assert.Equal(deptB.Id, refreshed.DepartmentId);
-        Assert.Null(refreshed.AssignedAttendantId);
+        Assert.Null(refreshed.AttendantId);
         Assert.True(refreshed.SlaStartedAt > DateTimeOffset.UtcNow.AddMinutes(-1),
             "SLA must be reset on cross-dept transfer (FR-026).");
     }
@@ -95,9 +95,9 @@ public class TransferTicketTests : IClassFixture<TestWebApplicationFactory>
         var t = new Ticket
         {
             Id = Guid.NewGuid(), Number = Random.Shared.Next(1000, 999999),
-            Subject = "Test", DepartmentId = deptId, AssignedAttendantId = attendantId,
+            Subject = "Test", DepartmentId = deptId, AttendantId = attendantId,
             AssignedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
-            Status = TicketStatus.Assigned, SlaStartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            Status = TicketStatus.InProgress, SlaStartedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
             CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow,
         };
         db.Tickets.Add(t);

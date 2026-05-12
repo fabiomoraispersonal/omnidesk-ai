@@ -35,6 +35,21 @@ public static class RedisKeys
     public static string WsAttendant(string tenantSlug, Guid attendantId) =>
         Require(tenantSlug) + $":ws:attendant:{attendantId}";
 
+    // Spec 009 — CRM WebSocket pub/sub channels
+    public static string CrmDepartment(string tenantSlug, Guid departmentId) =>
+        Require(tenantSlug) + $":crm:dept:{departmentId}";
+
+    public static string CrmSupervisor(string tenantSlug) =>
+        Require(tenantSlug) + ":crm:supervisor";
+
+    // Spec 009 — SLA warning idempotency flags (TTL 24h set by TicketSlaMonitorJob)
+    public static string SlaWarnedFlag(string tenantSlug, Guid ticketId, string slaType) =>
+        Require(tenantSlug) + $":ticket:{ticketId}:sla_warned:{slaType}";
+
+    // Spec 009 — Contact dedup lock
+    public static string ContactDedupLock(string tenantSlug, string key) =>
+        Require(tenantSlug) + $":contact:dedup:lock:{key}";
+
     private static string Require(string tenantSlug)
     {
         if (string.IsNullOrWhiteSpace(tenantSlug))

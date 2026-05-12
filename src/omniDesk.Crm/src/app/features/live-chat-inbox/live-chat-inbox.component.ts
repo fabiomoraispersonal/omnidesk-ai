@@ -25,6 +25,7 @@ import {
   TemplatePickerDialogComponent,
   TemplatePickerResult,
 } from './components/template-picker-dialog.component';
+import { Router, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -45,7 +46,7 @@ import { environment } from '../../../environments/environment';
   imports: [
     CommonModule, FormsModule, CardModule, ButtonModule,
     InputTextareaModule, ToastModule, DatePipe,
-    TemplatePickerDialogComponent,
+    TemplatePickerDialogComponent, RouterLink,
   ],
   providers: [MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +68,12 @@ import { environment } from '../../../environments/environment';
             <div class="status">
               <span *ngIf="conv.attendant_id" class="badge owned">você</span>
               <span *ngIf="!conv.attendant_id" class="badge unassigned">novo</span>
+            </div>
+            <!-- Spec 009 T182 — link to ticket when conversation is linked -->
+            <div *ngIf="conv.ticket_id" class="ticket-link-row" (click)="$event.stopPropagation()">
+              <a [routerLink]="['/tickets', conv.ticket_id]" class="ticket-link">
+                Abrir ticket TK...
+              </a>
             </div>
           </li>
         </ul>
@@ -226,6 +233,7 @@ export class LiveChatInboxComponent implements OnInit, OnDestroy {
   private readonly notify = inject(BrowserNotificationService);
   private readonly toast = inject(MessageService);
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
 
   protected readonly draft = signal('');
   protected readonly templatePickerVisible = signal(false);
@@ -243,8 +251,14 @@ export class LiveChatInboxComponent implements OnInit, OnDestroy {
     this.ws.destroy();
   }
 
-  protected async select(id: string): Promise<void> {
-    await this.inbox.select(id);
+  protected async select(convId: string): Promise<void> {
+    // Spec 009 T107 — when conversation has a linked ticket, navigate there instead.
+    const conv = this.inbox.conversations().find((c) => c.id === convId);
+    if (conv?.ticket_id) {
+      void this.router.navigate(['/tickets', conv.ticket_id]);
+      return;
+    }
+    await this.inbox.select(convId);
     requestAnimationFrame(() => this.scrollToBottom());
   }
 

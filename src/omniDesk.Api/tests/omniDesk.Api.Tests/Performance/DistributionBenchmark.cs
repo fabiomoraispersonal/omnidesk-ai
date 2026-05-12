@@ -74,7 +74,7 @@ public class DistributionBenchmark : IClassFixture<TestWebApplicationFactory>
         var service = new TicketAssignmentService(
             db, new TicketLock(redis), new RoundRobinCursorRedis(redis),
             new EligibleAttendantsQuery(db, presence), bus,
-            NullLogger<TicketAssignmentService>.Instance);
+            new TicketEventPublisher(redis), NullLogger<TicketAssignmentService>.Instance);
 
         // Warm-up
         for (var i = 0; i < 10; i++) await Run(db, service, slug, dept.Id);
@@ -98,7 +98,7 @@ public class DistributionBenchmark : IClassFixture<TestWebApplicationFactory>
         var ticket = new Ticket
         {
             Id = Guid.NewGuid(), Number = Random.Shared.Next(1000, 999999),
-            Subject = "Bench", DepartmentId = deptId, Status = TicketStatus.Queued,
+            Subject = "Bench", DepartmentId = deptId, Status = TicketStatus.New,
             CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow,
         };
         db.Tickets.Add(ticket);

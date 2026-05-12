@@ -71,7 +71,9 @@ public class TenantSchemaFixture : IAsyncLifetime
         var tables = new[]
         {
             "ai_handoff_snapshots", "ai_threads", "ai_agents", "ai_settings",
-            "tickets", "attendant_status", "attendant_departments",
+            "ticket_notes", "tickets", "contacts",
+            "pipeline_columns", "pipelines",
+            "attendant_status", "attendant_departments",
             "canned_responses", "attendants", "departments",
         };
         foreach (var t in tables)
@@ -112,6 +114,14 @@ public class TenantSchemaFixture : IAsyncLifetime
             "Add_WhatsApp_Tables.sql",
             "Add_WhatsApp_Conversation_Fields.sql",
             "Add_WhatsApp_Message_Fields.sql",
+            // Spec 009 — Tickets/CRM full model
+            "Add_Tickets_FullModel.sql",
+            "Add_Contacts.sql",
+            "Add_ContactId_To_Visitors.sql",
+            "Add_TicketId_To_Conversations.sql",
+            "Add_TicketNotes.sql",
+            "Add_Pipelines.sql",
+            "Add_Messages_SearchVector.sql",
         };
         foreach (var name in tenantMigrations)
         {
