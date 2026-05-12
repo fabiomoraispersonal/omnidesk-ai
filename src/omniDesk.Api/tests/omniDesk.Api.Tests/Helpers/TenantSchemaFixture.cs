@@ -70,6 +70,8 @@ public class TenantSchemaFixture : IAsyncLifetime
         await conn.OpenAsync();
         var tables = new[]
         {
+            // Spec 010 — notifications (truncate first; FK -> attendants)
+            "notifications", "push_subscriptions", "attendant_notification_preferences",
             "ai_handoff_snapshots", "ai_threads", "ai_agents", "ai_settings",
             "ticket_notes", "tickets", "contacts",
             "pipeline_columns", "pipelines",
@@ -100,6 +102,9 @@ public class TenantSchemaFixture : IAsyncLifetime
         // 2b. Spec 007 — public.tenants gains widget_token (public, immutable, non-secret).
         await ExecAsync(conn, ReadIfExists(migrationsDir, "Add_WidgetToken_To_Tenants.sql"));
 
+        // 2c. Spec 010 — public.tenant_notification_settings (per-tenant follow-up + reminder toggles).
+        await ExecAsync(conn, ReadIfExists(migrationsDir, "Add_TenantNotificationSettings.sql"));
+
         // 3. Tenant schema.
         await ExecAsync(conn, $@"CREATE SCHEMA IF NOT EXISTS ""{TenantSchema}""");
 
@@ -122,6 +127,8 @@ public class TenantSchemaFixture : IAsyncLifetime
             "Add_TicketNotes.sql",
             "Add_Pipelines.sql",
             "Add_Messages_SearchVector.sql",
+            // Spec 010 — notifications + push + per-attendant preferences
+            "Add_Notifications_Push_Preferences.sql",
         };
         foreach (var name in tenantMigrations)
         {

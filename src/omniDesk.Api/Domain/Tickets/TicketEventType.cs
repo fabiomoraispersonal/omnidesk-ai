@@ -15,4 +15,6 @@ public static class TicketEventType
     public const string SlaBreached        = "sla_breached";
     public const string TicketResolved     = "ticket_resolved";
     public const string TicketCancelled    = "ticket_cancelled";
+    // Spec 010 US4 — appointment reminder failures
+    public const string ReminderFailed     = "reminder_failed";
 }

@@ -2,6 +2,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
   computed,
   inject,
@@ -16,6 +17,8 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { TicketDetailService } from './services/ticket-detail.service';
 import { TicketsService } from '../tickets-kanban/services/tickets.service';
+import { CrmWebSocketService } from '../live-chat-inbox/services/crm-websocket.service';
+import { SendTemplateModalComponent } from '../whatsapp-templates/send-template-modal.component';
 import { ConversationTimelineComponent } from '../../shared/components/conversation-timeline/conversation-timeline.component';
 import { InternalNotesSectionComponent } from './components/internal-notes-section.component';
 import { TicketSidePanelComponent } from './components/ticket-side-panel.component';
@@ -32,6 +35,7 @@ import { TicketSidePanelComponent } from './components/ticket-side-panel.compone
     ConversationTimelineComponent,
     InternalNotesSectionComponent,
     TicketSidePanelComponent,
+    SendTemplateModalComponent,
   ],
   providers: [MessageService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +81,16 @@ import { TicketSidePanelComponent } from './components/ticket-side-panel.compone
                 disabled
                 class="reply-textarea"
               ></textarea>
+              <div class="reply-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-send"
+                  label="Enviar template"
+                  class="p-button-sm p-button-outlined"
+                  (click)="openTemplateModal()"
+                ></button>
+              </div>
             </div>
 
             <!-- Internal notes -->
@@ -100,6 +114,15 @@ import { TicketSidePanelComponent } from './components/ticket-side-panel.compone
         <p>Ticket não encontrado.</p>
         <button pButton label="Voltar" class="p-button-text" (click)="goBack()"></button>
       </div>
+    }
+
+    @if (templateModalOpen() && currentTicketId()) {
+      <app-send-template-modal
+        [ticketId]="currentTicketId()!"
+        [visible]="templateModalOpen()"
+        (visibleChange)="templateModalOpen.set($event)"
+        (sent)="onTemplateSent()"
+      />
     }
   `,
   styles: [`
@@ -193,18 +216,62 @@ import { TicketSidePanelComponent } from './components/ticket-side-panel.compone
     }
   `],
 })
-export class TicketDetailComponent implements OnInit {
+export class TicketDetailComponent implements OnInit, OnDestroy {
   readonly detailService = inject(TicketDetailService);
   private readonly ticketsService = inject(TicketsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
+  private readonly ws = inject(CrmWebSocketService);
+
+  // Spec 010 US2 T063 — silence-rule heartbeat. TTL 60s server-side, refresh every 30s.
+  private viewingTicketId: string | null = null;
+  private viewingTimer: ReturnType<typeof setInterval> | null = null;
+
+  // Spec 010 US5 — manual template send modal state.
+  protected readonly templateModalOpen = signal(false);
+  protected readonly currentTicketId = computed(
+    () => this.detailService.detail()?.id ?? null);
 
   replyContent = '';
+
+  openTemplateModal(): void {
+    if (this.currentTicketId()) this.templateModalOpen.set(true);
+  }
+
+  onTemplateSent(): void {
+    // Reload the ticket so the new message appears in the timeline.
+    const id = this.currentTicketId();
+    if (id) void this.detailService.load(id);
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) void this.detailService.load(id);
+
+    // Spec 010 US2 T063 — tell backend which ticket we're viewing so it can
+    // suppress browser push for new_message / client_replied on THIS ticket.
+    if (id) {
+      this.viewingTicketId = id;
+      this.ws.connect(); // idempotent
+      this.ws.send({ type: 'attendant.viewing_ticket', ticket_id: id });
+      this.viewingTimer = setInterval(() => {
+        if (this.viewingTicketId) {
+          this.ws.send({ type: 'attendant.viewing_ticket', ticket_id: this.viewingTicketId });
+        }
+      }, 30_000);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.viewingTimer) {
+      clearInterval(this.viewingTimer);
+      this.viewingTimer = null;
+    }
+    if (this.viewingTicketId) {
+      this.ws.send({ type: 'attendant.viewing_ticket', ticket_id: null });
+      this.viewingTicketId = null;
+    }
   }
 
   goBack(): void {

@@ -1,26 +1,43 @@
 namespace omniDesk.Api.Features.Notifications;
 
 /// <summary>
-/// Spec 009 Polish T180 — V1 no-op stub.
-/// Spec 010 will deliver the real implementation (email, in-app, push).
+/// Spec 010 — dispatches in-app notifications (DB persist + WS publish) and, in production,
+/// also dispatches browser push (added in US2). Implementations MUST persist the in-app
+/// notification even when push fails or is disabled (FR-001/FR-002).
 /// </summary>
 public interface INotificationService
 {
-    /// <summary>Notify an attendant that a ticket has been assigned to them.</summary>
+    // Spec 009 compat — already called by TicketCreationGateway. Signature preserved.
     Task NotifyTicketAssignedAsync(Guid attendantId, Guid ticketId, string protocol, CancellationToken ct);
-
-    /// <summary>Notify the department supervisor that a new ticket arrived unassigned.</summary>
     Task NotifyNewUnassignedTicketAsync(Guid departmentId, Guid ticketId, string protocol, CancellationToken ct);
-}
 
-/// <summary>
-/// V1 no-op: logs intent, does nothing. Replaced by Spec 010 real implementation.
-/// </summary>
-public class NoOpNotificationService : INotificationService
-{
-    public Task NotifyTicketAssignedAsync(Guid attendantId, Guid ticketId, string protocol, CancellationToken ct)
-        => Task.CompletedTask;
+    // Spec 010 — additional event types (US2/US3/US4 hook into these).
+    Task NotifyTicketTransferredAsync(
+        Guid toAttendantId, Guid ticketId, string protocol,
+        Guid? fromAttendantId, string? fromAttendantName, CancellationToken ct);
 
-    public Task NotifyNewUnassignedTicketAsync(Guid departmentId, Guid ticketId, string protocol, CancellationToken ct)
-        => Task.CompletedTask;
+    Task NotifyNewMessageAsync(
+        Guid attendantId, Guid ticketId, string protocol,
+        string contactName, string snippet, CancellationToken ct);
+
+    Task NotifyClientRepliedAsync(
+        Guid attendantId, Guid ticketId, string protocol,
+        string contactName, CancellationToken ct);
+
+    Task NotifySlaWarningAsync(
+        Guid attendantId, Guid ticketId, string protocol,
+        string slaType, CancellationToken ct);
+
+    /// <summary>Fan-out to attendant (if any) + all supervisors of the department.</summary>
+    Task NotifySlaBreachedAsync(
+        Guid ticketId, string protocol, Guid departmentId, Guid? attendantId,
+        CancellationToken ct);
+
+    /// <summary>Fan-out to all supervisors of the department (no attendant — by definition).</summary>
+    Task NotifyTicketQueuedAsync(
+        Guid ticketId, string protocol, Guid departmentId, CancellationToken ct);
+
+    Task NotifyReminderFailedAsync(
+        Guid attendantId, Guid ticketId, string protocol,
+        string contactName, string reason, CancellationToken ct);
 }

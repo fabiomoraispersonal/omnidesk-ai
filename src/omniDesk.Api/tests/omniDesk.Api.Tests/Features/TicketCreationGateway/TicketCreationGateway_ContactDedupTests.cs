@@ -8,6 +8,7 @@ using omniDesk.Api.Features.AgentRuntime;
 using omniDesk.Api.Features.Contacts;
 using omniDesk.Api.Features.Distribution;
 using omniDesk.Api.Features.Notifications;
+using NoOpNotificationService = omniDesk.Api.Tests.Helpers.NoOpNotificationService;
 using omniDesk.Api.Features.Tickets;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.Contacts;

@@ -50,6 +50,18 @@ public static class RedisKeys
     public static string ContactDedupLock(string tenantSlug, string key) =>
         Require(tenantSlug) + $":contact:dedup:lock:{key}";
 
+    // Spec 010 — TicketQueueMonitorJob idempotency flag (FR-009, TTL 1h via SETNX).
+    public static string NotificationQueueAlert(string tenantSlug, Guid ticketId) =>
+        Require(tenantSlug) + $":queue_alert:{ticketId}";
+
+    // Spec 010 — AppointmentReminderJob idempotency flag (FR-018, TTL 48h via SETNX).
+    public static string ReminderSent(string tenantSlug, Guid appointmentId, string dateYyyyMmDd) =>
+        Require(tenantSlug) + $":reminder_sent:{appointmentId}:{dateYyyyMmDd}";
+
+    // Spec 010 — silence-rule (FR-010): which ticket the attendant has open. TTL 60s, heartbeat 30s.
+    public static string AttendantActiveTicket(string tenantSlug, Guid attendantId) =>
+        Require(tenantSlug) + $":attendant_active_ticket:{attendantId}";
+
     private static string Require(string tenantSlug)
     {
         if (string.IsNullOrWhiteSpace(tenantSlug))

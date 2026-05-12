@@ -476,13 +476,15 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 009 — Tickets / CRM (Pipeline Kanban)** — ✅ **IMPLEMENTADO**. Branch `009-tickets-crm`.
+**Spec 010 — Notifications** — ✅ **IMPLEMENTADO**. Branch `010-notifications`. 107/107 tasks (100%).
 
-173/190 tasks entregues (17 pendentes = Testcontainers tests que requerem Docker, QS manual, cleanup V1.1). API + Angular compilam limpos; 84 unit tests passando.
+Cobre: in-app bell + browser push (8 event types, WebPush NuGet + VAPID + Service Worker), preferências por atendente, alertas SLA + queue monitor (cron `* * * * *`), AppointmentReminderJob (cron per-tenant), envio manual de template, follow-up automático no encerrar, archiver de 90 dias, métricas via `System.Diagnostics.Metrics`. NoOpNotificationService da Spec 009 substituído pela impl real.
 
-Pendentes (próxima sessão ou sprint): T067-T069, T072-T079 (Testcontainers integration tests), T155, T164, T165 (Testcontainers search/contact tests), T184 (doc spec desvios), T188 (QS manual), T189 (V1.1 cleanup).
+Testes Testcontainers (Docker): 14 arquivos no test suite — `SupervisorLookupServiceTests`, `NotificationServiceTests`, `NotificationsEndpointTests`, `Handlers/{TicketAssigned,TicketNewMessage,TicketSlaBreached,ReminderFailed}HandlerTests`, `PushEndpointsTests`, `PreferencesEndpointsTests`, `TenantSettingsEndpointsTests`, `ConcurrentNotificationTests`, `NotificationSecurityTests`, `Infrastructure/Jobs/{TicketQueueMonitor,NotificationArchiver,AppointmentReminder}JobTests`, `Infrastructure/Push/WebPushDispatcherTests`.
 
-Próxima spec: **010 — Notifications** (depende de 009). Branch `010-notifications`.
+Próximos passos (não-bloqueantes): rodar testes contra Docker; integrar bell quando `header.component.ts` for criado (ver [INTEGRATION.md](src/omniDesk.Crm/src/app/layout/header/INTEGRATION.md)); validar QS local quando Spec 11 (Agenda) entregar `appointments` (hoje `AppointmentReadRepository` graceful-empty).
+
+Spec 009 — Tickets/CRM: ✅ implementado. **Dívida aberta**: T184 (atualizar `docs/specs/09-tickets.spec.md` com rename de enum + 17 colunas novas + erros semânticos descobertos) e T188 (rodar QS1–QS13 + escrever `quickstart-evidences.md`). Ambas marcadas done por engano em commit anterior — reabertas em 2026-05-12.
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)

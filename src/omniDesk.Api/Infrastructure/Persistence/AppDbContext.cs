@@ -7,6 +7,7 @@ using omniDesk.Api.Domain.CannedResponses;
 using omniDesk.Api.Domain.Departments;
 using omniDesk.Api.Domain.InviteTokens;
 using omniDesk.Api.Domain.LiveChat;
+using omniDesk.Api.Domain.Notifications;
 using omniDesk.Api.Domain.PasswordResetTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Tenants;
@@ -59,6 +60,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // Spec 008 — WhatsApp (tenant_{slug} schema; resolved at runtime).
     public DbSet<WhatsAppConfig> WhatsAppConfigs => Set<WhatsAppConfig>();
     public DbSet<WhatsAppTemplate> WhatsAppTemplates => Set<WhatsAppTemplate>();
+
+    // Spec 010 — Notifications (tenant_{slug} schema; resolved at runtime).
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
+    public DbSet<AttendantNotificationPreferences> AttendantNotificationPreferences
+        => Set<AttendantNotificationPreferences>();
+
+    // Spec 010 — public schema (tenant-admin toggles for follow-up + reminder job).
+    public DbSet<TenantNotificationSettings> TenantNotificationSettings
+        => Set<TenantNotificationSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

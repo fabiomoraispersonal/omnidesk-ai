@@ -39,6 +39,8 @@ using omniDesk.Api.Infrastructure.Distribution;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Presence;
 using omniDesk.Api.Infrastructure.WebSockets;
+using omniDesk.Api.Features.Notifications;
+using omniDesk.Api.Features.Notifications.Schedulers;
 using omniDesk.Api.Features.Tickets;
 using omniDesk.Api.Features.Tickets.Notes;
 using omniDesk.Api.Features.Pipelines;
@@ -268,6 +270,8 @@ builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.BackfillTicketProtoc
 builder.Services.AddScoped<omniDesk.Api.Features.Contacts.ContactBackfillJob>();
 // Spec 009 US3 — SLA monitoring jobs
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.TicketSlaMonitorJob>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.TicketQueueMonitorJob>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.NotificationArchiverJob>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Jobs.WaitingClientResumerJob>();
 // Spec 009 US2 — queries and commands
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Queries.SearchTicketsQuery>();
@@ -280,9 +284,42 @@ builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.UpdateTicketCo
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Notes.AddTicketNoteCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.TransferTicketCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.CreateManualTicketCommand>();
-// Spec 009 Polish T180 — Notification service (no-op V1; Spec 010 provides real impl)
+// Spec 010 — Notifications (real impl replaces Spec 009's NoOp stub).
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.NotificationRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.PushSubscriptionRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.AttendantPreferencesRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Notifications.TenantSettingsRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.WebSockets.NotificationEventPublisher>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.SupervisorLookupService>();
+// Spec 010 US2 — Web Push (browser).
+builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Push.VapidKeyProvider>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Push.WebPushDispatcher>();
 builder.Services.AddScoped<omniDesk.Api.Features.Notifications.INotificationService,
-    omniDesk.Api.Features.Notifications.NoOpNotificationService>();
+    omniDesk.Api.Features.Notifications.NotificationService>();
+// Spec 010 US1 — Notifications endpoint dependencies (queries + commands)
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Queries.ListNotificationsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Queries.UnreadCountQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAsReadCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.MarkAllAsReadCommand>();
+// Spec 010 US6 — per-attendant preferences
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.UpdatePreferencesCommand>();
+// Spec 010 US4 — real AppointmentReminderScheduler (replaces Phase 9 NoOp).
+builder.Services.AddScoped<
+    omniDesk.Api.Features.Notifications.Schedulers.IAppointmentReminderScheduler,
+    omniDesk.Api.Features.Notifications.Schedulers.AppointmentReminderScheduler>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Commands.UpdateTenantSettingsCommand>();
+// Spec 010 US4 — appointment data source + reminder job + failure handler.
+builder.Services.AddScoped<
+    omniDesk.Api.Infrastructure.Appointments.IAppointmentReadRepository,
+    omniDesk.Api.Infrastructure.Appointments.AppointmentReadRepository>();
+builder.Services.AddScoped<omniDesk.Api.Features.Notifications.Handlers.ReminderFailedHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Jobs.AppointmentReminderJob>();
+// Spec 010 US5 — Manual WhatsApp template send from ticket detail.
+builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.SendManualTemplateCommand>();
+// Spec 010 Polish T100 — metrics. AddMetrics() registers IMeterFactory.
+builder.Services.AddMetrics();
+builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Metrics.NotificationMetrics>();
 // Spec 009 US9 — Pipeline config
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
@@ -381,7 +418,25 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.TicketSlaMonitorJob>(
     job => job.RunAsync(CancellationToken.None),
     Cron.Minutely());
 
+// Spec 010 US3 T070 — Queue monitor: runs every minute, notifies supervisors when
+// a ticket sits in `new` without attendant for ≥ 5 min (FR-009 fixed threshold).
+RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.TicketQueueMonitorJob>(
+    "queue-monitor",
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Minutely());
+
+// Spec 010 Polish T098 — Notification archiver: 3 AM UTC daily, soft-deletes rows
+// older than Notifications:ArchiveRetentionDays (default 90). FR-007.
+RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.NotificationArchiverJob>(
+    "notifications-archiver",
+    job => job.RunAsync(CancellationToken.None),
+    "0 3 * * *");
+
 await app.SeedDatabaseAsync();
+
+// Spec 010 US4 T079 — restore per-tenant appointment-reminder cron jobs on startup.
+// Idempotent: AddOrUpdate replaces existing definitions; RemoveIfExists is a no-op when absent.
+await app.RestoreAppointmentReminderSchedulesAsync();
 
 var api = app.MapGroup("/api");
 
@@ -426,6 +481,28 @@ TransferTicketEndpoint.Map(tickets);
 
 // Spec 009 US2 — CRM ticket management (list, detail, update, status, resolve, cancel, notes)
 tickets.MapTicketEndpoints();
+
+// Spec 010 US5 — POST /api/tickets/{id}/send-template
+tickets.MapSendTemplateEndpoint();
+
+// Spec 010 US1 — Notifications (in-app feed) + US6 (per-attendant preferences)
+var notifications = api.MapGroup("/notifications")
+                       .RequireAuthorization()
+                       .AddEndpointFilter<ImpersonationAuditFilter>();
+notifications.MapNotificationsEndpoints();
+notifications.MapPreferencesEndpoints();
+
+// Spec 010 US2 — Web Push: VAPID public key + subscribe/unsubscribe
+var pushApi = api.MapGroup("/push")
+                 .RequireAuthorization()
+                 .AddEndpointFilter<ImpersonationAuditFilter>();
+pushApi.MapPushEndpoints();
+
+// Spec 010 Phase 9 — tenant-admin notification settings
+var notificationSettings = api.MapGroup("/notification-settings")
+                              .RequireAuthorization()
+                              .AddEndpointFilter<ImpersonationAuditFilter>();
+notificationSettings.MapTenantSettingsEndpoints();
 
 // Spec 009 US9 — Pipeline config
 var pipelines = api.MapGroup("/pipelines")
