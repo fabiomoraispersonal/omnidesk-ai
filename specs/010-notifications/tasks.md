@@ -92,7 +92,7 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 ### Foundational tests
 
 - [x] T031 [P] Criar `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Notifications/NotificationServiceTests.cs` cobrindo: `NotifyTicketAssignedAsync` persiste notification correta + publica WS; `NotifyTicketQueuedAsync` faz fan-out para múltiplos supervisores; `NotifySlaBreachedAsync` notifica atendente + supervisores; idempotência básica
-- [ ] T032 [P] Criar `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Notifications/SupervisorLookupServiceTests.cs` — seed 1 TenantAdmin + 2 Supervisors (1 no depto, 1 fora), assert retorna 2 (admin + supervisor do depto)
+- [x] T032 [P] Criar `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Notifications/SupervisorLookupServiceTests.cs` — seed 1 TenantAdmin + 2 Supervisors (1 no depto, 1 fora), assert retorna 2 (admin + supervisor do depto)
 
 **Checkpoint**: ✅ Build verde. Spec 009 continua passando (mas agora notifications são persistidas de verdade). Pronto para iniciar User Stories em paralelo.
 
@@ -106,8 +106,8 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T033 [P] [US1] Criar `tests/.../Features/Notifications/NotificationsEndpointTests.cs` — GET feed paginado (20/pág), `unread_only=true` filtra, `unread-count` retorna live (não cache), `PATCH /{id}/read` flipa `is_read`, `POST /read-all` zera todas, erro 403 para id de outro atendente
-- [ ] T034 [P] [US1] Criar `tests/.../Features/Notifications/Handlers/TicketAssignedHandlerTests.cs` — `NotifyTicketAssignedAsync` é chamado quando ticket é criado via `TicketCreationGateway`; notification persistida com `event_type='ticket.assigned'`, `entity_type='ticket'`, `entity_id=<ticket_id>`; WS event publicado em `{slug}:ws:attendant:{attendantId}`
+- [x] T033 [P] [US1] Criar `tests/.../Features/Notifications/NotificationsEndpointTests.cs` — GET feed paginado (20/pág), `unread_only=true` filtra, `unread-count` retorna live (não cache), `PATCH /{id}/read` flipa `is_read`, `POST /read-all` zera todas, erro 403 para id de outro atendente
+- [x] T034 [P] [US1] Criar `tests/.../Features/Notifications/Handlers/TicketAssignedHandlerTests.cs` — `NotifyTicketAssignedAsync` é chamado quando ticket é criado via `TicketCreationGateway`; notification persistida com `event_type='ticket.assigned'`, `entity_type='ticket'`, `entity_id=<ticket_id>`; WS event publicado em `{slug}:ws:attendant:{attendantId}`
 
 ### Implementation for User Story 1
 
@@ -146,9 +146,9 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T051 [P] [US2] Criar `tests/.../Features/Notifications/PushEndpointsTests.cs` — `GET /api/push/vapid-public-key` retorna key configurada; `POST /api/push/subscribe` cria registro; chamar de novo com mesmo endpoint faz upsert (não duplica); `DELETE /api/push/unsubscribe` remove; 401 sem auth
-- [ ] T052 [P] [US2] Criar `tests/.../Infrastructure/Push/WebPushDispatcherTests.cs` — usa stub `WebPushClient` (interface adaptada). Cenários: 200 OK não toca DB; `WebPushException(StatusCode=410)` chama `DeleteByEndpointAsync`; `WebPushException(StatusCode=404)` também chama delete; `WebPushException(StatusCode=429)` apenas loga warning
-- [ ] T053 [P] [US2] Criar `tests/.../Features/Notifications/Handlers/TicketNewMessageHandlerTests.cs` cobrindo silence rule: com `{slug}:attendant_active_ticket:{att}` setado para `ticket_X`, push para `ticket_X` é skip; push para `ticket_Y` ocorre normalmente; in-app **sempre** persiste
+- [x] T051 [P] [US2] Criar `tests/.../Features/Notifications/PushEndpointsTests.cs` — `GET /api/push/vapid-public-key` retorna key configurada; `POST /api/push/subscribe` cria registro; chamar de novo com mesmo endpoint faz upsert (não duplica); `DELETE /api/push/unsubscribe` remove; 401 sem auth
+- [x] T052 [P] [US2] Criar `tests/.../Infrastructure/Push/WebPushDispatcherTests.cs` — usa stub `WebPushClient` (interface adaptada). Cenários: 200 OK não toca DB; `WebPushException(StatusCode=410)` chama `DeleteByEndpointAsync`; `WebPushException(StatusCode=404)` também chama delete; `WebPushException(StatusCode=429)` apenas loga warning
+- [x] T053 [P] [US2] Criar `tests/.../Features/Notifications/Handlers/TicketNewMessageHandlerTests.cs` cobrindo silence rule: com `{slug}:attendant_active_ticket:{att}` setado para `ticket_X`, push para `ticket_X` é skip; push para `ticket_Y` ocorre normalmente; in-app **sempre** persiste
 
 ### Backend — VAPID + Endpoints
 
@@ -181,8 +181,8 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T064 [P] [US3] Criar `tests/.../Features/Notifications/Handlers/TicketSlaBreachedHandlerTests.cs` — quando `TicketSlaMonitorJob` (Spec 009) emite breach, `NotifySlaBreachedAsync` é chamado: atendente + N supervisores recebem; sem atendente, só supervisores; teste com 0 supervisores também passa (sem erro)
-- [ ] T065 [P] [US3] Criar `tests/.../Infrastructure/Jobs/TicketQueueMonitorJobTests.cs` — ticket em `new` há 4 min → 0 notificações; há 5 min → 1 round de notifs para supervisores; chamar job de novo → 0 (idempotente via Redis NX); 2 supervisores → 2 notification rows; após ticket atribuído, próximo run não notifica novamente (status mudou)
+- [x] T064 [P] [US3] Criar `tests/.../Features/Notifications/Handlers/TicketSlaBreachedHandlerTests.cs` — quando `TicketSlaMonitorJob` (Spec 009) emite breach, `NotifySlaBreachedAsync` é chamado: atendente + N supervisores recebem; sem atendente, só supervisores; teste com 0 supervisores também passa (sem erro)
+- [x] T065 [P] [US3] Criar `tests/.../Infrastructure/Jobs/TicketQueueMonitorJobTests.cs` — ticket em `new` há 4 min → 0 notificações; há 5 min → 1 round de notifs para supervisores; chamar job de novo → 0 (idempotente via Redis NX); 2 supervisores → 2 notification rows; após ticket atribuído, próximo run não notifica novamente (status mudou)
 
 ### Implementation for User Story 3
 
@@ -205,8 +205,8 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T072 [P] [US4] Criar `tests/.../Infrastructure/Jobs/AppointmentReminderJobTests.cs` (Testcontainers) — happy path: 1 appointment, 1 contato, 1 template approved, toggle on, channel on → 1 outgoing enqueued + 1 `wa_message_statuses` row + Redis flag setada; re-run no mesmo dia → 0 enqueued; toggle off → 0; sem template → 0; sem phone + appointment ligado a ticket → `reminder_failed` event + notification + `has_reminder_alert = true`
-- [ ] T073 [P] [US4] Criar `tests/.../Features/Notifications/Handlers/ReminderFailedHandlerTests.cs` — appointment com ticket → evento em `{slug}_ticket_events` + notification ao atendente + flag `has_reminder_alert`; appointment sem ticket → log em `{slug}_agent_activity_logs` + notification aos supervisores do depto
+- [x] T072 [P] [US4] Criar `tests/.../Infrastructure/Jobs/AppointmentReminderJobTests.cs` (Testcontainers) — happy path: 1 appointment, 1 contato, 1 template approved, toggle on, channel on → 1 outgoing enqueued + 1 `wa_message_statuses` row + Redis flag setada; re-run no mesmo dia → 0 enqueued; toggle off → 0; sem template → 0; sem phone + appointment ligado a ticket → `reminder_failed` event + notification + `has_reminder_alert = true`
+- [x] T073 [P] [US4] Criar `tests/.../Features/Notifications/Handlers/ReminderFailedHandlerTests.cs` — appointment com ticket → evento em `{slug}_ticket_events` + notification ao atendente + flag `has_reminder_alert`; appointment sem ticket → log em `{slug}_agent_activity_logs` + notification aos supervisores do depto
 
 ### Implementation for User Story 4
 
@@ -235,7 +235,7 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T080 [P] [US5] Criar `tests/.../Features/Tickets/SendTemplateEndpointTests.cs` — happy path enqueue; 403 quando atendente não é o assigned (e não é TenantAdmin); 422 com `TEMPLATE_NOT_APPROVED` / `TEMPLATE_VARIABLES_MISSING` / `CONTACT_HAS_NO_PHONE`; quando template é `appointment_reminder` e `has_reminder_alert=true`, flag reseta para false após enqueue
+- [x] T080 [P] [US5] Criar `tests/.../Features/Tickets/SendTemplateEndpointTests.cs` — happy path enqueue; 403 quando atendente não é o assigned (e não é TenantAdmin); 422 com `TEMPLATE_NOT_APPROVED` / `TEMPLATE_VARIABLES_MISSING` / `CONTACT_HAS_NO_PHONE`; quando template é `appointment_reminder` e `has_reminder_alert=true`, flag reseta para false após enqueue
 
 ### Implementation for User Story 5
 
@@ -256,13 +256,13 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T085 [P] [US6] Criar `tests/.../Features/Notifications/PreferencesEndpointsTests.cs` — GET sem row existente retorna defaults completos; PUT cria upsert; PUT com chave inválida em `event_push_flags` retorna 422 `INVALID_EVENT_TYPE`; após PUT, próximo push do tipo desabilitado é skipped (integração com `WebPushDispatcher` mockado)
+- [x] T085 [P] [US6] Criar `tests/.../Features/Notifications/PreferencesEndpointsTests.cs` — GET sem row existente retorna defaults completos; PUT cria upsert; PUT com chave inválida em `event_push_flags` retorna 422 `INVALID_EVENT_TYPE`; após PUT, próximo push do tipo desabilitado é skipped (integração com `WebPushDispatcher` mockado)
 
 ### Implementation for User Story 6
 
 - [x] T086 [P] [US6] Criar `src/omniDesk.Api/Features/Notifications/Commands/UpdatePreferencesCommand.cs` com `ExecuteAsync(attendantId, pushEnabled, eventPushFlags, ct)`. Valida chaves em `NotificationEventTypes.AllowedValues`. Upsert via `AttendantPreferencesRepository`
 - [x] T087 [US6] Criar `src/omniDesk.Api/Features/Notifications/PreferencesEndpoints.cs` com `GET /api/notifications/preferences` (retorna shape completo conforme contracts/preferences-api.md, preenchendo `true` para chaves ausentes) e `PUT /api/notifications/preferences`. Registrar em Program.cs
-- [ ] T088 [US6] Atualizar `NotificationService.SendPushAsync` (interno, T057) para consultar prefs **antes de cada push**: se `pushEnabled=false` → skip; se `eventPushFlags[event_type] == false` → skip. Garantir que in-app **sempre** persiste (a checagem é só sobre push)
+- [x] T088 [US6] Atualizar `NotificationService.SendPushAsync` (interno, T057) para consultar prefs **antes de cada push**: se `pushEnabled=false` → skip; se `eventPushFlags[event_type] == false` → skip. Garantir que in-app **sempre** persiste (a checagem é só sobre push)
 - [x] T089 [P] [US6] Criar `src/omniDesk.Crm/src/app/features/notifications/preferences-page.component.{ts,html,scss,spec.ts}` — formulário Reactive com toggle `push_enabled` + 8 checkboxes (um por event_type, label PT-BR). Carrega `GET /api/notifications/preferences` em `ngOnInit`. Save → `PUT`. Toast de sucesso. Rota `/preferences` em `app.routes.ts` lazy-load
 - [x] T090 [US6] Adicionar link "Preferências" no menu de usuário (`src/omniDesk.Crm/src/app/layout/header/header.component.html`) navegando para `/preferences`
 
@@ -274,7 +274,7 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 
 **Purpose**: Tela de admin para `follow_up_enabled`, `reminder_enabled`, `reminder_time`. Disparada por completar US4; o follow-up opt-in (FR-026) é parcialmente independente mas vive na mesma tela.
 
-- [ ] T091 [P] Criar `tests/.../Features/Notifications/TenantSettingsEndpointsTests.cs` — GET retorna defaults se row ausente; PUT como TenantAdmin upserta + chama scheduler; PUT como Attendant retorna 403; PUT com `reminder_time` inválido retorna 422
+- [x] T091 [P] Criar `tests/.../Features/Notifications/TenantSettingsEndpointsTests.cs` — GET retorna defaults se row ausente; PUT como TenantAdmin upserta + chama scheduler; PUT como Attendant retorna 403; PUT com `reminder_time` inválido retorna 422
 - [x] T092 [P] Criar `src/omniDesk.Api/Features/Notifications/Commands/UpdateTenantSettingsCommand.cs` — upsert via `TenantSettingsRepository` + chama `AppointmentReminderScheduler.ApplyAsync(tenantId, settings)`
 - [x] T093 Criar `src/omniDesk.Api/Features/Notifications/TenantSettingsEndpoints.cs` com `GET /api/notification-settings` e `PUT /api/notification-settings`. Policy `TenantAdmin` (existente em `Infrastructure/Authentication/`). Registrar em Program.cs
 - [x] T094 Atualizar `src/omniDesk.Api/Features/Tickets/Commands/ResolveTicketCommand.cs` (ou equivalente que encerra ticket, Spec 009) para — se `tenant_notification_settings.follow_up_enabled = true` e ticket tem WA conversation e template `follow_up` aprovado e contato com phone — enqueue follow-up via `OutgoingMessagePublisher` com `sender_type=system`, `template=follow_up`. Reusa `WhatsAppOutgoingAdapter`. Falha gera log warning (não trava resolve)
@@ -291,8 +291,8 @@ description: "Task list for Notifications (in-app bell + browser push + WhatsApp
 - [x] T098 [P] Criar `src/omniDesk.Api/Infrastructure/Jobs/NotificationArchiverJob.cs` — cron `0 3 * * *`. Para cada tenant ativo: `UPDATE tenant_{slug}.notifications SET archived_at = NOW() WHERE created_at < NOW() - INTERVAL @days DAY AND archived_at IS NULL` (usar `Notifications:ArchiveRetentionDays`). Registrar via `RecurringJob.AddOrUpdate("notifications-archiver", ..., "0 3 * * *", Utc)`
 - [x] T099 [P] Criar `tests/.../Infrastructure/Jobs/NotificationArchiverJobTests.cs` — 100 rows, 60 > 90 dias → exatamente 60 archived; runs idempotentes (segundo run não altera nada)
 - [x] T100 [P] Adicionar métricas em `Infrastructure/Metrics/` (se existe — senão `NotificationMetrics.cs`): `notifications_delivered_total{event_type}`, `notifications_push_failed_total{reason}`, `push_subscriptions_active`, `reminders_sent_total{tenant_slug}`, `reminders_failed_total{reason}`. Incrementar nos pontos relevantes
-- [ ] T101 [P] Adicionar testes de concorrência: `tests/.../Features/Notifications/ConcurrentNotificationTests.cs` — disparar 50 `NotifyTicketAssignedAsync` em paralelo para 5 attendants; assert 50 rows totais, 50 WS publishes, sem deadlock
-- [ ] T102 [P] Auditoria de segurança: confirmar que `NotificationsEndpoints` SEMPRE filtra por `attendant_id = current_user`; nenhum endpoint retorna notification de outro atendente; tests no `NotificationsEndpointTests` (T033) já cobrem — adicionar caso adicional de cross-tenant attempt
+- [x] T101 [P] Adicionar testes de concorrência: `tests/.../Features/Notifications/ConcurrentNotificationTests.cs` — disparar 50 `NotifyTicketAssignedAsync` em paralelo para 5 attendants; assert 50 rows totais, 50 WS publishes, sem deadlock
+- [x] T102 [P] Auditoria de segurança: confirmar que `NotificationsEndpoints` SEMPRE filtra por `attendant_id = current_user`; nenhum endpoint retorna notification de outro atendente; tests no `NotificationsEndpointTests` (T033) já cobrem — adicionar caso adicional de cross-tenant attempt
 - [x] T103 [P] Documentar em `docs/ARCHITECTURE.md` na seção de Notifications: tabelas, fluxo de push, idempotência do reminder, decisão R6 sobre supervisor, link para ADRs se aplicável
 - [x] T104 [P] Documentar em `docs/DEPENDENCIES.md` que Spec 010 depende de Spec 009 (✅ ok) e Spec 11 Agenda (paralelizada via adapter — `NullAppointmentReadRepository` é o stub default)
 - [x] T105 Atualizar `src/omniDesk.Api/Features/Notifications/README.md` (criado em T006) com setup VAPID resumido + link para quickstart.md

@@ -476,15 +476,15 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 010 — Notifications** — 📐 **PLAN APROVADO**. Branch `010-notifications`.
+**Spec 010 — Notifications** — ✅ **IMPLEMENTADO**. Branch `010-notifications`. 107/107 tasks (100%).
 
-Artefatos de plano: [plan.md](specs/010-notifications/plan.md), [research.md](specs/010-notifications/research.md), [data-model.md](specs/010-notifications/data-model.md), [contracts/](specs/010-notifications/contracts/), [quickstart.md](specs/010-notifications/quickstart.md).
+Cobre: in-app bell + browser push (8 event types, WebPush NuGet + VAPID + Service Worker), preferências por atendente, alertas SLA + queue monitor (cron `* * * * *`), AppointmentReminderJob (cron per-tenant), envio manual de template, follow-up automático no encerrar, archiver de 90 dias, métricas via `System.Diagnostics.Metrics`. NoOpNotificationService da Spec 009 substituído pela impl real.
 
-Cobre: in-app bell + browser push (8 event types), preferências por atendente, WhatsApp `appointment_reminder` job (cron por tenant), envio manual de template, configurações por tenant. Constitution Check ✅ sem violações. Depende de Spec 009 (implementada) e Spec 11 Agenda (paralelizável via adapter stub `IAppointmentReadRepository`).
+Testes Testcontainers (Docker): 14 arquivos no test suite — `SupervisorLookupServiceTests`, `NotificationServiceTests`, `NotificationsEndpointTests`, `Handlers/{TicketAssigned,TicketNewMessage,TicketSlaBreached,ReminderFailed}HandlerTests`, `PushEndpointsTests`, `PreferencesEndpointsTests`, `TenantSettingsEndpointsTests`, `ConcurrentNotificationTests`, `NotificationSecurityTests`, `Infrastructure/Jobs/{TicketQueueMonitor,NotificationArchiver,AppointmentReminder}JobTests`, `Infrastructure/Push/WebPushDispatcherTests`.
 
-Próximo passo: `/speckit-tasks` para gerar `tasks.md` executável.
+Próximos passos (não-bloqueantes): rodar testes contra Docker; integrar bell quando `header.component.ts` for criado (ver [INTEGRATION.md](src/omniDesk.Crm/src/app/layout/header/INTEGRATION.md)); validar QS local quando Spec 11 (Agenda) entregar `appointments` (hoje `AppointmentReadRepository` graceful-empty).
 
-Spec 009 — Tickets/CRM: ✅ implementado e mergeado. 17 tasks pendentes documentadas (Testcontainers + QS manual + V1.1 cleanup).
+Spec 009 — Tickets/CRM: ✅ implementado e mergeado.
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)
