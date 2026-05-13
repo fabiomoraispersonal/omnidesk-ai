@@ -5,6 +5,7 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Domain.WhatsApp;
+using omniDesk.Api.Features.Agenda.Cancellation;
 using omniDesk.Api.Features.AgentRuntime;
 using omniDesk.Api.Features.WhatsApp.Webhook;
 using omniDesk.Api.Hubs.Events;
@@ -38,6 +39,9 @@ public sealed class WhatsAppIncomingAdapter
     private readonly IncomingMessagePublisher _publisher;
     private readonly Hangfire.IBackgroundJobClient _backgroundJobs;
     private readonly TimeProvider _clock;
+    private readonly ReminderResponseInterpreter _reminderInterpreter;
+    private readonly CancelAppointmentByClientCommand _cancelByClient;
+    private readonly IConversationGateway _conversationGateway;
     private readonly ILogger<WhatsAppIncomingAdapter> _logger;
 
     public WhatsAppIncomingAdapter(
@@ -46,6 +50,9 @@ public sealed class WhatsAppIncomingAdapter
         IncomingMessagePublisher publisher,
         Hangfire.IBackgroundJobClient backgroundJobs,
         TimeProvider clock,
+        ReminderResponseInterpreter reminderInterpreter,
+        CancelAppointmentByClientCommand cancelByClient,
+        IConversationGateway conversationGateway,
         ILogger<WhatsAppIncomingAdapter> logger)
     {
         _db = db;
@@ -53,6 +60,9 @@ public sealed class WhatsAppIncomingAdapter
         _publisher = publisher;
         _backgroundJobs = backgroundJobs;
         _clock = clock;
+        _reminderInterpreter = reminderInterpreter;
+        _cancelByClient = cancelByClient;
+        _conversationGateway = conversationGateway;
         _logger = logger;
     }
 
@@ -204,7 +214,47 @@ public sealed class WhatsAppIncomingAdapter
                     attachmentName, msg.Type, CancellationToken.None));
         }
 
-        // 5. Enfileira no pipeline IA (channel-agnostic).
+        // 5a. Spec 011 — WhatsApp "NÃO" reminder cancellation (before AI pipeline).
+        if (supported == WaSupportedMessageType.Text && !string.IsNullOrWhiteSpace(content))
+        {
+            try
+            {
+                var outcome = await _reminderInterpreter.TryInterpretAsync(conv.Id, content, ct);
+                if (outcome is Outcome.Cancelled cancelled)
+                {
+                    var responseText = await _cancelByClient.ExecuteAsync(cancelled.Appointment, tenantSlug, ct);
+                    if (responseText is not null)
+                    {
+                        await _conversationGateway.EnqueueOutgoingAsync(
+                            conv.Id,
+                            new OutgoingMessage(responseText, "system", null),
+                            ct);
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "WaReminderCancellation: appointment {Id} was already cancelled (race); processing as normal.",
+                            cancelled.Appointment.Id);
+                    }
+                    // Whether we cancelled or raced, do NOT forward to AI orchestrator.
+                    return;
+                }
+                if (outcome is Outcome.OutsideWindowOutcome)
+                {
+                    _logger.LogWarning(
+                        "WhatsApp 'NÃO' received outside 26h window. Tenant={Slug}, Conversation={ConvId}",
+                        tenantSlug, conv.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "WaReminderInterpreter error — falling through to AI pipeline. Tenant={Slug}, Conversation={ConvId}",
+                    tenantSlug, conv.Id);
+            }
+        }
+
+        // 5b. Enfileira no pipeline IA (channel-agnostic).
         var sentAt = ParseUnixSeconds(msg.Timestamp) ?? _clock.GetUtcNow();
         var incoming = new IncomingMessage(
             TenantId: tenantId,

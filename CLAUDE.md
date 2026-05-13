@@ -476,15 +476,10 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 011 — Agenda e Catálogo de Serviços** — 🟡 **PLANEJADA**. Branch `011-agenda-services`. Plan em [specs/011-agenda-services/plan.md](specs/011-agenda-services/plan.md).
+Nenhuma spec ativa no momento. Próxima: **Spec 012 — Audit e Observabilidade**.
 
-Cobre: catálogo de serviços (CRUD + soft delete), profissionais com vínculos `professional_services` e disponibilidade semanal multi-turno + bloqueios pontuais (`btree_gist`), agendamentos `pending_confirmation → confirmed → cancelled/no_show`, race-condition em 3 camadas (Redis SETNX + UNIQUE parcial + FOR UPDATE), `AvailabilityCalculator` único para REST + IA, 2 tool calls (`check_availability`, `create_appointment`) com `client_type` autoritativo no backend, cancelamento via WhatsApp respondendo "NÃO" normalizado (janela 26h, `ReminderResponseInterpreter`), configuração de cancelamento tardio por tenant (`agenda_settings` singleton via `CHECK (id=1)`). Materializa a tabela `appointments` que a Spec 010 (`IAppointmentReadRepository`) já consome graciosamente.
-
-Artefatos de planejamento: [spec.md](specs/011-agenda-services/spec.md) (6 user stories, 49 FRs, 12 SCs, 17 assumptions), [research.md](specs/011-agenda-services/research.md) (12 decisões R1–R12), [data-model.md](specs/011-agenda-services/data-model.md) (7 tabelas + Mongo events + Redis lock), [contracts/](specs/011-agenda-services/contracts/) (7 contratos: services/professionals/availability/appointments/agenda-settings/WS/AI tools/WhatsApp cancellation), [quickstart.md](specs/011-agenda-services/quickstart.md). Constitution check ✅ aprovado.
-
-Próximos passos: `/speckit-tasks` → `/speckit-implement`. Implementação em 7 fases (A Foundation Catálogo → B Foundation Profissionais → C Core Appointments → D IA Tools → E Cancelamento WhatsApp → F Settings → G Polish).
-
-Specs anteriores:
+Specs implementadas:
+- **Spec 011 — Agenda e Catálogo de Serviços**: ✅ implementado (147/147 tasks). Catálogo de serviços, profissionais, disponibilidade, agendamentos, tool calls IA (`check_availability`, `create_appointment`), cancelamento via WhatsApp "NÃO" (`ReminderResponseInterpreter`), `agenda_settings` singleton. `IAppointmentReadRepository` (Spec 010) agora lê a tabela real.
 - **Spec 010 — Notifications**: ✅ implementado (107/107 tasks). Bell + push (8 event types), preferências, SLA/queue monitors, AppointmentReminderJob, follow-up automático, archiver 90d, métricas. `IAppointmentReadRepository` graceful-empty até Spec 011 mergear — agora destravado.
 - **Spec 009 — Tickets/CRM**: ✅ implementado. **Dívida aberta**: T184 (atualizar `docs/specs/09-tickets.spec.md`) e T188 (rodar QS1–QS13 + `quickstart-evidences.md`), reabertas em 2026-05-12.
 <!-- SPECKIT END -->

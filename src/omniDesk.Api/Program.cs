@@ -20,6 +20,7 @@ using StackExchange.Redis;
 using omniDesk.Api.Features.Agenda.Appointments;
 using omniDesk.Api.Features.Agenda.Professionals;
 using omniDesk.Api.Features.Agenda.Services;
+using omniDesk.Api.Features.Agenda.Settings;
 using omniDesk.Api.Features.Admin;
 using omniDesk.Api.Features.AgentRuntime;
 using omniDesk.Api.Features.AiAgents;
@@ -168,6 +169,9 @@ builder.Services.AddScoped<PromptVariableSubstitutor>();
 builder.Services.AddScoped<HandoffKeywordDetector>();
 builder.Services.AddScoped<ContextBuilder>();
 builder.Services.AddScoped<AgentResolver>();
+// Spec 011 US4 — agenda AI tool handlers
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Tools.CheckAvailabilityTool>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Tools.CreateAppointmentTool>();
 builder.Services.AddScoped<ToolCallDispatcher>();
 builder.Services.AddScoped<AgentOrchestrator>();
 // Spec 007 — replaces ChannelStubGateway. ChannelStubGateway remains in code as a
@@ -230,6 +234,9 @@ builder.Services.AddHttpClient<omniDesk.Api.Infrastructure.WhatsApp.WhatsAppMeta
 // Spec 008 US1 — webhook + adapters + job
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookTenantResolver>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookProcessorJob>();
+// Spec 011 US5 — WhatsApp "NÃO" cancellation flow
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Cancellation.ReminderResponseInterpreter>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Cancellation.CancelAppointmentByClientCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppIncomingAdapter>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppOutgoingAdapter>();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -323,6 +330,7 @@ builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.SendManualTemp
 // Spec 010 Polish T100 — metrics. AddMetrics() registers IMeterFactory.
 builder.Services.AddMetrics();
 builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Metrics.NotificationMetrics>();
+builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Metrics.AgendaMetrics>();
 // Spec 009 US9 — Pipeline config
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
@@ -380,6 +388,11 @@ builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Availability.IAvailabili
     omniDesk.Api.Features.Agenda.Availability.AvailabilityCalculator>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.WebSockets.AppointmentEventPublisher>();
 builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.AppointmentSlotLockService>();
+// Spec 011 US6 — AgendaSettings singleton CRUD
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.AgendaSettingsRepository>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Settings.UpdateAgendaSettingsCommand>();
+builder.Services.AddScoped<FluentValidation.IValidator<omniDesk.Api.Features.Agenda.Settings.UpdateAgendaSettingsRequest>,
+    omniDesk.Api.Features.Agenda.Settings.AgendaSettingsValidator>();
 
 builder.Services
     .AddAuthentication()
@@ -573,6 +586,12 @@ appointments.MapAppointmentsEndpoints();
 
 // Spec 011 US3 — Availability (shared by REST + AI tool calls)
 omniDesk.Api.Features.Agenda.Availability.AvailabilityEndpoint.MapAvailabilityEndpoint(api);
+
+// Spec 011 US6 — AgendaSettings (singleton per tenant, tenant_admin only)
+var agendaSettings = api.MapGroup("/agenda-settings")
+                        .RequireAuthorization()
+                        .AddEndpointFilter<ImpersonationAuditFilter>();
+agendaSettings.MapAgendaSettingsEndpoints();
 
 // Spec 009 US9 — Pipeline config
 var pipelines = api.MapGroup("/pipelines")

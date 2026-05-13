@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.AiAgents;
+using omniDesk.Api.Features.Agenda.Tools;
 using omniDesk.Api.Infrastructure.OpenAi;
 using omniDesk.Api.Infrastructure.Persistence;
 
@@ -12,6 +13,8 @@ public class ToolCallDispatcher
     private readonly IConversationGateway _conversation;
     private readonly ITicketCreationGateway _ticketGateway;
     private readonly AgentResolver _resolver;
+    private readonly CheckAvailabilityTool _checkAvailability;
+    private readonly CreateAppointmentTool _createAppointment;
     private readonly ILogger<ToolCallDispatcher> _logger;
 
     public ToolCallDispatcher(
@@ -19,12 +22,16 @@ public class ToolCallDispatcher
         IConversationGateway conversation,
         ITicketCreationGateway ticketGateway,
         AgentResolver resolver,
+        CheckAvailabilityTool checkAvailability,
+        CreateAppointmentTool createAppointment,
         ILogger<ToolCallDispatcher> logger)
     {
         _db = db;
         _conversation = conversation;
         _ticketGateway = ticketGateway;
         _resolver = resolver;
+        _checkAvailability = checkAvailability;
+        _createAppointment = createAppointment;
         _logger = logger;
     }
 
@@ -37,8 +44,12 @@ public class ToolCallDispatcher
         {
             ToolNames.HandoffToAgent => await HandleHandoffAsync(call, context, ct),
             ToolNames.TransferToHuman => await HandleTransferToHumanAsync(call, context, ct),
-            ToolNames.CheckAvailability => Unavailable(call, "Funcionalidade de agenda ainda não disponível. Use transfer_to_human para encaminhar agendamentos."),
-            ToolNames.CreateAppointment => Unavailable(call, "Funcionalidade de agendamento ainda não disponível. Use transfer_to_human."),
+            ToolNames.CheckAvailability => new ToolDispatchResult(
+                new ToolOutput(call.CallId, await _checkAvailability.ExecuteAsync(call.ArgumentsJson, context, ct)),
+                ToolDispatchOutcome.SubmitErrorContinue),
+            ToolNames.CreateAppointment => new ToolDispatchResult(
+                new ToolOutput(call.CallId, await _createAppointment.ExecuteAsync(call.ArgumentsJson, context, ct)),
+                ToolDispatchOutcome.SubmitErrorContinue),
             _ => Unknown(call),
         };
     }

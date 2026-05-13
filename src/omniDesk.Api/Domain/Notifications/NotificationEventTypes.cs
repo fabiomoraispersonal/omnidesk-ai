@@ -16,11 +16,14 @@ public static class NotificationEventTypes
     public const string TicketQueued           = "ticket.queued";
     public const string TicketReminderFailed   = "ticket.reminder_failed";
 
+    // Spec 011
+    public const string AppointmentCancelledByClient = "appointment.cancelled_by_client";
+
     public static readonly IReadOnlySet<string> AllowedValues = new HashSet<string>
     {
         TicketAssigned, TicketNewMessage, TicketTransferredToMe,
         TicketSlaWarning, TicketSlaBreached, TicketClientReplied,
-        TicketQueued, TicketReminderFailed,
+        TicketQueued, TicketReminderFailed, AppointmentCancelledByClient,
     };
 }
 
@@ -28,9 +31,10 @@ public static class NotificationEntityTypes
 {
     public const string Ticket = "ticket";
     public const string Conversation = "conversation";
+    public const string Appointment = "appointment";  // Spec 011
 
     public static readonly IReadOnlySet<string> AllowedValues = new HashSet<string>
     {
-        Ticket, Conversation,
+        Ticket, Conversation, Appointment,
     };
 }

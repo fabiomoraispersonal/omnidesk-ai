@@ -40,4 +40,16 @@ public interface INotificationService
     Task NotifyReminderFailedAsync(
         Guid attendantId, Guid ticketId, string protocol,
         string contactName, string reason, CancellationToken ct);
+
+    /// <summary>
+    /// Spec 011 — alerts the responsible attendant when a client cancels an appointment via
+    /// WhatsApp "NÃO" response. Fans out to ticket's attendant (if any) + supervisors of the
+    /// department.
+    /// </summary>
+    Task NotifyAppointmentCancelledByClientAsync(
+        Guid? ticketId,
+        Guid appointmentId,
+        string contactName,
+        DateTimeOffset appointmentStartAt,
+        CancellationToken ct);
 }

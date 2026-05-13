@@ -140,5 +140,11 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/agenda/agenda.routes').then(m => m.agendaRoutes),
   },
+  // Spec 011 US6 — Agenda settings (tenant_admin only)
+  {
+    path: 'configuracoes/agenda',
+    loadChildren: () =>
+      import('./features/agenda-settings/agenda-settings.routes').then(m => m.agendaSettingsRoutes),
+  },
   { path: '', redirectTo: 'kanban', pathMatch: 'full' },
 ];

@@ -71,11 +71,10 @@ public class AppointmentReadRepository(
             return Array.Empty<AppointmentReminderDto>();
         }
         catch (PostgresException ex) when (
-            ex.SqlState == "42703")  // undefined_column — optional columns missing
+            ex.SqlState == "42703")  // undefined_column — unexpected schema drift
         {
-            // Try again with the minimum projection. If even this fails, log and return empty.
-            logger.LogWarning(ex,
-                "AppointmentReadRepository: optional columns missing for tenant {Slug}; retrying minimal projection.",
+            logger.LogInformation(ex,
+                "AppointmentReadRepository: unexpected column mismatch for tenant {Slug}; retrying minimal projection.",
                 tenantSlug);
             return await GetMinimalAsync(schema, startOfDay, endOfDay, ct);
         }

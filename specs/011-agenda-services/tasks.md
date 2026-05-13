@@ -210,18 +210,18 @@ description: "Task breakdown for Spec 011 — Agenda e Catálogo de Serviços"
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T111 [P] [US4] Integration test `CheckAvailabilityToolTests` em `tests/Features/Agenda/Tools/CheckAvailabilityToolTests.cs` (paridade com endpoint REST — mesma resposta para os mesmos args)
-- [ ] T112 [P] [US4] Integration test `CreateAppointmentToolTests` em `tests/Features/Agenda/Tools/CreateAppointmentToolTests.cs` (cria contato se phone novo, descarta client_type da IA, conversation_id setado, conflito retorna erro)
-- [ ] T113 [P] [US4] Integration test `ToolRegistryAgendaTests` em `tests/Infrastructure/AgentRuntime/ToolRegistryAgendaTests.cs` (tools registradas só se `agenda_enabled=true` no `ai_settings`)
+- [X] T111 [P] [US4] Integration test `CheckAvailabilityToolTests` em `tests/Features/Agenda/Tools/CheckAvailabilityToolTests.cs` (paridade com endpoint REST — mesma resposta para os mesmos args)
+- [X] T112 [P] [US4] Integration test `CreateAppointmentToolTests` em `tests/Features/Agenda/Tools/CreateAppointmentToolTests.cs` (cria contato se phone novo, descarta client_type da IA, conversation_id setado, conflito retorna erro)
+- [X] T113 [P] [US4] Integration test `ToolRegistryAgendaTests` em `tests/Infrastructure/AgentRuntime/ToolRegistryAgendaTests.cs` (tools registradas só se `agenda_enabled=true` no `ai_settings`)
 
 ### Implementation for User Story 4
 
-- [ ] T114 [P] [US4] Criar `src/omniDesk.Api/Features/Agenda/Tools/CheckAvailabilityTool.cs` implementando `ITool` (Spec 006); parsea args, chama `IAvailabilityCalculator`, serializa resposta JSON
-- [ ] T115 [P] [US4] Criar `src/omniDesk.Api/Features/Agenda/Tools/CreateAppointmentTool.cs` implementando `ITool`; usa `IContactRepository.FindOrCreateByPhoneAsync`; chama `CreateAppointmentCommand` com `created_by=ai`, `conversation_id` do `IAgentContext`; descarta `client_type` do payload
-- [ ] T116 [US4] Estender `src/omniDesk.Api/Infrastructure/AgentRuntime/ToolRegistry.cs` para registrar `CheckAvailabilityTool` e `CreateAppointmentTool` quando `settings.AgendaEnabled == true` (depende de T114, T115)
-- [ ] T117 [US4] Adicionar campo `AgendaEnabled` em `Domain/AiSettings/AiSettings.cs` (default `false` para tenants legacy) — migration `Add_AgendaEnabled_To_AiSettings.sql` se ainda não existir
-- [ ] T118 [US4] Atualizar Spec 006 system prompt template para mencionar as tools (ver `Features/AgentRuntime/Prompts/system-prompt.md` ou equivalente) — descrição curta orientando "consulte disponibilidade antes de propor horários" e "NUNCA invente IDs"
-- [ ] T119 [US4] Quickstart manual: validar fluxo end-to-end via Live Chat widget (script em `quickstart.md` §6 será expandido após implementação)
+- [X] T114 [P] [US4] Criar `src/omniDesk.Api/Features/Agenda/Tools/CheckAvailabilityTool.cs` implementando `ITool` (Spec 006); parsea args, chama `IAvailabilityCalculator`, serializa resposta JSON
+- [X] T115 [P] [US4] Criar `src/omniDesk.Api/Features/Agenda/Tools/CreateAppointmentTool.cs` implementando `ITool`; usa `IContactRepository.FindOrCreateByPhoneAsync`; chama `CreateAppointmentCommand` com `created_by=ai`, `conversation_id` do `IAgentContext`; descarta `client_type` do payload
+- [X] T116 [US4] Estender `src/omniDesk.Api/Infrastructure/AgentRuntime/ToolRegistry.cs` para registrar `CheckAvailabilityTool` e `CreateAppointmentTool` quando `settings.AgendaEnabled == true` (depende de T114, T115)
+- [X] T117 [US4] Adicionar campo `AgendaEnabled` em `Domain/AiSettings/AiSettings.cs` (default `false` para tenants legacy) — migration `Add_AgendaEnabled_To_AiSettings.sql` se ainda não existir
+- [X] T118 [US4] Atualizar Spec 006 system prompt template para mencionar as tools (ver `Features/AgentRuntime/Prompts/system-prompt.md` ou equivalente) — descrição curta orientando "consulte disponibilidade antes de propor horários" e "NUNCA invente IDs"
+- [X] T119 [US4] Quickstart manual: validar fluxo end-to-end via Live Chat widget (script em `quickstart.md` §6 será expandido após implementação)
 
 **Checkpoint**: US4 funcional. SC-003 verificável.
 
@@ -235,18 +235,18 @@ description: "Task breakdown for Spec 011 — Agenda e Catálogo de Serviços"
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T120 [P] [US5] Unit test `ReminderResponseInterpreterTests` em `tests/Features/Agenda/Cancellation/ReminderResponseInterpreterTests.cs` (normalização "NÃO"/"Não"/"nao"/"NAO"; lookup correto pelo `conversation_id`; janela 26h; múltiplos elegíveis cancela o mais cedo; sem elegível retorna `NotApplicable`)
-- [ ] T121 [P] [US5] Integration test `CancelAppointmentByClientCommandTests` em `tests/Features/Agenda/Cancellation/CancelAppointmentByClientCommandTests.cs` (cancela appointment, late cancel inclui aviso, fora da janela não inclui, resposta WhatsApp enfileirada, notificação in-app via Spec 010)
-- [ ] T122 [P] [US5] Integration test `WaWebhookProcessorJobReminderResponseTests` em `tests/Features/WhatsApp/Webhook/WaWebhookProcessorJobReminderResponseTests.cs` (webhook "NÃO" elegível pula IA; webhook "NÃO" não elegível segue para IA; outro texto sempre segue para IA)
+- [X] T120 [P] [US5] Unit test `ReminderResponseInterpreterTests` em `tests/Features/Agenda/Cancellation/ReminderResponseInterpreterTests.cs` (normalização "NÃO"/"Não"/"nao"/"NAO"; lookup correto pelo `conversation_id`; janela 26h; múltiplos elegíveis cancela o mais cedo; sem elegível retorna `NotApplicable`)
+- [X] T121 [P] [US5] Integration test `CancelAppointmentByClientCommandTests` em `tests/Features/Agenda/Cancellation/CancelAppointmentByClientCommandTests.cs` (cancela appointment, late cancel inclui aviso, fora da janela não inclui, resposta WhatsApp enfileirada, notificação in-app via Spec 010)
+- [X] T122 [P] [US5] Integration test `WaWebhookProcessorJobReminderResponseTests` em `tests/Features/WhatsApp/Webhook/WaWebhookProcessorJobReminderResponseTests.cs` (webhook "NÃO" elegível pula IA; webhook "NÃO" não elegível segue para IA; outro texto sempre segue para IA)
 
 ### Implementation for User Story 5
 
-- [ ] T123 [P] [US5] Criar `src/omniDesk.Api/Features/Agenda/Cancellation/ReminderResponseInterpreter.cs` (`Outcome` enum: `NotApplicable | OutsideWindow | Cancelled(appointment)`); função pura de normalização + query SQL
-- [ ] T124 [US5] Estender `src/omniDesk.Api/Features/Notifications/INotificationService.cs` adicionando `NotifyAppointmentCancelledByClientAsync(Guid? ticketId, Guid appointmentId, string contactName, DateTimeOffset startAt, CancellationToken ct)` (assinatura conforme `contracts/whatsapp-cancellation.md`)
-- [ ] T125 [US5] Estender `src/omniDesk.Api/Features/Notifications/NotificationService.cs` implementando o novo método (cria notification + WS + push, mesmo padrão dos outros eventos)
-- [ ] T126 [US5] Criar `src/omniDesk.Api/Features/Agenda/Cancellation/CancelAppointmentByClientCommand.cs` (cancela appointment; carrega `agenda_settings`; renderiza resposta WA; enfileira via `OutgoingMessagePublisher` com `sender_type=system`, `message_type=text`; emite event action=cancelled channel=whatsapp; chama `NotifyAppointmentCancelledByClientAsync`; publica WS `appointment.changed`) (depende de T123, T124, T125)
-- [ ] T127 [US5] Estender `src/omniDesk.Api/Features/WhatsApp/Webhook/WaWebhookProcessorJob.cs` (`ProcessAsync`): após resolver conversation+message, antes do despacho à IA, chamar `ReminderResponseInterpreter.TryInterpretAsync(...)`. Se `Cancelled` → executar `CancelAppointmentByClientCommand` e retornar (early-return). Senão → fluxo normal. (depende de T123, T126)
-- [ ] T128 [P] [US5] Estender `src/omniDesk.Crm/src/app/features/notifications/notification-item.component.html` (e/ou map de tipos no `notifications.service.ts`) para renderizar evento `appointment.cancelled_by_client` com link `/agenda/{appointmentId}` — apenas se este evento já não estiver coberto pelo render genérico da Spec 010
+- [X] T123 [P] [US5] Criar `src/omniDesk.Api/Features/Agenda/Cancellation/ReminderResponseInterpreter.cs` (`Outcome` enum: `NotApplicable | OutsideWindow | Cancelled(appointment)`); função pura de normalização + query SQL
+- [X] T124 [US5] Estender `src/omniDesk.Api/Features/Notifications/INotificationService.cs` adicionando `NotifyAppointmentCancelledByClientAsync(Guid? ticketId, Guid appointmentId, string contactName, DateTimeOffset startAt, CancellationToken ct)` (assinatura conforme `contracts/whatsapp-cancellation.md`)
+- [X] T125 [US5] Estender `src/omniDesk.Api/Features/Notifications/NotificationService.cs` implementando o novo método (cria notification + WS + push, mesmo padrão dos outros eventos)
+- [X] T126 [US5] Criar `src/omniDesk.Api/Features/Agenda/Cancellation/CancelAppointmentByClientCommand.cs` (cancela appointment; carrega `agenda_settings`; renderiza resposta WA; enfileira via `OutgoingMessagePublisher` com `sender_type=system`, `message_type=text`; emite event action=cancelled channel=whatsapp; chama `NotifyAppointmentCancelledByClientAsync`; publica WS `appointment.changed`) (depende de T123, T124, T125)
+- [X] T127 [US5] Estender `src/omniDesk.Api/Features/WhatsApp/Webhook/WaWebhookProcessorJob.cs` (`ProcessAsync`): após resolver conversation+message, antes do despacho à IA, chamar `ReminderResponseInterpreter.TryInterpretAsync(...)`. Se `Cancelled` → executar `CancelAppointmentByClientCommand` e retornar (early-return). Senão → fluxo normal. (depende de T123, T126)
+- [X] T128 [P] [US5] Estender `src/omniDesk.Crm/src/app/features/notifications/notification-item.component.html` (e/ou map de tipos no `notifications.service.ts`) para renderizar evento `appointment.cancelled_by_client` com link `/agenda/{appointmentId}` — apenas se este evento já não estiver coberto pelo render genérico da Spec 010
 
 **Checkpoint**: US5 funcional. SC-006, SC-009 verificáveis.
 
@@ -260,20 +260,20 @@ description: "Task breakdown for Spec 011 — Agenda e Catálogo de Serviços"
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T129 [P] [US6] Contract test `AgendaSettingsEndpointContractTests` em `tests/Features/Agenda/Settings/AgendaSettingsEndpointContractTests.cs`
-- [ ] T130 [P] [US6] Integration test `AgendaSettingsEndpointTests` em `tests/Features/Agenda/Settings/AgendaSettingsEndpointTests.cs` (GET retorna defaults, PUT valida `late_cancel_window_hours > 0`, role enforcement)
+- [X] T129 [P] [US6] Contract test `AgendaSettingsEndpointContractTests` em `tests/Features/Agenda/Settings/AgendaSettingsEndpointContractTests.cs`
+- [X] T130 [P] [US6] Integration test `AgendaSettingsEndpointTests` em `tests/Features/Agenda/Settings/AgendaSettingsEndpointTests.cs` (GET retorna defaults, PUT valida `late_cancel_window_hours > 0`, role enforcement)
 
 ### Implementation for User Story 6
 
-- [ ] T131 [P] [US6] Criar `src/omniDesk.Api/Features/Agenda/Validators/AgendaSettingsValidator.cs` (`late_cancel_window_hours > 0`, textos ≤ 2000)
-- [ ] T132 [US6] Criar `src/omniDesk.Api/Infrastructure/Agenda/AgendaSettingsRepository.cs` (GET/UPDATE singleton)
-- [ ] T133 [P] [US6] Criar `src/omniDesk.Api/Features/Agenda/Settings/Commands/UpdateAgendaSettingsCommand.cs`
-- [ ] T134 [US6] Criar `src/omniDesk.Api/Features/Agenda/Settings/AgendaSettingsEndpoints.cs` mapeando GET/PUT `/api/agenda-settings` com `RequirePermission(AgendaSettings.Manage)` (depende de T131–T133)
-- [ ] T135 [US6] Registrar `AgendaSettingsEndpoints` no DI em `Program.cs`
-- [ ] T136 [P] [US6] Criar `src/omniDesk.Crm/src/app/features/agenda-settings/agenda-settings.service.{ts,spec.ts}`
-- [ ] T137 [P] [US6] Criar `src/omniDesk.Crm/src/app/features/agenda-settings/settings-page.component.{ts,html,scss,spec.ts}` (3 controles: window number input, late_cancel_text textarea, cancellation_policy_text textarea)
-- [ ] T138 [US6] Criar `src/omniDesk.Crm/src/app/features/agenda-settings/agenda-settings.routes.ts` (lazy, guard `canManageAgenda`)
-- [ ] T139 [US6] Adicionar rota `/configuracoes/agenda` em `app.routes.ts` + item de menu
+- [X] T131 [P] [US6] Criar `src/omniDesk.Api/Features/Agenda/Validators/AgendaSettingsValidator.cs` (`late_cancel_window_hours > 0`, textos ≤ 2000)
+- [X] T132 [US6] Criar `src/omniDesk.Api/Infrastructure/Agenda/AgendaSettingsRepository.cs` (GET/UPDATE singleton)
+- [X] T133 [P] [US6] Criar `src/omniDesk.Api/Features/Agenda/Settings/Commands/UpdateAgendaSettingsCommand.cs`
+- [X] T134 [US6] Criar `src/omniDesk.Api/Features/Agenda/Settings/AgendaSettingsEndpoints.cs` mapeando GET/PUT `/api/agenda-settings` com `RequirePermission(AgendaSettings.Manage)` (depende de T131–T133)
+- [X] T135 [US6] Registrar `AgendaSettingsEndpoints` no DI em `Program.cs`
+- [X] T136 [P] [US6] Criar `src/omniDesk.Crm/src/app/features/agenda-settings/agenda-settings.service.{ts,spec.ts}`
+- [X] T137 [P] [US6] Criar `src/omniDesk.Crm/src/app/features/agenda-settings/settings-page.component.{ts,html,scss,spec.ts}` (3 controles: window number input, late_cancel_text textarea, cancellation_policy_text textarea)
+- [X] T138 [US6] Criar `src/omniDesk.Crm/src/app/features/agenda-settings/agenda-settings.routes.ts` (lazy, guard `canManageAgenda`)
+- [X] T139 [US6] Adicionar rota `/configuracoes/agenda` em `app.routes.ts` + item de menu
 
 **Checkpoint**: US6 funcional. Toda a Spec 011 entregue end-to-end.
 
@@ -283,14 +283,14 @@ description: "Task breakdown for Spec 011 — Agenda e Catálogo de Serviços"
 
 **Purpose**: métricas, documentação, validação operacional, dívidas técnicas.
 
-- [ ] T140 [P] Adicionar contadores Prometheus em pontos relevantes via `System.Diagnostics.Metrics` (padrão Spec 010): `appointments_created_total{tenant,source,status_inicial}` em `CreateAppointmentCommand`, `appointment_cancellations_total{tenant,by,channel}` em `CancelAppointmentCommand` e `CancelAppointmentByClientCommand`, `appointment_no_show_total{tenant}` em `MarkNoShowCommand`, `availability_query_duration_seconds{tenant}` em `AvailabilityCalculator`, `reminder_response_no_total{tenant,outcome}` em `ReminderResponseInterpreter`, `appointment_slot_conflict_total{tenant,layer}` em `CreateAppointmentCommand` (research §R12)
-- [ ] T141 [P] Atualizar `src/omniDesk.Api/Features/Agenda/README.md` com diagrama de fluxo (criação manual + IA + cancelamento via "NÃO") e referências aos contracts
-- [ ] T142 [P] Revisar performance dos índices PG após carga de teste — confirmar `idx_ap_prof_start`, `idx_ap_contact_status_start`, `idx_ap_reminder_pending`, `idx_ap_conv_confirmed`, `idx_ap_slot_unique`, `idx_sb_overlap` (GIST) todos sendo usados (EXPLAIN ANALYZE nos paths críticos)
-- [ ] T143 Remover o `LogWarning` de "tabela appointments não existe" em `src/omniDesk.Api/Infrastructure/Appointments/AppointmentReadRepository.cs` (Spec 010 — graceful empty agora desnecessário; tabela existe)
-- [ ] T144 [P] Atualizar `docs/specs/11-agenda.spec.md` se houve drift entre a spec original e a implementação (ex.: códigos de erro descobertos durante implementação) — analogous a T184 da Spec 009
-- [ ] T145 Atualizar `CLAUDE.md` (entre marcadores `<!-- SPECKIT START -->` / `<!-- SPECKIT END -->`) marcando Spec 011 como ✅ IMPLEMENTADO com sumário final (n/N tasks, mudanças relevantes, dívidas se houver)
-- [ ] T146 Rodar `quickstart.md` ponta-a-ponta em ambiente local e escrever `specs/011-agenda-services/quickstart-evidences.md` com saídas reais dos 8 smoke tests REST + WS + race condition + métricas (padrão Spec 009/010)
-- [ ] T147 [P] Adicionar entry em `docs/DEPENDENCIES.md` confirmando que Spec 010 deixa de ter graceful-empty (Spec 011 satisfaz dep)
+- [X] T140 [P] Adicionar contadores Prometheus em pontos relevantes via `System.Diagnostics.Metrics` (padrão Spec 010): `appointments_created_total{tenant,source,status_inicial}` em `CreateAppointmentCommand`, `appointment_cancellations_total{tenant,by,channel}` em `CancelAppointmentCommand` e `CancelAppointmentByClientCommand`, `appointment_no_show_total{tenant}` em `MarkNoShowCommand`, `availability_query_duration_seconds{tenant}` em `AvailabilityCalculator`, `reminder_response_no_total{tenant,outcome}` em `ReminderResponseInterpreter`, `appointment_slot_conflict_total{tenant,layer}` em `CreateAppointmentCommand` (research §R12)
+- [X] T141 [P] Atualizar `src/omniDesk.Api/Features/Agenda/README.md` com diagrama de fluxo (criação manual + IA + cancelamento via "NÃO") e referências aos contracts
+- [X] T142 [P] Revisar performance dos índices PG após carga de teste — confirmar `idx_ap_prof_start`, `idx_ap_contact_status_start`, `idx_ap_reminder_pending`, `idx_ap_conv_confirmed`, `idx_ap_slot_unique`, `idx_sb_overlap` (GIST) todos sendo usados (EXPLAIN ANALYZE nos paths críticos)
+- [X] T143 Remover o `LogWarning` de "tabela appointments não existe" em `src/omniDesk.Api/Infrastructure/Appointments/AppointmentReadRepository.cs` (Spec 010 — graceful empty agora desnecessário; tabela existe)
+- [X] T144 [P] Atualizar `docs/specs/11-agenda.spec.md` se houve drift entre a spec original e a implementação (ex.: códigos de erro descobertos durante implementação) — analogous a T184 da Spec 009
+- [X] T145 Atualizar `CLAUDE.md` (entre marcadores `<!-- SPECKIT START -->` / `<!-- SPECKIT END -->`) marcando Spec 011 como ✅ IMPLEMENTADO com sumário final (n/N tasks, mudanças relevantes, dívidas se houver)
+- [X] T146 Rodar `quickstart.md` ponta-a-ponta em ambiente local e escrever `specs/011-agenda-services/quickstart-evidences.md` com saídas reais dos 8 smoke tests REST + WS + race condition + métricas (padrão Spec 009/010)
+- [X] T147 [P] Adicionar entry em `docs/DEPENDENCIES.md` confirmando que Spec 010 deixa de ter graceful-empty (Spec 011 satisfaz dep)
 
 ---
 

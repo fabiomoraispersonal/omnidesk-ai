@@ -1,6 +1,6 @@
 # Spec 11 — Agenda e Catálogo de Serviços
-**Versão:** 1.0
-**Status:** Aprovado
+**Versão:** 1.1
+**Status:** Implementado
 **Última atualização:** 2026-05
 
 ---

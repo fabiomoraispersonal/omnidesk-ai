@@ -61,8 +61,9 @@ export class NotificationItemComponent {
       case 'ticket.sla_breached':     return '🔴';
       case 'ticket.client_replied':   return '↩️';
       case 'ticket.queued':           return '📥';
-      case 'ticket.reminder_failed':  return '⚠️';
-      default:                        return '🔔';
+      case 'ticket.reminder_failed':          return '⚠️';
+      case 'appointment.cancelled_by_client': return '📅';
+      default:                                return '🔔';
     }
   }
 }
