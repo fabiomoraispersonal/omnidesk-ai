@@ -1,0 +1,11 @@
+<div class="appt-card" [class]="'status-' + appointment.status" (click)="clicked.emit(appointment)">
+  <div class="appt-card__time">{{ startTime }}</div>
+  <div class="appt-card__body">
+    <div class="appt-card__service">{{ appointment.service?.name }}</div>
+    <div class="appt-card__professional">{{ appointment.professional?.name }}</div>
+  </div>
+  <div class="appt-card__badges">
+    <p-badge [value]="statusLabel" [severity]="statusSeverity" />
+    <p-badge [value]="clientLabel" severity="secondary" />
+  </div>
+</div>

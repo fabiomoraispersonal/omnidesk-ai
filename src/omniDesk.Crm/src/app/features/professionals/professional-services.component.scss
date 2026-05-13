@@ -1,0 +1,10 @@
+.professional-services {
+  h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+  .service-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+  .service-item { display: flex; align-items: center; gap: 0.5rem; }
+  .service-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+  .service-name { font-weight: 500; }
+  .service-meta { font-size: 0.75rem; color: var(--color-text-muted); }
+  .empty { color: var(--color-text-muted); font-size: 0.875rem; }
+  .actions { display: flex; justify-content: flex-end; }
+}

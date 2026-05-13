@@ -1,0 +1,28 @@
+<div class="professional-services">
+  <h3>Serviços oferecidos</h3>
+
+  <div class="service-list" *ngIf="allServices().length > 0; else empty">
+    <div class="service-item" *ngFor="let svc of allServices()">
+      <p-checkbox
+        [ngModel]="isLinked(svc.id)"
+        (ngModelChange)="toggle(svc.id)"
+        [binary]="true"
+        [inputId]="'svc-' + svc.id" />
+      <label [for]="'svc-' + svc.id" class="service-label">
+        <span class="service-name">{{ svc.name }}</span>
+        <span class="service-meta" *ngIf="svc.duration_minutes">{{ svc.duration_minutes }} min</span>
+        <span class="service-meta" *ngIf="svc.price != null">R$ {{ svc.price | number:'1.2-2' }}</span>
+      </label>
+    </div>
+  </div>
+
+  <ng-template #empty>
+    <p class="empty">Nenhum serviço cadastrado no catálogo.</p>
+  </ng-template>
+
+  <div class="actions" *ngIf="allServices().length > 0">
+    <p-button label="Salvar serviços" icon="pi pi-check" (click)="save()" [loading]="saving()" />
+  </div>
+</div>
+
+<p-toast />

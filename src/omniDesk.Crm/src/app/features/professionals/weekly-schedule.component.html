@@ -1,0 +1,32 @@
+<div class="weekly-schedule">
+  <div class="header-row">
+    <h3>Disponibilidade semanal</h3>
+    <p-button label="Adicionar turno" icon="pi pi-plus" [text]="true" (click)="addSlot()" />
+  </div>
+
+  <form [formGroup]="slotsForm" (ngSubmit)="save()">
+    <div formArrayName="slots">
+      <div class="slot-row" *ngFor="let slot of slotsArray.controls; let i = index" [formGroupName]="i">
+        <select formControlName="day_of_week" class="day-select">
+          <option *ngFor="let lbl of dayLabels; let d = index" [value]="d">{{ lbl }}</option>
+        </select>
+
+        <div class="time-range">
+          <input pInputText formControlName="start_time" placeholder="08:00" class="time-input" />
+          <span class="sep">–</span>
+          <input pInputText formControlName="end_time" placeholder="17:00" class="time-input" />
+        </div>
+
+        <p-button icon="pi pi-trash" [text]="true" severity="danger" type="button" (click)="removeSlot(i)" />
+      </div>
+    </div>
+
+    <p class="empty" *ngIf="slotsArray.length === 0">Nenhum turno configurado.</p>
+
+    <div class="actions">
+      <p-button label="Salvar agenda" icon="pi pi-check" type="submit" [loading]="saving()" />
+    </div>
+  </form>
+</div>
+
+<p-toast />

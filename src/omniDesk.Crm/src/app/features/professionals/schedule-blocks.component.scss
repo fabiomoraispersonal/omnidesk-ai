@@ -1,0 +1,9 @@
+.schedule-blocks {
+  h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+  .block-form { margin-bottom: 1.5rem; }
+  .form-row { display: flex; align-items: flex-end; gap: 0.75rem; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 0.25rem; label { font-size: 0.875rem; font-weight: 500; } }
+  .reason-field { flex: 1; min-width: 160px; }
+  .blocks-table { margin-top: 0.5rem; }
+  .empty { text-align: center; color: var(--color-text-muted); padding: 1rem; }
+}

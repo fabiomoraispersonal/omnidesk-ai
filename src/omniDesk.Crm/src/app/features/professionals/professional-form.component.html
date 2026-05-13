@@ -1,0 +1,37 @@
+<div class="professional-form-page">
+  <div class="page-header">
+    <h2>{{ isNew() ? 'Novo profissional' : 'Editar profissional' }}</h2>
+    <a routerLink="..">
+      <p-button label="Voltar" icon="pi pi-arrow-left" [text]="true" severity="secondary" />
+    </a>
+  </div>
+
+  <p-card>
+    <form [formGroup]="form" (ngSubmit)="save()" class="form-body">
+      <div class="field">
+        <label for="name">Nome *</label>
+        <input pInputText id="name" formControlName="name" placeholder="Ex: Dra. Ana Lima" class="w-full" />
+        <small class="error" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+          Nome é obrigatório (máx. 255 caracteres).
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="specialty">Especialidade</label>
+        <input pInputText id="specialty" formControlName="specialty" placeholder="Ex: Fisioterapeuta" class="w-full" />
+        <small class="error" *ngIf="form.get('specialty')?.invalid && form.get('specialty')?.touched">
+          Especialidade deve ter no máximo 100 caracteres.
+        </small>
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="..">
+          <p-button label="Cancelar" [text]="true" severity="secondary" type="button" />
+        </a>
+        <p-button label="Salvar" icon="pi pi-check" type="submit" [loading]="saving()" />
+      </div>
+    </form>
+  </p-card>
+</div>
+
+<p-toast />

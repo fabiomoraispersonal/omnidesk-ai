@@ -1,0 +1,47 @@
+<div class="schedule-blocks">
+  <h3>Bloqueios de horário</h3>
+
+  <form [formGroup]="form" (ngSubmit)="create()" class="block-form">
+    <div class="form-row">
+      <div class="field">
+        <label>Início *</label>
+        <input pInputText type="datetime-local" formControlName="start_at" />
+      </div>
+      <div class="field">
+        <label>Fim *</label>
+        <input pInputText type="datetime-local" formControlName="end_at" />
+      </div>
+      <div class="field reason-field">
+        <label>Motivo</label>
+        <input pInputText formControlName="reason" placeholder="Ex: Férias" />
+      </div>
+      <p-button label="Adicionar" icon="pi pi-plus" type="submit" [loading]="saving()" />
+    </div>
+  </form>
+
+  <p-table [value]="blocks()" [loading]="loading()" [rowHover]="true" class="blocks-table">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Início</th>
+        <th>Fim</th>
+        <th>Motivo</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-b>
+      <tr>
+        <td>{{ b.start_at | date:'dd/MM/yy HH:mm' }}</td>
+        <td>{{ b.end_at | date:'dd/MM/yy HH:mm' }}</td>
+        <td>{{ b.reason || '—' }}</td>
+        <td>
+          <p-button icon="pi pi-trash" [text]="true" severity="danger" (click)="remove(b.id)" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="4" class="empty">Nenhum bloqueio cadastrado.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-toast />

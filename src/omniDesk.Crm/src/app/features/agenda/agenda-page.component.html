@@ -1,0 +1,14 @@
+<div class="agenda-page">
+  <div class="agenda-page__header">
+    <h1>Agenda</h1>
+    <p-button label="Novo agendamento" icon="pi pi-plus" routerLink="agendamentos/novo" />
+  </div>
+
+  <nav class="agenda-page__tabs">
+    <a routerLink="grade" routerLinkActive="is-active">Grade semanal</a>
+    <a routerLink="agendamentos" routerLinkActive="is-active">Lista</a>
+    <a routerLink="pendentes" routerLinkActive="is-active">Pendentes</a>
+  </nav>
+
+  <router-outlet />
+</div>

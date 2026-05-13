@@ -77,27 +77,27 @@ description: "Task breakdown for Spec 011 — Agenda e Catálogo de Serviços"
 
 ### Tests for User Story 1 ⚠️ (escrever ANTES da implementação)
 
-- [ ] T026 [P] [US1] Contract test `ServicesEndpointContractTests` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Agenda/Services/ServicesEndpointContractTests.cs` validando shape de request/response contra `contracts/services-api.md` (GET list, POST create, PUT update, PATCH toggle, error codes)
-- [ ] T027 [P] [US1] Integration test `ServicesEndpointTests` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Agenda/Services/ServicesEndpointTests.cs` cobrindo: criar serviço, listar com filtro `include_inactive`, editar, desativar, role enforcement (attendant recebe 403), validação `duration_minutes <= 0`, soft delete preserva agendamentos existentes
+- [X] T026 [P] [US1] Contract test `ServicesEndpointContractTests` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Agenda/Services/ServicesEndpointContractTests.cs` validando shape de request/response contra `contracts/services-api.md` (GET list, POST create, PUT update, PATCH toggle, error codes)
+- [X] T027 [P] [US1] Integration test `ServicesEndpointTests` em `src/omniDesk.Api/tests/omniDesk.Api.Tests/Features/Agenda/Services/ServicesEndpointTests.cs` cobrindo: criar serviço, listar com filtro `include_inactive`, editar, desativar, role enforcement (attendant recebe 403), validação `duration_minutes <= 0`, soft delete preserva agendamentos existentes
 
 ### Implementation for User Story 1
 
-- [ ] T028 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Validators/CreateServiceValidator.cs` e `UpdateServiceValidator.cs` (FluentValidation: name 1–100, duration > 0, price ≥ 0 se presente, category ≤ 100, description ≤ 2000)
-- [ ] T029 [US1] Criar `src/omniDesk.Api/Infrastructure/Agenda/ServiceRepository.cs` (CRUD + soft toggle; usa `TenantDbContext`)
-- [ ] T030 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Queries/ListServicesQuery.cs` (paginado, filtro `include_inactive`, sort)
-- [ ] T031 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Commands/CreateServiceCommand.cs`
-- [ ] T032 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Commands/UpdateServiceCommand.cs`
-- [ ] T033 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Commands/ToggleServiceCommand.cs`
-- [ ] T034 [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/ServicesEndpoints.cs` mapeando GET/POST/PUT/PATCH em `app.MapGroup("/api/services").MapServicesEndpoints().RequireAuthorization()` (depende de T028–T033)
-- [ ] T035 [US1] Registrar `ServicesEndpoints`, `ServiceRepository`, validators, commands no DI em `src/omniDesk.Api/Program.cs`
-- [ ] T036 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services.service.ts` (HTTP client tipado para `/api/services`)
-- [ ] T037 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services.service.spec.ts` (mock HttpClient, testa GET/POST/PUT/PATCH)
-- [ ] T038 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services-list.component.{ts,html,scss}` (PrimeNG Table com filtro ativos/inativos, sort, action buttons)
-- [ ] T039 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services-list.component.spec.ts`
-- [ ] T040 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/service-form.component.{ts,html,scss}` (Reactive Form: name, description textarea, category, duration_minutes number, price ngx-mask, requires_confirmation toggle; PrimeNG components)
-- [ ] T041 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/service-form.component.spec.ts`
-- [ ] T042 [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services-catalog.routes.ts` (lazy load com guard `canManageAgenda`)
-- [ ] T043 [US1] Adicionar rota `/configuracoes/servicos` em `src/omniDesk.Crm/src/app/app.routes.ts` e item de menu condicional (`*ngIf="canManageAgenda$"`) na sidebar
+- [X] T028 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Validators/CreateServiceValidator.cs` e `UpdateServiceValidator.cs` (FluentValidation: name 1–100, duration > 0, price ≥ 0 se presente, category ≤ 100, description ≤ 2000)
+- [X] T029 [US1] Criar `src/omniDesk.Api/Infrastructure/Agenda/ServiceRepository.cs` (CRUD + soft toggle; usa `TenantDbContext`)
+- [X] T030 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Queries/ListServicesQuery.cs` (paginado, filtro `include_inactive`, sort)
+- [X] T031 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Commands/CreateServiceCommand.cs`
+- [X] T032 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Commands/UpdateServiceCommand.cs`
+- [X] T033 [P] [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/Commands/ToggleServiceCommand.cs`
+- [X] T034 [US1] Criar `src/omniDesk.Api/Features/Agenda/Services/ServicesEndpoints.cs` mapeando GET/POST/PUT/PATCH em `app.MapGroup("/api/services").MapServicesEndpoints().RequireAuthorization()` (depende de T028–T033)
+- [X] T035 [US1] Registrar `ServicesEndpoints`, `ServiceRepository`, validators, commands no DI em `src/omniDesk.Api/Program.cs`
+- [X] T036 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services.service.ts` (HTTP client tipado para `/api/services`)
+- [X] T037 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services.service.spec.ts` (mock HttpClient, testa GET/POST/PUT/PATCH)
+- [X] T038 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services-list.component.{ts,html,scss}` (PrimeNG Table com filtro ativos/inativos, sort, action buttons)
+- [X] T039 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services-list.component.spec.ts`
+- [X] T040 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/service-form.component.{ts,html,scss}` (Reactive Form: name, description textarea, category, duration_minutes number, price ngx-mask, requires_confirmation toggle; PrimeNG components)
+- [X] T041 [P] [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/service-form.component.spec.ts`
+- [X] T042 [US1] Criar `src/omniDesk.Crm/src/app/features/services-catalog/services-catalog.routes.ts` (lazy load com guard `canManageAgenda`)
+- [X] T043 [US1] Adicionar rota `/configuracoes/servicos` em `src/omniDesk.Crm/src/app/app.routes.ts` e item de menu condicional (`*ngIf="canManageAgenda$"`) na sidebar
 
 **Checkpoint**: US1 funcional. Catálogo persistido; CRM `tenant_admin` consegue gerenciar; suite `ServicesEndpointTests` verde.
 
@@ -111,36 +111,36 @@ description: "Task breakdown for Spec 011 — Agenda e Catálogo de Serviços"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T044 [P] [US2] Contract test `ProfessionalsEndpointContractTests` em `tests/Features/Agenda/Professionals/ProfessionalsEndpointContractTests.cs` (GET list, POST create, PUT update, PATCH toggle, sub-rotas `/services` `/schedule` `/blocks`)
-- [ ] T045 [P] [US2] Integration test `ProfessionalsEndpointTests` em `tests/Features/Agenda/Professionals/ProfessionalsEndpointTests.cs` (CRUD, vínculo opcional com atendente, unique partial `attendant_id`, filtros `department_id`/`service_id`)
-- [ ] T046 [P] [US2] Integration test `ProfessionalServicesEndpointTests` em `tests/Features/Agenda/Professionals/ProfessionalServicesEndpointTests.cs` (replace-all diff, erro se service_id inválido)
-- [ ] T047 [P] [US2] Integration test `WeeklyScheduleEndpointTests` em `tests/Features/Agenda/Professionals/WeeklyScheduleEndpointTests.cs` (replace-all transacional, erro `INVALID_RANGE`, erro `OVERLAP`, erro `INVALID_DAY`)
-- [ ] T048 [P] [US2] Integration test `ScheduleBlocksEndpointTests` em `tests/Features/Agenda/Professionals/ScheduleBlocksEndpointTests.cs` (criar, listar `from`, deletar, erro `BLOCK_RANGE_INVALID`, erro `BLOCK_OVERLAPS_APPOINTMENTS` com lista de IDs)
+- [X] T044 [P] [US2] Contract test `ProfessionalsEndpointContractTests` em `tests/Features/Agenda/Professionals/ProfessionalsEndpointContractTests.cs` (GET list, POST create, PUT update, PATCH toggle, sub-rotas `/services` `/schedule` `/blocks`)
+- [X] T045 [P] [US2] Integration test `ProfessionalsEndpointTests` em `tests/Features/Agenda/Professionals/ProfessionalsEndpointTests.cs` (CRUD, vínculo opcional com atendente, unique partial `attendant_id`, filtros `department_id`/`service_id`)
+- [X] T046 [P] [US2] Integration test `ProfessionalServicesEndpointTests` em `tests/Features/Agenda/Professionals/ProfessionalServicesEndpointTests.cs` (replace-all diff, erro se service_id inválido)
+- [X] T047 [P] [US2] Integration test `WeeklyScheduleEndpointTests` em `tests/Features/Agenda/Professionals/WeeklyScheduleEndpointTests.cs` (replace-all transacional, erro `INVALID_RANGE`, erro `OVERLAP`, erro `INVALID_DAY`)
+- [X] T048 [P] [US2] Integration test `ScheduleBlocksEndpointTests` em `tests/Features/Agenda/Professionals/ScheduleBlocksEndpointTests.cs` (criar, listar `from`, deletar, erro `BLOCK_RANGE_INVALID`, erro `BLOCK_OVERLAPS_APPOINTMENTS` com lista de IDs)
 
 ### Implementation for User Story 2
 
-- [ ] T049 [P] [US2] Criar `src/omniDesk.Api/Features/Agenda/Validators/CreateProfessionalValidator.cs` e `UpdateProfessionalValidator.cs`
-- [ ] T050 [P] [US2] Criar `src/omniDesk.Api/Features/Agenda/Validators/WeeklyScheduleValidator.cs` (turnos: day 0–6, start<end, sem overlap entre turnos do mesmo dia)
-- [ ] T051 [P] [US2] Criar `src/omniDesk.Api/Features/Agenda/Validators/ScheduleBlockValidator.cs` (start<end)
-- [ ] T052 [US2] Criar `src/omniDesk.Api/Infrastructure/Agenda/ProfessionalRepository.cs` (CRUD + filtros + unique attendant check)
-- [ ] T053 [US2] Criar `src/omniDesk.Api/Infrastructure/Agenda/WeeklyScheduleRepository.cs` (replace-all em transação)
-- [ ] T054 [US2] Criar `src/omniDesk.Api/Infrastructure/Agenda/ScheduleBlockRepository.cs` (CRUD + query GIST de overlap contra appointments para a validação de criação)
-- [ ] T055 [P] [US2] Criar queries `ListProfessionalsQuery.cs`, `GetProfessionalServicesQuery.cs`, `GetWeeklyScheduleQuery.cs`, `ListBlocksQuery.cs` em `Features/Agenda/Professionals/Queries/`
-- [ ] T056 [P] [US2] Criar commands `CreateProfessionalCommand.cs`, `UpdateProfessionalCommand.cs`, `ToggleProfessionalCommand.cs` em `Features/Agenda/Professionals/Commands/`
-- [ ] T057 [P] [US2] Criar `Features/Agenda/Professionals/Commands/UpdateProfessionalServicesCommand.cs` (diff atomic em transação)
-- [ ] T058 [P] [US2] Criar `Features/Agenda/Professionals/Commands/UpdateWeeklyScheduleCommand.cs` (replace-all em transação, valida overlap)
-- [ ] T059 [P] [US2] Criar `Features/Agenda/Professionals/Commands/CreateBlockCommand.cs` (valida overlap contra appointments, retorna `BLOCK_OVERLAPS_APPOINTMENTS` com IDs)
-- [ ] T060 [P] [US2] Criar `Features/Agenda/Professionals/Commands/DeleteBlockCommand.cs`
-- [ ] T061 [US2] Criar `src/omniDesk.Api/Features/Agenda/Professionals/ProfessionalsEndpoints.cs` mapeando todas as rotas (`/api/professionals`, sub-rotas `/{id}/services`, `/{id}/schedule`, `/{id}/blocks`, `/{id}/blocks/{blockId}`) (depende de T049–T060)
-- [ ] T062 [US2] Registrar `ProfessionalsEndpoints` e repositórios no DI em `Program.cs`
-- [ ] T063 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professionals.service.{ts,spec.ts}` (HTTP client com sub-rotas)
-- [ ] T064 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professionals-list.component.{ts,html,scss,spec.ts}`
-- [ ] T065 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professional-form.component.{ts,html,scss,spec.ts}` (campos: name, specialty, department dropdown, attendant dropdown)
-- [ ] T066 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professional-services.component.{ts,html,scss,spec.ts}` (multi-select dos serviços do catálogo, replace-all no save)
-- [ ] T067 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/weekly-schedule.component.{ts,html,scss,spec.ts}` (matriz 7 dias × N turnos, add/remove turnos por dia)
-- [ ] T068 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/schedule-blocks.component.{ts,html,scss,spec.ts}` (lista + form criar bloqueio)
-- [ ] T069 [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professionals.routes.ts` com guard `canManageAgenda`
-- [ ] T070 [US2] Adicionar rota `/configuracoes/profissionais` em `app.routes.ts` + item de menu
+- [X] T049 [P] [US2] Criar `src/omniDesk.Api/Features/Agenda/Validators/CreateProfessionalValidator.cs` e `UpdateProfessionalValidator.cs`
+- [X] T050 [P] [US2] Criar `src/omniDesk.Api/Features/Agenda/Validators/WeeklyScheduleValidator.cs` (turnos: day 0–6, start<end, sem overlap entre turnos do mesmo dia)
+- [X] T051 [P] [US2] Criar `src/omniDesk.Api/Features/Agenda/Validators/ScheduleBlockValidator.cs` (start<end)
+- [X] T052 [US2] Criar `src/omniDesk.Api/Infrastructure/Agenda/ProfessionalRepository.cs` (CRUD + filtros + unique attendant check)
+- [X] T053 [US2] Criar `src/omniDesk.Api/Infrastructure/Agenda/WeeklyScheduleRepository.cs` (replace-all em transação)
+- [X] T054 [US2] Criar `src/omniDesk.Api/Infrastructure/Agenda/ScheduleBlockRepository.cs` (CRUD + query GIST de overlap contra appointments para a validação de criação)
+- [X] T055 [P] [US2] Criar queries `ListProfessionalsQuery.cs`, `GetProfessionalServicesQuery.cs`, `GetWeeklyScheduleQuery.cs`, `ListBlocksQuery.cs` em `Features/Agenda/Professionals/Queries/`
+- [X] T056 [P] [US2] Criar commands `CreateProfessionalCommand.cs`, `UpdateProfessionalCommand.cs`, `ToggleProfessionalCommand.cs` em `Features/Agenda/Professionals/Commands/`
+- [X] T057 [P] [US2] Criar `Features/Agenda/Professionals/Commands/UpdateProfessionalServicesCommand.cs` (diff atomic em transação)
+- [X] T058 [P] [US2] Criar `Features/Agenda/Professionals/Commands/UpdateWeeklyScheduleCommand.cs` (replace-all em transação, valida overlap)
+- [X] T059 [P] [US2] Criar `Features/Agenda/Professionals/Commands/CreateBlockCommand.cs` (valida overlap contra appointments, retorna `BLOCK_OVERLAPS_APPOINTMENTS` com IDs)
+- [X] T060 [P] [US2] Criar `Features/Agenda/Professionals/Commands/DeleteBlockCommand.cs`
+- [X] T061 [US2] Criar `src/omniDesk.Api/Features/Agenda/Professionals/ProfessionalsEndpoints.cs` mapeando todas as rotas (`/api/professionals`, sub-rotas `/{id}/services`, `/{id}/schedule`, `/{id}/blocks`, `/{id}/blocks/{blockId}`) (depende de T049–T060)
+- [X] T062 [US2] Registrar `ProfessionalsEndpoints` e repositórios no DI em `Program.cs`
+- [X] T063 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professionals.service.{ts,spec.ts}` (HTTP client com sub-rotas)
+- [X] T064 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professionals-list.component.{ts,html,scss,spec.ts}`
+- [X] T065 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professional-form.component.{ts,html,scss,spec.ts}` (campos: name, specialty, department dropdown, attendant dropdown)
+- [X] T066 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professional-services.component.{ts,html,scss,spec.ts}` (multi-select dos serviços do catálogo, replace-all no save)
+- [X] T067 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/weekly-schedule.component.{ts,html,scss,spec.ts}` (matriz 7 dias × N turnos, add/remove turnos por dia)
+- [X] T068 [P] [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/schedule-blocks.component.{ts,html,scss,spec.ts}` (lista + form criar bloqueio)
+- [X] T069 [US2] Criar `src/omniDesk.Crm/src/app/features/professionals/professionals.routes.ts` com guard `canManageAgenda`
+- [X] T070 [US2] Adicionar rota `/configuracoes/profissionais` em `app.routes.ts` + item de menu
 
 **Checkpoint**: US2 funcional. Profissionais cadastrados com serviços e disponibilidade. US1 + US2 já permitem configurar a agenda (sem agendamentos ainda).
 
@@ -154,49 +154,49 @@ description: "Task breakdown for Spec 011 — Agenda e Catálogo de Serviços"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T071 [P] [US3] Contract test `AppointmentsEndpointContractTests` em `tests/Features/Agenda/Appointments/AppointmentsEndpointContractTests.cs` contra `contracts/appointments-api.md`
-- [ ] T072 [P] [US3] Contract test `AvailabilityEndpointContractTests` em `tests/Features/Agenda/Availability/AvailabilityEndpointContractTests.cs` contra `contracts/availability-api.md`
-- [ ] T073 [P] [US3] Integration test `AvailabilityCalculatorTests` em `tests/Features/Agenda/Availability/AvailabilityCalculatorTests.cs` (slots dentro de turnos, subtração de bloqueios, subtração de appointments, profissional/serviço inativos retornam lista vazia, sem `professional_services` retorna vazio, slot no passado filtrado)
-- [ ] T074 [P] [US3] Integration test `CreateAppointmentCommandTests` em `tests/Features/Agenda/Appointments/CreateAppointmentCommandTests.cs` (cliente novo→pending, cliente retorno→confirmed, `requires_confirmation=true` override, end_at calculado, `client_type` autoritativo descarta input)
-- [ ] T075 [P] [US3] Integration test `AppointmentLifecycleTests` em `tests/Features/Agenda/Appointments/AppointmentLifecycleTests.cs` (confirm, cancel, no-show, resend-reminder, transições inválidas retornam `APPOINTMENT_INVALID_STATUS_TRANSITION`, no-show só após `start_at`)
-- [ ] T076 [P] [US3] Integration test `ConcurrentAppointmentCreationTests` em `tests/Features/Agenda/Appointments/ConcurrentAppointmentCreationTests.cs` usando `Task.WhenAll` com 2+ tentativas no mesmo slot → exatamente 1 sucesso, demais retornam 409 (cobre SC-005)
-- [ ] T077 [P] [US3] Integration test `AppointmentVisibilityPolicyTests` em `tests/Features/Agenda/Appointments/AppointmentVisibilityPolicyTests.cs` (TenantAdmin vê tudo; Supervisor por departamento; Attendant por departamento OR por `professional.attendant_id`)
-- [ ] T078 [P] [US3] Integration test `AppointmentSlotLockServiceTests` em `tests/Infrastructure/Agenda/AppointmentSlotLockServiceTests.cs` (SETNX adquire; segunda tentativa falha; TTL expira; release manual)
-- [ ] T079 [P] [US3] Integration test `AppointmentEventStoreTests` em `tests/Infrastructure/Agenda/AppointmentEventStoreTests.cs` (append imutável; query cronológica por appointment_id)
+- [X] T071 [P] [US3] Contract test `AppointmentsEndpointContractTests` em `tests/Features/Agenda/Appointments/AppointmentsEndpointContractTests.cs` contra `contracts/appointments-api.md`
+- [X] T072 [P] [US3] Contract test `AvailabilityEndpointContractTests` em `tests/Features/Agenda/Availability/AvailabilityEndpointContractTests.cs` contra `contracts/availability-api.md`
+- [X] T073 [P] [US3] Integration test `AvailabilityCalculatorTests` em `tests/Features/Agenda/Availability/AvailabilityCalculatorTests.cs` (slots dentro de turnos, subtração de bloqueios, subtração de appointments, profissional/serviço inativos retornam lista vazia, sem `professional_services` retorna vazio, slot no passado filtrado)
+- [X] T074 [P] [US3] Integration test `CreateAppointmentCommandTests` em `tests/Features/Agenda/Appointments/CreateAppointmentCommandTests.cs` (cliente novo→pending, cliente retorno→confirmed, `requires_confirmation=true` override, end_at calculado, `client_type` autoritativo descarta input)
+- [X] T075 [P] [US3] Integration test `AppointmentLifecycleTests` em `tests/Features/Agenda/Appointments/AppointmentLifecycleTests.cs` (confirm, cancel, no-show, resend-reminder, transições inválidas retornam `APPOINTMENT_INVALID_STATUS_TRANSITION`, no-show só após `start_at`)
+- [X] T076 [P] [US3] Integration test `ConcurrentAppointmentCreationTests` em `tests/Features/Agenda/Appointments/ConcurrentAppointmentCreationTests.cs` usando `Task.WhenAll` com 2+ tentativas no mesmo slot → exatamente 1 sucesso, demais retornam 409 (cobre SC-005)
+- [X] T077 [P] [US3] Integration test `AppointmentVisibilityPolicyTests` em `tests/Features/Agenda/Appointments/AppointmentVisibilityPolicyTests.cs` (TenantAdmin vê tudo; Supervisor por departamento; Attendant por departamento OR por `professional.attendant_id`)
+- [X] T078 [P] [US3] Integration test `AppointmentSlotLockServiceTests` em `tests/Infrastructure/Agenda/AppointmentSlotLockServiceTests.cs` (SETNX adquire; segunda tentativa falha; TTL expira; release manual)
+- [X] T079 [P] [US3] Integration test `AppointmentEventStoreTests` em `tests/Infrastructure/Agenda/AppointmentEventStoreTests.cs` (append imutável; query cronológica por appointment_id)
 
 ### Implementation for User Story 3
 
-- [ ] T080 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Availability/Slot.cs` (value object `record struct Slot(DateTimeOffset StartAt, DateTimeOffset EndAt)`)
-- [ ] T081 [US3] Criar `src/omniDesk.Api/Features/Agenda/Availability/AvailabilityCalculator.cs` implementando algoritmo de research §R1 (carrega service, weekly_schedules, schedule_blocks, appointments; merge intervals; gera slots) (depende de T080, T021)
-- [ ] T082 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Availability/AvailabilityEndpoint.cs` mapeando `GET /api/availability` (depende de T081)
-- [ ] T083 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/ClientTypeResolver.cs` (`ResolveAsync(contactId, ct)`; query autoritativa em `appointments` por status `confirmed`/`no_show`)
-- [ ] T084 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/IAppointmentVisibilityPolicy.cs` e `AppointmentVisibilityPolicy.cs` (regras de research §R8: TenantAdmin/Supervisor/Attendant)
-- [ ] T085 [US3] Criar `src/omniDesk.Api/Infrastructure/Agenda/AppointmentRepository.cs` (queries com filtro de visibility, eager-load de professional/service/contact/ticket; query autoritativa de `client_type`)
-- [ ] T086 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Validators/CreateAppointmentValidator.cs` (campos obrigatórios, start_at no futuro, professional+service+contact existem)
-- [ ] T087 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Validators/CancelAppointmentValidator.cs` (cancellation_reason ≤ 255)
-- [ ] T088 [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/Commands/CreateAppointmentCommand.cs` implementando: (1) lock Redis via `AppointmentSlotLockService`; (2) BEGIN TX; (3) revalida disponibilidade incluindo `FOR UPDATE`; (4) resolve `client_type` autoritativo; (5) calcula `end_at`; (6) INSERT; (7) catch `unique_violation` → 409; (8) COMMIT; (9) `appointment.changed` action=created via `AppointmentEventPublisher`; (10) se `confirmed`, chama `INotificationService.NotifyAppointmentConfirmedAsync` (depende de T024, T081, T083, T085)
-- [ ] T089 [P] [US3] Criar `Features/Agenda/Appointments/Commands/UpdateAppointmentCommand.cs` (recalcula end_at, revalida disponibilidade excluindo o próprio appointment, action=rescheduled se start_at/service_id mudaram, NÃO re-dispara confirmation per research §R7)
-- [ ] T090 [P] [US3] Criar `Features/Agenda/Appointments/Commands/ConfirmAppointmentCommand.cs` (transição pending→confirmed, dispara `INotificationService.NotifyAppointmentConfirmedAsync`, event action=confirmed)
-- [ ] T091 [P] [US3] Criar `Features/Agenda/Appointments/Commands/CancelAppointmentCommand.cs` (transições pending→cancelled, confirmed→cancelled; persiste `cancelled_by=attendant`, `cancelled_at`, `cancellation_reason`; event action=cancelled channel=crm)
-- [ ] T092 [P] [US3] Criar `Features/Agenda/Appointments/Commands/MarkNoShowCommand.cs` (validar status=confirmed E start_at <= now())
-- [ ] T093 [P] [US3] Criar `Features/Agenda/Appointments/Commands/ResendReminderCommand.cs` (validar status=confirmed E contato tem phone; atualiza `reminder_sent_at=now()`; enfileira template via `OutgoingMessagePublisher` Spec 008; event action=reminder_resent; erro `WHATSAPP_CHANNEL_INACTIVE` se canal inativo)
-- [ ] T094 [P] [US3] Criar `Features/Agenda/Appointments/Queries/ListAppointmentsQuery.cs` (paginado + filtros profissional/serviço/status/from/to; aplica visibility policy)
-- [ ] T095 [P] [US3] Criar `Features/Agenda/Appointments/Queries/GetAppointmentQuery.cs` (carrega appointment + history do MongoDB `{slug}_appointment_events`; aplica visibility policy)
-- [ ] T096 [US3] Criar `src/omniDesk.Api/Hubs/Events/AppointmentEvents.cs` (constants `Type = "appointment.changed"`, `Action.Created/Confirmed/Cancelled/NoShow/Rescheduled/ReminderSent/ReminderResent`)
-- [ ] T097 [US3] Criar `src/omniDesk.Api/Infrastructure/WebSockets/AppointmentEventPublisher.cs` (`IAppointmentEventPublisher.PublishAsync(appointment, action, actor, ct)` publica em `RedisKeys.WsCrmDept(slug, deptId)` e `RedisKeys.WsAttendant(slug, attendantId)`) (depende de T096)
-- [ ] T098 [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/AppointmentsEndpoints.cs` mapeando todas as rotas: GET list/detail, POST, PUT, PATCH `/confirm` `/cancel` `/no-show`, POST `/resend-reminder`. Cada handler chama o command correspondente (depende de T088–T095, T097)
-- [ ] T099 [US3] Registrar `AppointmentsEndpoints`, `AvailabilityEndpoint`, `AvailabilityCalculator`, `ClientTypeResolver`, `IAppointmentVisibilityPolicy`, `AppointmentRepository`, `AppointmentEventPublisher` no DI em `Program.cs`
-- [ ] T100 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointments.service.{ts,spec.ts}` (HTTP client + assinar WS `appointment.changed` via `notification-stream.service.ts` existente)
-- [ ] T101 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/availability.service.{ts,spec.ts}` (HTTP client para `GET /api/availability`)
-- [ ] T102 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointment-card.component.{ts,html,scss,spec.ts}` (badge Novo/Retorno, serviço+preço, horário, status com cor, profissional)
-- [ ] T103 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/weekly-grid.component.{ts,html,scss,spec.ts}` (grade semanal por profissional usando PrimeNG `p-fullCalendar` ou implementação custom; slots coloridos por status; clique vazio abre form; clique em card abre detalhe)
-- [ ] T104 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointments-list.component.{ts,html,scss,spec.ts}` (PrimeNG Table com filtros profissional/serviço/status/período)
-- [ ] T105 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/pending-appointments.component.{ts,html,scss,spec.ts}` (lista pendentes com botões Confirmar/Editar/Cancelar inline)
-- [ ] T106 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointment-form.component.{ts,html,scss,spec.ts}` (Reactive Form: profissional, serviço filtrado por professional_services, autocomplete contato, datepicker, slots disponíveis via `availability.service`)
-- [ ] T107 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointment-detail.component.{ts,html,scss,spec.ts}` (dados editáveis, history, links para ticket/conversa/contato, ações Confirmar/Cancelar/No-show/Reenviar)
-- [ ] T108 [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/agenda-page.component.{ts,html,scss,spec.ts}` (container com 3 abas: Grade Semanal · Lista · Pendentes)
-- [ ] T109 [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/agenda.routes.ts` (rotas lazy; permissão `Appointments.View`)
-- [ ] T110 [US3] Adicionar rota `/agenda` em `app.routes.ts` + item de menu visível a todos os atendentes
+- [X] T080 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Availability/Slot.cs` (value object `record struct Slot(DateTimeOffset StartAt, DateTimeOffset EndAt)`)
+- [X] T081 [US3] Criar `src/omniDesk.Api/Features/Agenda/Availability/AvailabilityCalculator.cs` implementando algoritmo de research §R1 (carrega service, weekly_schedules, schedule_blocks, appointments; merge intervals; gera slots) (depende de T080, T021)
+- [X] T082 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Availability/AvailabilityEndpoint.cs` mapeando `GET /api/availability` (depende de T081)
+- [X] T083 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/ClientTypeResolver.cs` (`ResolveAsync(contactId, ct)`; query autoritativa em `appointments` por status `confirmed`/`no_show`)
+- [X] T084 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/IAppointmentVisibilityPolicy.cs` e `AppointmentVisibilityPolicy.cs` (regras de research §R8: TenantAdmin/Supervisor/Attendant)
+- [X] T085 [US3] Criar `src/omniDesk.Api/Infrastructure/Agenda/AppointmentRepository.cs` (queries com filtro de visibility, eager-load de professional/service/contact/ticket; query autoritativa de `client_type`)
+- [X] T086 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Validators/CreateAppointmentValidator.cs` (campos obrigatórios, start_at no futuro, professional+service+contact existem)
+- [X] T087 [P] [US3] Criar `src/omniDesk.Api/Features/Agenda/Validators/CancelAppointmentValidator.cs` (cancellation_reason ≤ 255)
+- [X] T088 [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/Commands/CreateAppointmentCommand.cs` implementando: (1) lock Redis via `AppointmentSlotLockService`; (2) BEGIN TX; (3) revalida disponibilidade incluindo `FOR UPDATE`; (4) resolve `client_type` autoritativo; (5) calcula `end_at`; (6) INSERT; (7) catch `unique_violation` → 409; (8) COMMIT; (9) `appointment.changed` action=created via `AppointmentEventPublisher`; (10) se `confirmed`, chama `INotificationService.NotifyAppointmentConfirmedAsync` (depende de T024, T081, T083, T085)
+- [X] T089 [P] [US3] Criar `Features/Agenda/Appointments/Commands/UpdateAppointmentCommand.cs` (recalcula end_at, revalida disponibilidade excluindo o próprio appointment, action=rescheduled se start_at/service_id mudaram, NÃO re-dispara confirmation per research §R7)
+- [X] T090 [P] [US3] Criar `Features/Agenda/Appointments/Commands/ConfirmAppointmentCommand.cs` (transição pending→confirmed, dispara `INotificationService.NotifyAppointmentConfirmedAsync`, event action=confirmed)
+- [X] T091 [P] [US3] Criar `Features/Agenda/Appointments/Commands/CancelAppointmentCommand.cs` (transições pending→cancelled, confirmed→cancelled; persiste `cancelled_by=attendant`, `cancelled_at`, `cancellation_reason`; event action=cancelled channel=crm)
+- [X] T092 [P] [US3] Criar `Features/Agenda/Appointments/Commands/MarkNoShowCommand.cs` (validar status=confirmed E start_at <= now())
+- [X] T093 [P] [US3] Criar `Features/Agenda/Appointments/Commands/ResendReminderCommand.cs` (validar status=confirmed E contato tem phone; atualiza `reminder_sent_at=now()`; enfileira template via `OutgoingMessagePublisher` Spec 008; event action=reminder_resent; erro `WHATSAPP_CHANNEL_INACTIVE` se canal inativo)
+- [X] T094 [P] [US3] Criar `Features/Agenda/Appointments/Queries/ListAppointmentsQuery.cs` (paginado + filtros profissional/serviço/status/from/to; aplica visibility policy)
+- [X] T095 [P] [US3] Criar `Features/Agenda/Appointments/Queries/GetAppointmentQuery.cs` (carrega appointment + history do MongoDB `{slug}_appointment_events`; aplica visibility policy)
+- [X] T096 [US3] Criar `src/omniDesk.Api/Hubs/Events/AppointmentEvents.cs` (constants `Type = "appointment.changed"`, `Action.Created/Confirmed/Cancelled/NoShow/Rescheduled/ReminderSent/ReminderResent`)
+- [X] T097 [US3] Criar `src/omniDesk.Api/Infrastructure/WebSockets/AppointmentEventPublisher.cs` (`IAppointmentEventPublisher.PublishAsync(appointment, action, actor, ct)` publica em `RedisKeys.WsCrmDept(slug, deptId)` e `RedisKeys.WsAttendant(slug, attendantId)`) (depende de T096)
+- [X] T098 [US3] Criar `src/omniDesk.Api/Features/Agenda/Appointments/AppointmentsEndpoints.cs` mapeando todas as rotas: GET list/detail, POST, PUT, PATCH `/confirm` `/cancel` `/no-show`, POST `/resend-reminder`. Cada handler chama o command correspondente (depende de T088–T095, T097)
+- [X] T099 [US3] Registrar `AppointmentsEndpoints`, `AvailabilityEndpoint`, `AvailabilityCalculator`, `ClientTypeResolver`, `IAppointmentVisibilityPolicy`, `AppointmentRepository`, `AppointmentEventPublisher` no DI em `Program.cs`
+- [X] T100 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointments.service.{ts,spec.ts}` (HTTP client + assinar WS `appointment.changed` via `notification-stream.service.ts` existente)
+- [X] T101 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/availability.service.{ts,spec.ts}` (HTTP client para `GET /api/availability`)
+- [X] T102 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointment-card.component.{ts,html,scss,spec.ts}` (badge Novo/Retorno, serviço+preço, horário, status com cor, profissional)
+- [X] T103 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/weekly-grid.component.{ts,html,scss,spec.ts}` (grade semanal por profissional usando PrimeNG `p-fullCalendar` ou implementação custom; slots coloridos por status; clique vazio abre form; clique em card abre detalhe)
+- [X] T104 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointments-list.component.{ts,html,scss,spec.ts}` (PrimeNG Table com filtros profissional/serviço/status/período)
+- [X] T105 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/pending-appointments.component.{ts,html,scss,spec.ts}` (lista pendentes com botões Confirmar/Editar/Cancelar inline)
+- [X] T106 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointment-form.component.{ts,html,scss,spec.ts}` (Reactive Form: profissional, serviço filtrado por professional_services, autocomplete contato, datepicker, slots disponíveis via `availability.service`)
+- [X] T107 [P] [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/appointment-detail.component.{ts,html,scss,spec.ts}` (dados editáveis, history, links para ticket/conversa/contato, ações Confirmar/Cancelar/No-show/Reenviar)
+- [X] T108 [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/agenda-page.component.{ts,html,scss,spec.ts}` (container com 3 abas: Grade Semanal · Lista · Pendentes)
+- [X] T109 [US3] Criar `src/omniDesk.Crm/src/app/features/agenda/agenda.routes.ts` (rotas lazy; permissão `Appointments.View`)
+- [X] T110 [US3] Adicionar rota `/agenda` em `app.routes.ts` + item de menu visível a todos os atendentes
 
 **Checkpoint**: US3 funcional. MVP completo (US1+US2+US3): clínica consegue operar manualmente sem IA. SC-002, SC-005, SC-008, SC-010 verificáveis.
 

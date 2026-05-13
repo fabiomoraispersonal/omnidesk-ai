@@ -1,0 +1,51 @@
+.appt-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border-left: 3px solid var(--color-primary-500);
+  background: var(--color-surface-50);
+  transition: background 0.15s;
+
+  &:hover { background: var(--color-surface-100); }
+
+  &.status-confirmed     { border-left-color: var(--color-success); }
+  &.status-pending_confirmation { border-left-color: var(--color-warning); }
+  &.status-cancelled     { border-left-color: var(--color-danger); opacity: 0.65; }
+  &.status-no_show       { border-left-color: var(--color-text-muted); opacity: 0.65; }
+}
+
+.appt-card__time {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  min-width: 3rem;
+}
+
+.appt-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.appt-card__service {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appt-card__professional {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.appt-card__badges {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}

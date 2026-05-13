@@ -1,0 +1,98 @@
+<div class="appt-detail">
+  <p-toast />
+
+  @if (loading()) {
+    <div class="appt-detail__loading">Carregando...</div>
+  } @else if (appt()) {
+    <div class="appt-detail__header">
+      <p-button icon="pi pi-arrow-left" [text]="true" routerLink="/agenda/agendamentos" label="Voltar" />
+      <h2>Agendamento</h2>
+    </div>
+
+    <p-card>
+      <div class="appt-detail__grid">
+        <div class="appt-detail__item">
+          <span class="appt-detail__label">Profissional</span>
+          <span>{{ appt()!.professional?.name ?? '—' }}</span>
+        </div>
+        <div class="appt-detail__item">
+          <span class="appt-detail__label">Serviço</span>
+          <span>{{ appt()!.service?.name ?? '—' }}</span>
+        </div>
+        <div class="appt-detail__item">
+          <span class="appt-detail__label">Início</span>
+          <span>{{ appt()!.start_at | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</span>
+        </div>
+        <div class="appt-detail__item">
+          <span class="appt-detail__label">Fim</span>
+          <span>{{ appt()!.end_at | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</span>
+        </div>
+        <div class="appt-detail__item">
+          <span class="appt-detail__label">Status</span>
+          <p-badge [value]="statusLabel(appt()!.status)" />
+        </div>
+        <div class="appt-detail__item">
+          <span class="appt-detail__label">Tipo de cliente</span>
+          <span>{{ appt()!.client_type === 'new_client' ? 'Novo' : 'Retorno' }}</span>
+        </div>
+        <div class="appt-detail__item">
+          <span class="appt-detail__label">Criado por</span>
+          <span>{{ appt()!.created_by === 'ai' ? 'IA' : 'Atendente' }}</span>
+        </div>
+        @if (appt()!.notes) {
+          <div class="appt-detail__item appt-detail__item--full">
+            <span class="appt-detail__label">Observações</span>
+            <span>{{ appt()!.notes }}</span>
+          </div>
+        }
+        @if (appt()!.cancelled_by) {
+          <div class="appt-detail__item">
+            <span class="appt-detail__label">Cancelado por</span>
+            <span>{{ cancelByLabel(appt()!.cancelled_by!) }}</span>
+          </div>
+        }
+        @if (appt()!.cancellation_reason) {
+          <div class="appt-detail__item">
+            <span class="appt-detail__label">Motivo do cancelamento</span>
+            <span>{{ appt()!.cancellation_reason }}</span>
+          </div>
+        }
+        @if (appt()!.reminder_sent_at) {
+          <div class="appt-detail__item">
+            <span class="appt-detail__label">Lembrete enviado</span>
+            <span>{{ appt()!.reminder_sent_at | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</span>
+          </div>
+        }
+      </div>
+    </p-card>
+
+    @if (!isTerminal) {
+      <div class="appt-detail__actions">
+        @if (isPending) {
+          <p-button label="Confirmar" icon="pi pi-check" severity="success"
+            [loading]="busy()" (onClick)="confirm()" />
+        }
+        @if (isConfirmed) {
+          <p-button label="Reenviar lembrete" icon="pi pi-bell" severity="info"
+            [loading]="busy()" (onClick)="resendReminder()" />
+          <p-button label="Não compareceu" icon="pi pi-user-minus" severity="warning"
+            [loading]="busy()" (onClick)="noShow()" />
+        }
+        <p-button label="Cancelar agendamento" icon="pi pi-times" severity="danger"
+          [loading]="busy()" (onClick)="showCancelDialog = true" />
+      </div>
+    }
+  }
+
+  <p-dialog header="Cancelar agendamento" [(visible)]="showCancelDialog" [modal]="true" [style]="{ width: '420px' }">
+    <div class="appt-detail__cancel-dialog">
+      <label for="cancelReason">Motivo (opcional)</label>
+      <textarea id="cancelReason" pInputTextarea [(ngModel)]="cancelReason" rows="3"
+        placeholder="Ex: cliente solicitou"></textarea>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button label="Voltar" [text]="true" severity="secondary" (onClick)="showCancelDialog = false" />
+      <p-button label="Confirmar cancelamento" severity="danger" [loading]="busy()" (onClick)="cancelSubmit()" />
+    </ng-template>
+  </p-dialog>
+</div>
