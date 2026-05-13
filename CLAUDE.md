@@ -476,15 +476,17 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-**Spec 010 — Notifications** — ✅ **IMPLEMENTADO**. Branch `010-notifications`. 107/107 tasks (100%).
+**Spec 011 — Agenda e Catálogo de Serviços** — 🟡 **PLANEJADA**. Branch `011-agenda-services`. Plan em [specs/011-agenda-services/plan.md](specs/011-agenda-services/plan.md).
 
-Cobre: in-app bell + browser push (8 event types, WebPush NuGet + VAPID + Service Worker), preferências por atendente, alertas SLA + queue monitor (cron `* * * * *`), AppointmentReminderJob (cron per-tenant), envio manual de template, follow-up automático no encerrar, archiver de 90 dias, métricas via `System.Diagnostics.Metrics`. NoOpNotificationService da Spec 009 substituído pela impl real.
+Cobre: catálogo de serviços (CRUD + soft delete), profissionais com vínculos `professional_services` e disponibilidade semanal multi-turno + bloqueios pontuais (`btree_gist`), agendamentos `pending_confirmation → confirmed → cancelled/no_show`, race-condition em 3 camadas (Redis SETNX + UNIQUE parcial + FOR UPDATE), `AvailabilityCalculator` único para REST + IA, 2 tool calls (`check_availability`, `create_appointment`) com `client_type` autoritativo no backend, cancelamento via WhatsApp respondendo "NÃO" normalizado (janela 26h, `ReminderResponseInterpreter`), configuração de cancelamento tardio por tenant (`agenda_settings` singleton via `CHECK (id=1)`). Materializa a tabela `appointments` que a Spec 010 (`IAppointmentReadRepository`) já consome graciosamente.
 
-Testes Testcontainers (Docker): 14 arquivos no test suite — `SupervisorLookupServiceTests`, `NotificationServiceTests`, `NotificationsEndpointTests`, `Handlers/{TicketAssigned,TicketNewMessage,TicketSlaBreached,ReminderFailed}HandlerTests`, `PushEndpointsTests`, `PreferencesEndpointsTests`, `TenantSettingsEndpointsTests`, `ConcurrentNotificationTests`, `NotificationSecurityTests`, `Infrastructure/Jobs/{TicketQueueMonitor,NotificationArchiver,AppointmentReminder}JobTests`, `Infrastructure/Push/WebPushDispatcherTests`.
+Artefatos de planejamento: [spec.md](specs/011-agenda-services/spec.md) (6 user stories, 49 FRs, 12 SCs, 17 assumptions), [research.md](specs/011-agenda-services/research.md) (12 decisões R1–R12), [data-model.md](specs/011-agenda-services/data-model.md) (7 tabelas + Mongo events + Redis lock), [contracts/](specs/011-agenda-services/contracts/) (7 contratos: services/professionals/availability/appointments/agenda-settings/WS/AI tools/WhatsApp cancellation), [quickstart.md](specs/011-agenda-services/quickstart.md). Constitution check ✅ aprovado.
 
-Próximos passos (não-bloqueantes): rodar testes contra Docker; integrar bell quando `header.component.ts` for criado (ver [INTEGRATION.md](src/omniDesk.Crm/src/app/layout/header/INTEGRATION.md)); validar QS local quando Spec 11 (Agenda) entregar `appointments` (hoje `AppointmentReadRepository` graceful-empty).
+Próximos passos: `/speckit-tasks` → `/speckit-implement`. Implementação em 7 fases (A Foundation Catálogo → B Foundation Profissionais → C Core Appointments → D IA Tools → E Cancelamento WhatsApp → F Settings → G Polish).
 
-Spec 009 — Tickets/CRM: ✅ implementado. **Dívida aberta**: T184 (atualizar `docs/specs/09-tickets.spec.md` com rename de enum + 17 colunas novas + erros semânticos descobertos) e T188 (rodar QS1–QS13 + escrever `quickstart-evidences.md`). Ambas marcadas done por engano em commit anterior — reabertas em 2026-05-12.
+Specs anteriores:
+- **Spec 010 — Notifications**: ✅ implementado (107/107 tasks). Bell + push (8 event types), preferências, SLA/queue monitors, AppointmentReminderJob, follow-up automático, archiver 90d, métricas. `IAppointmentReadRepository` graceful-empty até Spec 011 mergear — agora destravado.
+- **Spec 009 — Tickets/CRM**: ✅ implementado. **Dívida aberta**: T184 (atualizar `docs/specs/09-tickets.spec.md`) e T188 (rodar QS1–QS13 + `quickstart-evidences.md`), reabertas em 2026-05-12.
 <!-- SPECKIT END -->
 
 ## Configuração da API (.NET)

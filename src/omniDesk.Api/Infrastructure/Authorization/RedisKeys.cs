@@ -62,6 +62,11 @@ public static class RedisKeys
     public static string AttendantActiveTicket(string tenantSlug, Guid attendantId) =>
         Require(tenantSlug) + $":attendant_active_ticket:{attendantId}";
 
+    // Spec 011 — slot lock for race-condition protection on appointment creation (research §R2).
+    // TTL: 10s. Format includes startAt in ISO 8601 round-trip ("O") for uniqueness.
+    public static string AppointmentSlotLock(string tenantSlug, Guid professionalId, DateTimeOffset startAt) =>
+        Require(tenantSlug) + $":appointment_slot_lock:{professionalId:N}:{startAt.UtcDateTime:yyyyMMddTHHmmssZ}";
+
     private static string Require(string tenantSlug)
     {
         if (string.IsNullOrWhiteSpace(tenantSlug))

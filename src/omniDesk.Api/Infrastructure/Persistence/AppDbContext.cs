@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Agenda;
 using omniDesk.Api.Domain.AgentTemplates;
 using omniDesk.Api.Domain.AiAgents;
 using omniDesk.Api.Domain.AiThreads;
@@ -70,6 +71,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // Spec 010 — public schema (tenant-admin toggles for follow-up + reminder job).
     public DbSet<TenantNotificationSettings> TenantNotificationSettings
         => Set<TenantNotificationSettings>();
+
+    // Spec 011 — Agenda e Catálogo de Serviços (tenant_{slug} schema; resolved at runtime).
+    public DbSet<Service> Services => Set<Service>();
+    public DbSet<Professional> Professionals => Set<Professional>();
+    public DbSet<ProfessionalServiceLink> ProfessionalServices => Set<ProfessionalServiceLink>();
+    public DbSet<WeeklySchedule> WeeklySchedules => Set<WeeklySchedule>();
+    public DbSet<ScheduleBlock> ScheduleBlocks => Set<ScheduleBlock>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<AgendaSettings> AgendaSettings => Set<AgendaSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
