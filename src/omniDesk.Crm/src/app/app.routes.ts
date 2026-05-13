@@ -122,5 +122,29 @@ export const routes: Routes = [
         (m) => m.NotificationSettingsPageComponent,
       ),
   },
+  // Spec 011 US1 — Services catalog (tenant_admin only)
+  {
+    path: 'configuracoes/servicos',
+    loadChildren: () =>
+      import('./features/services-catalog/services-catalog.routes').then(m => m.servicesCatalogRoutes),
+  },
+  // Spec 011 US2 — Professionals (tenant_admin only)
+  {
+    path: 'configuracoes/profissionais',
+    loadChildren: () =>
+      import('./features/professionals/professionals.routes').then(m => m.professionalsRoutes),
+  },
+  // Spec 011 US3 — Agenda (all authenticated)
+  {
+    path: 'agenda',
+    loadChildren: () =>
+      import('./features/agenda/agenda.routes').then(m => m.agendaRoutes),
+  },
+  // Spec 011 US6 — Agenda settings (tenant_admin only)
+  {
+    path: 'configuracoes/agenda',
+    loadChildren: () =>
+      import('./features/agenda-settings/agenda-settings.routes').then(m => m.agendaSettingsRoutes),
+  },
   { path: '', redirectTo: 'kanban', pathMatch: 'full' },
 ];

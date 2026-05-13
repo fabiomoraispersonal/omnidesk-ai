@@ -1,0 +1,39 @@
+<div class="pending">
+  <p-toast />
+
+  @if (loading()) {
+    <div class="pending__loading">Carregando...</div>
+  } @else if (items().length === 0) {
+    <p class="pending__empty">Nenhum agendamento pendente de confirmação.</p>
+  } @else {
+    <div class="pending__grid">
+      @for (appt of items(); track appt.id) {
+        <p-card styleClass="pending__card">
+          <div class="pending__card-header">
+            <span class="pending__time">{{ appt.start_at | date:'dd/MM HH:mm':'America/Sao_Paulo' }}</span>
+            <span class="pending__client-badge">{{ appt.client_type === 'new_client' ? 'Novo' : 'Retorno' }}</span>
+          </div>
+          <div class="pending__service">{{ appt.service?.name }}</div>
+          <div class="pending__prof">{{ appt.professional?.name }}</div>
+          <div class="pending__actions">
+            <p-button
+              label="Confirmar"
+              icon="pi pi-check"
+              severity="success"
+              size="small"
+              [loading]="confirming() === appt.id"
+              (onClick)="confirm(appt)"
+            />
+            <p-button
+              label="Ver detalhes"
+              icon="pi pi-eye"
+              [text]="true"
+              size="small"
+              [routerLink]="['/agenda/agendamentos', appt.id]"
+            />
+          </div>
+        </p-card>
+      }
+    </div>
+  }
+</div>

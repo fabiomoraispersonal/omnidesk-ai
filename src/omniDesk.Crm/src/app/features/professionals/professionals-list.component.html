@@ -1,0 +1,41 @@
+<div class="professionals-list-page">
+  <div class="page-header">
+    <h2>Profissionais</h2>
+    <a routerLink="novo">
+      <p-button label="Novo profissional" icon="pi pi-plus" />
+    </a>
+  </div>
+
+  <p-table [value]="items()" [loading]="loading()" [rowHover]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Nome</th>
+        <th>Especialidade</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-p>
+      <tr>
+        <td>{{ p.name }}</td>
+        <td>{{ p.specialty || '—' }}</td>
+        <td>
+          <p-tag [value]="p.is_active ? 'Ativo' : 'Inativo'"
+                 [severity]="p.is_active ? 'success' : 'secondary'" />
+        </td>
+        <td class="actions">
+          <a [routerLink]="[p.id]">
+            <p-button icon="pi pi-pencil" [text]="true" severity="secondary" />
+          </a>
+          <p-button
+            [icon]="p.is_active ? 'pi pi-eye-slash' : 'pi pi-eye'"
+            [text]="true" [severity]="p.is_active ? 'danger' : 'success'"
+            (click)="toggleActive(p)" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="4" class="empty">Nenhum profissional cadastrado.</td></tr>
+    </ng-template>
+  </p-table>
+</div>

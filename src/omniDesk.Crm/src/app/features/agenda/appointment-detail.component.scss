@@ -1,0 +1,57 @@
+.appt-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px;
+
+  &__loading {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 3rem;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    h2 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    &--full { grid-column: 1 / -1; }
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  &__cancel-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label { font-weight: 600; font-size: 0.875rem; }
+    textarea { width: 100%; }
+  }
+}

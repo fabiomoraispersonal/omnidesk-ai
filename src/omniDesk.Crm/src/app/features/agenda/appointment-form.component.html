@@ -1,0 +1,80 @@
+<div class="appt-form">
+  <p-toast />
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="appt-form__fields">
+      <div class="appt-form__field">
+        <label>Profissional *</label>
+        <p-dropdown
+          formControlName="professional_id"
+          [options]="professionals()"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Selecione"
+          (onChange)="onProfessionalChange()"
+        />
+      </div>
+
+      <div class="appt-form__field">
+        <label>Serviço *</label>
+        <p-dropdown
+          formControlName="service_id"
+          [options]="services()"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Selecione o profissional primeiro"
+          [disabled]="services().length === 0"
+          (onChange)="onDateChange(form.value.date ?? null)"
+        />
+      </div>
+
+      <div class="appt-form__field">
+        <label>Data *</label>
+        <p-calendar
+          formControlName="date"
+          dateFormat="dd/mm/yy"
+          [minDate]="today"
+          [showIcon]="true"
+          (onSelect)="onDateChange($event)"
+        />
+      </div>
+
+      <div class="appt-form__field">
+        <label>Horário *</label>
+        <p-dropdown
+          formControlName="slot_start_at"
+          [options]="slotOptions()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Selecione a data primeiro"
+          [disabled]="slots().length === 0"
+          [loading]="loadingSlots()"
+        />
+        @if (!loadingSlots() && form.value.date && slots().length === 0) {
+          <small class="appt-form__hint">Nenhum horário disponível neste dia.</small>
+        }
+      </div>
+
+      <div class="appt-form__field appt-form__field--full">
+        <label>Observações</label>
+        <textarea pInputTextarea formControlName="notes" rows="3" placeholder="Observações internas..."></textarea>
+      </div>
+    </div>
+
+    <div class="appt-form__actions">
+      <p-button
+        label="Cancelar"
+        [text]="true"
+        severity="secondary"
+        routerLink="/agenda/agendamentos"
+      />
+      <p-button
+        type="submit"
+        label="Criar agendamento"
+        icon="pi pi-calendar-plus"
+        [loading]="saving()"
+        [disabled]="form.invalid || saving()"
+      />
+    </div>
+  </form>
+</div>

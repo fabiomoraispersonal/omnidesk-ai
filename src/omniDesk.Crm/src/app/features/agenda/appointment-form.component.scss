@@ -1,0 +1,30 @@
+.appt-form {
+  max-width: 680px;
+
+  &__fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    label { font-weight: 600; font-size: 0.875rem; }
+
+    &--full { grid-column: 1 / -1; }
+
+    textarea { width: 100%; resize: vertical; }
+  }
+
+  &__hint { color: var(--color-text-muted); }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+}

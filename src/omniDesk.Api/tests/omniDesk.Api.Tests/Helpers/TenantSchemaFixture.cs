@@ -70,6 +70,10 @@ public class TenantSchemaFixture : IAsyncLifetime
         await conn.OpenAsync();
         var tables = new[]
         {
+            // Spec 011 — agenda (truncate before contacts/tickets/conversations — has FKs to them)
+            "appointments", "schedule_blocks", "weekly_schedules",
+            "professional_services", "professionals", "services",
+            "agenda_settings",
             // Spec 010 — notifications (truncate first; FK -> attendants)
             "notifications", "push_subscriptions", "attendant_notification_preferences",
             "ai_handoff_snapshots", "ai_threads", "ai_agents", "ai_settings",
@@ -129,6 +133,11 @@ public class TenantSchemaFixture : IAsyncLifetime
             "Add_Messages_SearchVector.sql",
             // Spec 010 — notifications + push + per-attendant preferences
             "Add_Notifications_Push_Preferences.sql",
+            // Spec 011 — agenda e catálogo de serviços (em ordem: servicos+profissionais → schedules+blocks → appointments → settings)
+            "Add_Agenda_ServicesAndProfessionals.sql",
+            "Add_Agenda_SchedulesAndBlocks.sql",
+            "Add_Agenda_Appointments.sql",
+            "Add_Agenda_Settings.sql",
         };
         foreach (var name in tenantMigrations)
         {

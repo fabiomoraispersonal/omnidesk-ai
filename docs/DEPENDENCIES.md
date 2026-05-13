@@ -76,7 +76,7 @@ Com base no grafo acima, os módulos podem ser desenvolvidos em paralelo dentro 
 | **G3 — Canais** | 07 (AI Agents) + 08 (WhatsApp) | ✅ Paralelo |
 | **G4 — Canal Live Chat** | 08 (Live Chat) | Aguarda G3 |
 | **G5 — CRM** | 10 (Tickets) | Aguarda G4 | ✅ **Implementado** (Spec 009) |
-| **G6 — Comunicação e Agenda** | 11 (Notifications) + 11 (Agenda) | ✅ Paralelo após G5 |
+| **G6 — Comunicação e Agenda** | 11 (Notifications) + 11 (Agenda) | ✅ Paralelo após G5 | ✅ **Implementado** (Specs 010 + 011) |
 | **G7 — Observabilidade** | 12 (Audit) | ✅ Paralelo com G6 |
 
 ---

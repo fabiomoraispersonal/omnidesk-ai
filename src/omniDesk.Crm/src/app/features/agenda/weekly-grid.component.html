@@ -1,0 +1,54 @@
+<div class="weekly-grid">
+  <div class="weekly-grid__toolbar">
+    <p-button icon="pi pi-chevron-left" [text]="true" (onClick)="prevWeek()" />
+    <span class="weekly-grid__week-label">
+      Semana de {{ weekStart() | date:'dd/MM/yyyy':'America/Sao_Paulo' }}
+    </span>
+    <p-button icon="pi pi-chevron-right" [text]="true" (onClick)="nextWeek()" />
+    <p-dropdown
+      [options]="profOptions()"
+      [ngModel]="selectedProfId()"
+      (ngModelChange)="selectedProfId.set($event)"
+      placeholder="Filtrar profissional"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="ml-3"
+    />
+  </div>
+
+  @if (loading()) {
+    <div class="weekly-grid__loading">Carregando...</div>
+  } @else {
+    <div class="weekly-grid__table-wrap">
+      <table class="weekly-grid__table">
+        <thead>
+          <tr>
+            <th class="weekly-grid__prof-col">Profissional</th>
+            @for (col of columns(); track col.dayOfWeek) {
+              <th [class.is-today]="col.date.toDateString() === today.toDateString()">
+                {{ col.label }}
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (prof of filteredProfessionals(); track prof.id) {
+            <tr>
+              <td class="weekly-grid__prof-name">{{ prof.name }}</td>
+              @for (col of columns(); track col.dayOfWeek) {
+                <td class="weekly-grid__day-cell">
+                  @for (appt of getAppointmentsForProfDay(prof.id, col); track appt.id) {
+                    <app-appointment-card
+                      [appointment]="appt"
+                      (clicked)="navigate(appt)"
+                    />
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

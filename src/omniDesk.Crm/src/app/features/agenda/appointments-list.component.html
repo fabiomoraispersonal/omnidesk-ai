@@ -1,0 +1,51 @@
+<div class="appt-list">
+  <div class="appt-list__filters">
+    <p-dropdown
+      [options]="statusOptions"
+      [(ngModel)]="filterStatus"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Status"
+      (onChange)="page.set(1); load()"
+    />
+    <p-button label="Novo agendamento" icon="pi pi-plus" routerLink="novo" />
+  </div>
+
+  <p-table
+    [value]="items()"
+    [loading]="loading()"
+    [rows]="perPage"
+    [totalRecords]="total()"
+    [lazy]="true"
+    (onLazyLoad)="onPage($any($event))"
+    [paginator]="true"
+    responsiveLayout="scroll"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Horário</th>
+        <th>Profissional</th>
+        <th>Serviço</th>
+        <th>Status</th>
+        <th>Cliente</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-appt>
+      <tr>
+        <td>{{ appt.start_at | date:'dd/MM/yyyy HH:mm':'America/Sao_Paulo' }}</td>
+        <td>{{ appt.professional?.name ?? '—' }}</td>
+        <td>{{ appt.service?.name ?? '—' }}</td>
+        <td><p-badge [value]="statusLabel(appt.status)" [severity]="statusSeverity(appt.status)" /></td>
+        <td>{{ appt.client_type === 'new_client' ? 'Novo' : 'Retorno' }}</td>
+        <td>
+          <p-button icon="pi pi-eye" [text]="true" size="small"
+            [routerLink]="[appt.id]" />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="6" style="text-align:center; color: var(--color-text-muted)">Nenhum agendamento encontrado.</td></tr>
+    </ng-template>
+  </p-table>
+</div>

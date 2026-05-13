@@ -11,6 +11,9 @@ public class AiSettings
     public int ContextWindowMessages { get; set; } = DefaultContextWindowMessages;
     public string[] AvailableModels { get; set; } = Array.Empty<string>();
     public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>Spec 011 — habilita check_availability e create_appointment tool calls (opt-in por tenant).</summary>
+    public bool AgendaEnabled { get; set; } = false;
 }
 
 public interface IAiSettingsRepository

@@ -1,0 +1,82 @@
+<p-toast />
+
+<div class="service-form-page">
+  <div class="page-header">
+    <a routerLink=".." class="back-link">
+      <i class="pi pi-arrow-left"></i> Voltar
+    </a>
+    <h2>{{ isNew() ? 'Novo Serviço' : 'Editar Serviço' }}</h2>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-card">
+    <div class="field">
+      <label for="name">Nome *</label>
+      <input pInputText id="name" formControlName="name" placeholder="Ex: Consulta de Avaliação" />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <small class="error">Nome é obrigatório (máx. 100 caracteres).</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="description">Descrição</label>
+      <textarea
+        pInputTextarea
+        id="description"
+        formControlName="description"
+        rows="3"
+        placeholder="Descrição detalhada para exibição ao cliente"
+      ></textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="category">Categoria</label>
+        <input pInputText id="category" formControlName="category" placeholder="Ex: Consulta, Procedimento" />
+      </div>
+
+      <div class="field">
+        <label for="duration">Duração (minutos) *</label>
+        <p-inputNumber
+          id="duration"
+          formControlName="duration_minutes"
+          [min]="1"
+          [showButtons]="false"
+          placeholder="Ex: 45"
+        />
+        @if (form.controls.duration_minutes.invalid && form.controls.duration_minutes.touched) {
+          <small class="error">Duração deve ser maior que 0.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="price">Preço (R$)</label>
+        <p-inputNumber
+          id="price"
+          formControlName="price"
+          mode="currency"
+          currency="BRL"
+          locale="pt-BR"
+          placeholder="Deixe em branco para 'a combinar'"
+        />
+      </div>
+    </div>
+
+    <div class="field field-toggle">
+      <p-toggleSwitch formControlName="requires_confirmation" inputId="requires" />
+      <label for="requires">Exigir confirmação manual</label>
+      <small class="hint">Quando ativo, todos os agendamentos deste serviço entram como "Pendente" — mesmo para clientes de retorno.</small>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="..">
+        <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" />
+      </a>
+      <p-button
+        label="Salvar"
+        type="submit"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+      />
+    </div>
+  </form>
+</div>

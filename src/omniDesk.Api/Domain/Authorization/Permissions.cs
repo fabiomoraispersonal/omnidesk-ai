@@ -56,6 +56,10 @@ public static class Policies
     public const string CanConfigureAvailability = "Agenda.ConfigureAvailability";
     public const string CanConfigureCancellationPolicy = "Agenda.ConfigureCancellationPolicy";
 
+    // 4.10b Agendamentos (Spec 011) — visibilidade filtrada por IAppointmentVisibilityPolicy
+    public const string CanViewAppointments = "Appointments.View";
+    public const string CanManageAppointments = "Appointments.Manage";
+
     // 4.11 Auditoria
     public const string CanViewAuditActivity = "Audit.ViewActivity";
     public const string CanManageAuditApiKeys = "Audit.ManageApiKeys";
@@ -78,6 +82,7 @@ public static class Policies
         CanViewChannelStatus, CanEditChannelConfig, CanViewAccessToken, CanToggleChannel, CanManageTemplates,
         CanConfigureClientNotifications, CanViewOwnNotifications, CanMarkNotificationAsRead, CanConfigurePushPreferences,
         CanManageProfessionals, CanManageServiceCatalog, CanConfigureAvailability, CanConfigureCancellationPolicy,
+        CanViewAppointments, CanManageAppointments,
         CanViewAuditActivity, CanManageAuditApiKeys,
         CanInviteUser, CanInviteSupervisor, CanDeactivateUser
     ];

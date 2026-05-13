@@ -148,6 +148,49 @@ public class NotificationService(
             entityType: NotificationEntityTypes.Ticket,
             entityId: ticketId, ct);
 
+    public async Task NotifyAppointmentCancelledByClientAsync(
+        Guid? ticketId,
+        Guid appointmentId,
+        string contactName,
+        DateTimeOffset appointmentStartAt,
+        CancellationToken ct)
+    {
+        var dateStr = appointmentStartAt.ToString("dd/MM HH:mm");
+        var title = "Cliente cancelou agendamento via WhatsApp";
+        var body = $"{Trim(contactName, 40)} — {dateStr}";
+
+        Guid? attendantId = null;
+        Guid? departmentId = null;
+
+        if (ticketId.HasValue)
+        {
+            var ticketInfo = await db.Tickets.AsNoTracking()
+                .Where(t => t.Id == ticketId.Value)
+                .Select(t => new { t.AttendantId, t.DepartmentId })
+                .FirstOrDefaultAsync(ct);
+            attendantId = ticketInfo?.AttendantId;
+            departmentId = ticketInfo?.DepartmentId;
+        }
+
+        var recipients = new HashSet<Guid>();
+        if (attendantId.HasValue) recipients.Add(attendantId.Value);
+        if (departmentId.HasValue)
+        {
+            foreach (var s in await supervisors.GetDepartmentSupervisorsAsync(departmentId.Value, ct))
+                recipients.Add(s);
+        }
+
+        foreach (var rid in recipients)
+        {
+            await DispatchAsync(rid,
+                NotificationEventTypes.AppointmentCancelledByClient,
+                title: title,
+                body: body,
+                entityType: NotificationEntityTypes.Appointment,
+                entityId: appointmentId, ct);
+        }
+    }
+
     // ------------------------------------------------------------------
     // Internal pipeline: persist → publish WS new → publish unread count
     // ------------------------------------------------------------------

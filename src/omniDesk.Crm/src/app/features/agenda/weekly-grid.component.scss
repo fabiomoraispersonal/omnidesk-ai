@@ -1,0 +1,70 @@
+.weekly-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.weekly-grid__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weekly-grid__week-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 180px;
+  text-align: center;
+}
+
+.weekly-grid__loading {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 2rem;
+}
+
+.weekly-grid__table-wrap {
+  overflow-x: auto;
+}
+
+.weekly-grid__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th, td {
+    border: 1px solid var(--color-surface-100);
+    padding: 0.5rem;
+    vertical-align: top;
+    min-width: 140px;
+  }
+
+  th {
+    background: var(--color-surface-50);
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+
+    &.is-today {
+      background: var(--color-primary-500);
+      color: #fff;
+    }
+  }
+}
+
+.weekly-grid__prof-col {
+  width: 160px;
+  min-width: 160px;
+}
+
+.weekly-grid__prof-name {
+  font-weight: 600;
+  white-space: nowrap;
+  vertical-align: middle !important;
+}
+
+.weekly-grid__day-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}

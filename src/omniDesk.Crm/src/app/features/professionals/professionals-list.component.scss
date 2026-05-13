@@ -1,0 +1,6 @@
+.professionals-list-page {
+  padding: 1.5rem;
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; h2 { margin: 0; font-size: 1.25rem; font-weight: 600; } }
+  .actions { display: flex; gap: 0.25rem; justify-content: flex-end; }
+  .empty { text-align: center; color: var(--color-text-muted); padding: 2rem; }
+}

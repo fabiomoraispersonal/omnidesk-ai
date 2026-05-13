@@ -17,6 +17,10 @@ using omniDesk.Api.Infrastructure.Security;
 using omniDesk.Api.Infrastructure.Tenants;
 using Serilog;
 using StackExchange.Redis;
+using omniDesk.Api.Features.Agenda.Appointments;
+using omniDesk.Api.Features.Agenda.Professionals;
+using omniDesk.Api.Features.Agenda.Services;
+using omniDesk.Api.Features.Agenda.Settings;
 using omniDesk.Api.Features.Admin;
 using omniDesk.Api.Features.AgentRuntime;
 using omniDesk.Api.Features.AiAgents;
@@ -165,6 +169,9 @@ builder.Services.AddScoped<PromptVariableSubstitutor>();
 builder.Services.AddScoped<HandoffKeywordDetector>();
 builder.Services.AddScoped<ContextBuilder>();
 builder.Services.AddScoped<AgentResolver>();
+// Spec 011 US4 — agenda AI tool handlers
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Tools.CheckAvailabilityTool>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Tools.CreateAppointmentTool>();
 builder.Services.AddScoped<ToolCallDispatcher>();
 builder.Services.AddScoped<AgentOrchestrator>();
 // Spec 007 — replaces ChannelStubGateway. ChannelStubGateway remains in code as a
@@ -227,6 +234,9 @@ builder.Services.AddHttpClient<omniDesk.Api.Infrastructure.WhatsApp.WhatsAppMeta
 // Spec 008 US1 — webhook + adapters + job
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookTenantResolver>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Webhook.WaWebhookProcessorJob>();
+// Spec 011 US5 — WhatsApp "NÃO" cancellation flow
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Cancellation.ReminderResponseInterpreter>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Cancellation.CancelAppointmentByClientCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppIncomingAdapter>();
 builder.Services.AddScoped<omniDesk.Api.Features.WhatsApp.Adapters.WhatsAppOutgoingAdapter>();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -320,6 +330,7 @@ builder.Services.AddScoped<omniDesk.Api.Features.Tickets.Commands.SendManualTemp
 // Spec 010 Polish T100 — metrics. AddMetrics() registers IMeterFactory.
 builder.Services.AddMetrics();
 builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Metrics.NotificationMetrics>();
+builder.Services.AddSingleton<omniDesk.Api.Infrastructure.Metrics.AgendaMetrics>();
 // Spec 009 US9 — Pipeline config
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.GetPipelineWithColumnsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Pipelines.Queries.ListPipelinesQuery>();
@@ -331,6 +342,57 @@ builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Queries.ListContactTic
 builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Queries.ListContactConversationsQuery>();
 builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Commands.CreateContactCommand>();
 builder.Services.AddScoped<omniDesk.Api.Features.Contacts.Commands.UpdateContactCommand>();
+// Spec 011 US1 — Services catalog
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.ServiceRepository>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.CreateServiceValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.UpdateServiceValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Services.Queries.ListServicesQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Services.Commands.CreateServiceCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Services.Commands.UpdateServiceCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Services.Commands.ToggleServiceCommand>();
+// Spec 011 US2 — Professionals + schedule + blocks
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.ProfessionalRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.WeeklyScheduleRepository>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.ScheduleBlockRepository>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.CreateProfessionalValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.UpdateProfessionalValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.WeeklyScheduleValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.ScheduleBlockValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Queries.ListProfessionalsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Queries.GetProfessionalServicesQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Queries.GetWeeklyScheduleQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Queries.ListBlocksQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Commands.CreateProfessionalCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Commands.UpdateProfessionalCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Commands.ToggleProfessionalCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Commands.UpdateProfessionalServicesCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Commands.UpdateWeeklyScheduleCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Commands.CreateBlockCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Professionals.Commands.DeleteBlockCommand>();
+// Spec 011 US3 — Appointments + Availability
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.AppointmentRepository>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.ClientTypeResolver>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.IAppointmentVisibilityPolicy,
+    omniDesk.Api.Features.Agenda.Appointments.AppointmentVisibilityPolicy>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Commands.CreateAppointmentCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Commands.UpdateAppointmentCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Commands.ConfirmAppointmentCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Commands.CancelAppointmentCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Commands.MarkNoShowCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Commands.ResendReminderCommand>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Queries.ListAppointmentsQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Appointments.Queries.GetAppointmentQuery>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.CreateAppointmentValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Validators.CancelAppointmentValidator>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Availability.IAvailabilityCalculator,
+    omniDesk.Api.Features.Agenda.Availability.AvailabilityCalculator>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.WebSockets.AppointmentEventPublisher>();
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.AppointmentSlotLockService>();
+// Spec 011 US6 — AgendaSettings singleton CRUD
+builder.Services.AddScoped<omniDesk.Api.Infrastructure.Agenda.AgendaSettingsRepository>();
+builder.Services.AddScoped<omniDesk.Api.Features.Agenda.Settings.UpdateAgendaSettingsCommand>();
+builder.Services.AddScoped<FluentValidation.IValidator<omniDesk.Api.Features.Agenda.Settings.UpdateAgendaSettingsRequest>,
+    omniDesk.Api.Features.Agenda.Settings.AgendaSettingsValidator>();
 
 builder.Services
     .AddAuthentication()
@@ -503,6 +565,33 @@ var notificationSettings = api.MapGroup("/notification-settings")
                               .RequireAuthorization()
                               .AddEndpointFilter<ImpersonationAuditFilter>();
 notificationSettings.MapTenantSettingsEndpoints();
+
+// Spec 011 US1 — Services catalog (tenant_admin writes; any authenticated reads)
+var services = api.MapGroup("/services")
+                  .RequireAuthorization()
+                  .AddEndpointFilter<ImpersonationAuditFilter>();
+services.MapServicesEndpoints();
+
+// Spec 011 US2 — Professionals (+ sub-routes: services, schedule, blocks)
+var professionals = api.MapGroup("/professionals")
+                       .RequireAuthorization()
+                       .AddEndpointFilter<ImpersonationAuditFilter>();
+professionals.MapProfessionalsEndpoints();
+
+// Spec 011 US3 — Appointments (full lifecycle)
+var appointments = api.MapGroup("/appointments")
+                      .RequireAuthorization()
+                      .AddEndpointFilter<ImpersonationAuditFilter>();
+appointments.MapAppointmentsEndpoints();
+
+// Spec 011 US3 — Availability (shared by REST + AI tool calls)
+omniDesk.Api.Features.Agenda.Availability.AvailabilityEndpoint.MapAvailabilityEndpoint(api);
+
+// Spec 011 US6 — AgendaSettings (singleton per tenant, tenant_admin only)
+var agendaSettings = api.MapGroup("/agenda-settings")
+                        .RequireAuthorization()
+                        .AddEndpointFilter<ImpersonationAuditFilter>();
+agendaSettings.MapAgendaSettingsEndpoints();
 
 // Spec 009 US9 — Pipeline config
 var pipelines = api.MapGroup("/pipelines")
