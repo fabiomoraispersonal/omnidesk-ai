@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using omniDesk.Api.Domain.Agenda;
 using omniDesk.Api.Features.Agenda.Availability;
+using omniDesk.Api.Features.Agenda.Professionals.Commands;
+using omniDesk.Api.Features.Agenda.Services.Commands;
 using omniDesk.Api.Infrastructure.Agenda;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Tests.Helpers;
@@ -46,16 +48,16 @@ public class AvailabilityCalculatorTests : IAsyncLifetime
         return d;
     }
 
-    private async Task<(Domain.Agenda.Service svc, Professional prof)> SetupActivePair(
+    private async Task<(omniDesk.Api.Domain.Agenda.Service svc, Professional prof)> SetupActivePair(
         int durationMinutes = 30, DayOfWeek dayOfWeek = DayOfWeek.Monday)
     {
         var svcRepo  = new ServiceRepository(_db!);
         var profRepo = new ProfessionalRepository(_db!);
         var schRepo  = new WeeklyScheduleRepository(_db!);
 
-        var svc  = await new Features.Agenda.Services.Commands.CreateServiceCommand(svcRepo)
+        var svc  = await new CreateServiceCommand(svcRepo)
             .ExecuteAsync("Serviço", null, null, durationMinutes, null, false, default);
-        var prof = await new Features.Agenda.Professionals.Commands.CreateProfessionalCommand(profRepo)
+        var prof = await new CreateProfessionalCommand(profRepo)
             .ExecuteAsync("Dr. Teste", null, null, null, default);
 
         await schRepo.ReplaceAllAsync(prof.Id, new[]
@@ -63,13 +65,13 @@ public class AvailabilityCalculatorTests : IAsyncLifetime
             new WeeklySchedule
             {
                 ProfessionalId = prof.Id,
-                DayOfWeek = (int)dayOfWeek,
+                DayOfWeek = (short)dayOfWeek,
                 StartTime = new TimeOnly(8, 0),
                 EndTime   = new TimeOnly(10, 0),
             },
         }, default);
 
-        await new Features.Agenda.Professionals.Commands.UpdateProfessionalServicesCommand(profRepo)
+        await new UpdateProfessionalServicesCommand(profRepo)
             .ExecuteAsync(prof.Id, new[] { svc.Id }, default);
 
         return (svc, prof);
@@ -91,7 +93,7 @@ public class AvailabilityCalculatorTests : IAsyncLifetime
     public async Task ReturnsEmpty_WhenProfessionalIsInactive()
     {
         var (svc, prof) = await SetupActivePair(30, DayOfWeek.Monday);
-        await new Features.Agenda.Professionals.Commands.ToggleProfessionalCommand(new ProfessionalRepository(_db!))
+        await new ToggleProfessionalCommand(new ProfessionalRepository(_db!))
             .ExecuteAsync(prof.Id, false, default);
         var calc  = BuildCalc();
         var slots = await calc.GetSlotsAsync(prof.Id, svc.Id, FutureDate(DayOfWeek.Monday), "America/Sao_Paulo", default);
@@ -102,7 +104,7 @@ public class AvailabilityCalculatorTests : IAsyncLifetime
     public async Task ReturnsEmpty_WhenServiceIsInactive()
     {
         var (svc, prof) = await SetupActivePair(30, DayOfWeek.Monday);
-        await new Features.Agenda.Services.Commands.ToggleServiceCommand(new ServiceRepository(_db!))
+        await new ToggleServiceCommand(new ServiceRepository(_db!))
             .ExecuteAsync(svc.Id, false, default);
         var calc  = BuildCalc();
         var slots = await calc.GetSlotsAsync(prof.Id, svc.Id, FutureDate(DayOfWeek.Monday), "America/Sao_Paulo", default);
@@ -116,14 +118,14 @@ public class AvailabilityCalculatorTests : IAsyncLifetime
         var profRepo = new ProfessionalRepository(_db!);
         var schRepo  = new WeeklyScheduleRepository(_db!);
 
-        var svc  = await new Features.Agenda.Services.Commands.CreateServiceCommand(svcRepo)
+        var svc  = await new CreateServiceCommand(svcRepo)
             .ExecuteAsync("Unlinked", null, null, 30, null, false, default);
-        var prof = await new Features.Agenda.Professionals.Commands.CreateProfessionalCommand(profRepo)
+        var prof = await new CreateProfessionalCommand(profRepo)
             .ExecuteAsync("Dr. No-Link", null, null, null, default);
 
         await schRepo.ReplaceAllAsync(prof.Id, new[]
         {
-            new WeeklySchedule { ProfessionalId = prof.Id, DayOfWeek = (int)DayOfWeek.Monday, StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(10, 0) },
+            new WeeklySchedule { ProfessionalId = prof.Id, DayOfWeek = (short)DayOfWeek.Monday, StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(10, 0) },
         }, default);
         // Not linking service
 
@@ -142,7 +144,7 @@ public class AvailabilityCalculatorTests : IAsyncLifetime
         var blockStart = new DateTimeOffset(date.Year, date.Month, date.Day, 11, 0, 0, TimeSpan.FromHours(-3));
         var blockEnd   = blockStart.AddHours(1);
         var sbRepo     = new ScheduleBlockRepository(_db!);
-        await new Features.Agenda.Professionals.Commands.CreateBlockCommand(sbRepo)
+        await new CreateBlockCommand(sbRepo, _db!)
             .ExecuteAsync(prof.Id, blockStart, blockEnd, "Test block", default);
 
         var calc  = BuildCalc();

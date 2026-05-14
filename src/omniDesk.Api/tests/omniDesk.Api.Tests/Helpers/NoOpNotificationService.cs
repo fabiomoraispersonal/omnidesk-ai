@@ -50,4 +50,9 @@ public sealed class NoOpNotificationService : INotificationService
         Guid attendantId, Guid ticketId, string protocol,
         string contactName, string reason, CancellationToken ct)
         => Task.CompletedTask;
+
+    public Task NotifyAppointmentCancelledByClientAsync(
+        Guid? ticketId, Guid appointmentId, string contactName,
+        DateTimeOffset appointmentStartAt, CancellationToken ct)
+        => Task.CompletedTask;
 }

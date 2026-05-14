@@ -175,7 +175,7 @@ public class AutoTransbordoOnApiFailureTests : IAsyncLifetime
         var ticket = new StubTicketCreationGateway(_db!, _redis!, slug,
             NullLogger<StubTicketCreationGateway>.Instance);
         var resolver = new AgentResolver(_db!);
-        var dispatcher = new ToolCallDispatcher(_db!, conv, ticket, resolver,
+        var dispatcher = new ToolCallDispatcher(_db!, conv, ticket, resolver, null!, null!,
             NullLogger<ToolCallDispatcher>.Instance);
         var keyResolver = new OpenAiKeyResolver(_db!, EphemeralDp(),
             new ConfigurationBuilder()

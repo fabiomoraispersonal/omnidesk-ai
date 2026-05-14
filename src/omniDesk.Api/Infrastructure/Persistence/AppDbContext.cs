@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Agenda;
 using omniDesk.Api.Domain.AgentTemplates;
 using omniDesk.Api.Domain.AiAgents;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.AiThreads;
 using omniDesk.Api.Domain.Attendants;
 using omniDesk.Api.Domain.CannedResponses;
@@ -71,6 +72,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     // Spec 010 — public schema (tenant-admin toggles for follow-up + reminder job).
     public DbSet<TenantNotificationSettings> TenantNotificationSettings
         => Set<TenantNotificationSettings>();
+
+    // Spec 012 — Auditoria e Observabilidade (tenant_{slug} schema; resolved at runtime).
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     // Spec 011 — Agenda e Catálogo de Serviços (tenant_{slug} schema; resolved at runtime).
     public DbSet<Service> Services => Set<Service>();

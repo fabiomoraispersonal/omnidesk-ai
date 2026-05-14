@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.WebSockets;
 
@@ -25,7 +27,8 @@ public class TransferTicketCommand(
     AppDbContext db,
     ITicketEventStore eventStore,
     TicketEventPublisher publisher,
-    ITenantSlugAccessor slugAccessor)
+    ITenantSlugAccessor slugAccessor,
+    IAuditService audit)
 {
     public async Task<(bool Found, bool Forbidden, string? Error, object? Data)> ExecuteAsync(
         Guid ticketId,
@@ -160,6 +163,10 @@ public class TransferTicketCommand(
             await publisher.PublishTransferredAsync(slug, ticket.DepartmentId, payload);
         }
         catch { /* best-effort */ }
+
+        audit.Log(slug, Guid.Empty, AuditEventNames.TicketTransferred,
+            new AuditActor { UserId = actorId, Role = "attendant" },
+            AuditTargetFactory.Ticket(ticket.Id, ticket.Protocol));
 
         var data = new
         {

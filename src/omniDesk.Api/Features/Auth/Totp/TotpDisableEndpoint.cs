@@ -1,6 +1,10 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.TotpRecoveryCodes;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
+using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Security;
 
 namespace omniDesk.Api.Features.Auth.Totp;
@@ -22,6 +26,8 @@ public static class TotpDisableEndpoint
         IUserRepository users,
         ITotpRecoveryCodeRepository recoveryCodes,
         PasswordHasher hasher,
+        AppDbContext db,
+        IAuditService audit,
         CancellationToken ct)
     {
         var userId = Guid.Parse(principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -41,6 +47,12 @@ public static class TotpDisableEndpoint
         await users.UpdateAsync(user, ct);
 
         await recoveryCodes.DeleteAllByUserIdAsync(userId, ct);
+
+        var slug = user.TenantId is { } tid
+            ? await db.Tenants.AsNoTracking().Where(t => t.Id == tid).Select(t => (string?)t.Slug).FirstOrDefaultAsync(ct)
+            : null;
+        audit.Log(slug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.AuthTotpDisabled,
+            AuditActorFactory.ForLogin(user.Id, user.Name, user.Role.ToString()));
 
         return Results.NoContent();
     }

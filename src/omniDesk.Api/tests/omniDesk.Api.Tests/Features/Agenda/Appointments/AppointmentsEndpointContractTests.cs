@@ -3,6 +3,8 @@ using Npgsql;
 using omniDesk.Api.Domain.Agenda;
 using omniDesk.Api.Features.Agenda.Appointments.Commands;
 using omniDesk.Api.Features.Agenda.Appointments.Queries;
+using omniDesk.Api.Features.Agenda.Professionals.Commands;
+using omniDesk.Api.Features.Agenda.Services.Commands;
 using omniDesk.Api.Infrastructure.Agenda;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Tests.Helpers;
@@ -83,17 +85,17 @@ public class AppointmentsEndpointContractTests : IAsyncLifetime
         Assert.Equal("WHATSAPP_CHANNEL_INACTIVE", AgendaErrorCodes.WhatsAppChannelInactive);
     }
 
-    private async Task<(Appointment appt, Domain.Agenda.Service svc, Professional prof)> SeedAppointmentAsync(int durationMinutes = 30)
+    private async Task<(Appointment appt, omniDesk.Api.Domain.Agenda.Service svc, Professional prof)> SeedAppointmentAsync(int durationMinutes = 30)
     {
         var svcRepo  = new ServiceRepository(_db!);
         var profRepo = new ProfessionalRepository(_db!);
         var schRepo  = new WeeklyScheduleRepository(_db!);
 
-        var svc  = await new Features.Agenda.Services.Commands.CreateServiceCommand(svcRepo)
+        var svc  = await new CreateServiceCommand(svcRepo)
             .ExecuteAsync("Consulta", null, null, durationMinutes, null, false, default);
-        var prof = await new Features.Agenda.Professionals.Commands.CreateProfessionalCommand(profRepo)
+        var prof = await new CreateProfessionalCommand(profRepo)
             .ExecuteAsync("Dra. Contrato", null, null, null, default);
-        await new Features.Agenda.Professionals.Commands.UpdateProfessionalServicesCommand(profRepo)
+        await new UpdateProfessionalServicesCommand(profRepo)
             .ExecuteAsync(prof.Id, new[] { svc.Id }, default);
 
         var startAt = DateTimeOffset.UtcNow.AddDays(7);

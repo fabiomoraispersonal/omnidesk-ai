@@ -1,7 +1,10 @@
 using FluentValidation;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Features.WhatsApp.Config.Commands;
 using omniDesk.Api.Features.WhatsApp.Config.Queries;
+using omniDesk.Api.Infrastructure.Audit;
+using omniDesk.Api.Infrastructure.Authentication;
 
 namespace omniDesk.Api.Features.WhatsApp.Config;
 
@@ -45,6 +48,8 @@ public static class WhatsAppConfigEndpoints
         UpdateWhatsAppConfigCommand command,
         IValidator<UpdateWhatsAppConfigRequest> validator,
         GetWhatsAppConfigQuery query,
+        ICurrentUser caller,
+        IAuditService audit,
         CancellationToken ct)
     {
         var validation = await validator.ValidateAsync(request, ct);
@@ -71,6 +76,11 @@ public static class WhatsAppConfigEndpoints
         var slug = ResolveTenantSlug(http);
 
         await command.ExecuteAsync(tenantId, slug, request, ct);
+
+        audit.Log(slug, tenantId, AuditEventNames.TenantWhatsappConfigured,
+            AuditActorFactory.FromCurrentUser(caller),
+            AuditTargetFactory.Tenant(tenantId, slug));
+
         var dto = await query.ExecuteAsync(tenantId, slug, ct);
         return Results.Ok(new { success = true, data = dto });
     }

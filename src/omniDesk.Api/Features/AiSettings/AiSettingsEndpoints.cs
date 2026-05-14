@@ -4,13 +4,15 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
+using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Features.AiSettings.Validators;
 using omniDesk.Api.Features.Authorization.Authz;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Authentication;
 using omniDesk.Api.Infrastructure.OpenAi;
 using omniDesk.Api.Infrastructure.Persistence;
 using AiSettingsEntity = omniDesk.Api.Domain.AiSettings.AiSettings;
-using omniDesk.Api.Domain.Authorization;
 
 namespace omniDesk.Api.Features.AiSettings;
 
@@ -100,6 +102,7 @@ public static class AiSettingsEndpoints
         IDataProtectionProvider dp,
         OpenAiKeyResolver resolver,
         ICurrentUser currentUser,
+        IAuditService audit,
         CancellationToken ct)
     {
         if (currentUser.TenantId is null) return Results.Unauthorized();
@@ -121,6 +124,10 @@ public static class AiSettingsEndpoints
         tenant.OpenAiProject = req.Project;
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
+
+        audit.Log(currentUser.TenantSlug, currentUser.TenantId!.Value, AuditEventNames.TenantOpenAiKeyChanged,
+            AuditActorFactory.FromCurrentUser(currentUser),
+            AuditTargetFactory.Tenant(currentUser.TenantId!.Value, currentUser.TenantSlug));
 
         var preview = "sk-..." + req.ApiKey[^Math.Min(4, req.ApiKey.Length)..];
         return Results.Ok(new { success = true, data = new { key_set = true, key_preview = preview } });

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.WebSockets;
 
@@ -10,7 +12,8 @@ public class CancelTicketCommand(
     AppDbContext db,
     ITicketEventStore eventStore,
     TicketEventPublisher eventPublisher,
-    ITenantSlugAccessor slugAccessor)
+    ITenantSlugAccessor slugAccessor,
+    IAuditService audit)
 {
     public async Task<(bool Found, bool AlreadyClosed)> ExecuteAsync(
         Guid ticketId,
@@ -63,6 +66,10 @@ public class CancelTicketCommand(
         {
             // Best-effort
         }
+
+        audit.Log(tenantSlug, Guid.Empty, AuditEventNames.TicketCancelled,
+            new AuditActor { UserId = actorId, Role = "attendant" },
+            AuditTargetFactory.Ticket(ticket.Id, ticket.Protocol));
 
         return (true, false);
     }

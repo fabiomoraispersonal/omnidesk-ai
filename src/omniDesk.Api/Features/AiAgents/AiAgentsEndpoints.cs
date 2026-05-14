@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.AiAgents;
+using omniDesk.Api.Domain.Audit;
+using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Features.AiAgents.Validators;
 using omniDesk.Api.Features.Authorization.Authz;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Authentication;
 using omniDesk.Api.Infrastructure.Persistence;
-using omniDesk.Api.Domain.Authorization;
 
 namespace omniDesk.Api.Features.AiAgents;
 
@@ -101,6 +103,7 @@ public static class AiAgentsEndpoints
         IValidator<CreateAiAgentRequest> validator,
         ICurrentUser currentUser,
         IConfiguration config,
+        IAuditService audit,
         CancellationToken ct)
     {
         var v = await validator.ValidateAsync(req, ct);
@@ -135,6 +138,10 @@ public static class AiAgentsEndpoints
         db.AiAgents.Add(entity);
         await db.SaveChangesAsync(ct);
 
+        audit.Log(currentUser.TenantSlug, currentUser.TenantId ?? Guid.Empty, AuditEventNames.AiAgentCreated,
+            AuditActorFactory.FromCurrentUser(currentUser),
+            AuditTargetFactory.AiAgent(entity.Id, entity.Name));
+
         return Results.Created($"/api/agents/{entity.Id}", new { success = true, data = new { id = entity.Id } });
     }
 
@@ -143,6 +150,8 @@ public static class AiAgentsEndpoints
         UpdateAiAgentRequest req,
         AppDbContext db,
         IValidator<UpdateAiAgentRequest> validator,
+        ICurrentUser currentUser,
+        IAuditService audit,
         CancellationToken ct)
     {
         var v = await validator.ValidateAsync(req, ct);
@@ -177,6 +186,10 @@ public static class AiAgentsEndpoints
         a.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(ct);
 
+        audit.Log(currentUser.TenantSlug, currentUser.TenantId ?? Guid.Empty, AuditEventNames.AiAgentUpdated,
+            AuditActorFactory.FromCurrentUser(currentUser),
+            AuditTargetFactory.AiAgent(a.Id, a.Name));
+
         return Results.Ok(new { success = true, data = new { id = a.Id } });
     }
 
@@ -192,7 +205,7 @@ public static class AiAgentsEndpoints
         return Results.Ok(new { success = true, data = new { id = a.Id, is_active = a.IsActive } });
     }
 
-    private static async Task<IResult> DeleteAsync(Guid id, AppDbContext db, CancellationToken ct)
+    private static async Task<IResult> DeleteAsync(Guid id, AppDbContext db, ICurrentUser currentUser, IAuditService audit, CancellationToken ct)
     {
         var a = await db.AiAgents.FirstOrDefaultAsync(x => x.Id == id, ct);
         if (a is null) return NotFound("AGENT_NOT_FOUND", "Agente não encontrado.");
@@ -206,11 +219,22 @@ public static class AiAgentsEndpoints
             a.DeletedAt = DateTimeOffset.UtcNow;
             a.UpdatedAt = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(ct);
+
+            audit.Log(currentUser.TenantSlug, currentUser.TenantId ?? Guid.Empty, AuditEventNames.AiAgentDeleted,
+                AuditActorFactory.FromCurrentUser(currentUser),
+                AuditTargetFactory.AiAgent(a.Id, a.Name));
+
             return Results.Ok(new { success = true, data = new { id, soft_deleted = true } });
         }
 
+        var agentName = a.Name;
         db.AiAgents.Remove(a);
         await db.SaveChangesAsync(ct);
+
+        audit.Log(currentUser.TenantSlug, currentUser.TenantId ?? Guid.Empty, AuditEventNames.AiAgentDeleted,
+            AuditActorFactory.FromCurrentUser(currentUser),
+            AuditTargetFactory.AiAgent(id, agentName));
+
         return Results.Ok(new { success = true, data = new { id, soft_deleted = false } });
     }
 
