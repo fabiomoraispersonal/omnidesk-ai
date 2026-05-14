@@ -1,7 +1,11 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
+using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Security;
 using OmniDesk.Api.Infrastructure.Security;
 
@@ -45,9 +49,12 @@ public static class LoginEndpoint
         PasswordHasher hasher,
         JwtService jwt,
         IRefreshTokenRepository refreshTokens,
+        IAuditService audit,
+        AppDbContext db,
         CancellationToken ct)
     {
         var ip = context.Connection.RemoteIpAddress?.ToString();
+        var ua = context.Request.Headers.UserAgent.ToString();
 
         var turnstileResult = await turnstile.VerifyAsync(request.TurnstileToken, ip, ct);
         if (!turnstileResult.Success)
@@ -58,11 +65,29 @@ public static class LoginEndpoint
 
         var user = await users.GetByEmailAsync(request.Email, ct);
 
-        if (user is null || !await hasher.VerifyAsync(request.Password, user.PasswordHash))
+        if (user is null)
+        {
+            audit.Log(string.Empty, Guid.Empty, AuditEventNames.AuthLoginFailed,
+                AuditActorFactory.ForFailedLogin(),
+                metadata: new { attempted_email = request.Email },
+                ipAddress: ip, userAgent: ua);
             return Results.Problem(
                 detail: "Invalid email or password.",
                 statusCode: 401,
                 extensions: new Dictionary<string, object?> { ["code"] = "invalid_credentials" });
+        }
+
+        if (!await hasher.VerifyAsync(request.Password, user.PasswordHash))
+        {
+            var slug = await ResolveTenantSlugAsync(user.TenantId, db, ct);
+            audit.Log(slug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.AuthLoginFailed,
+                AuditActorFactory.ForLogin(user.Id, user.Name, user.Role.ToString()),
+                ipAddress: ip, userAgent: ua);
+            return Results.Problem(
+                detail: "Invalid email or password.",
+                statusCode: 401,
+                extensions: new Dictionary<string, object?> { ["code"] = "invalid_credentials" });
+        }
 
         if (!user.IsActive)
             return Results.Problem(
@@ -82,15 +107,29 @@ public static class LoginEndpoint
             return Results.Ok(new LoginTotpRequiredResponse(true, totpToken));
         }
 
+        var tenantSlug = await ResolveTenantSlugAsync(user.TenantId, db, ct);
         var (accessToken, refreshCookie) = await IssueTokensAsync(
             user, request.RememberMe, jwt, refreshTokens, context, ip, ct);
 
         user.LastLoginAt = DateTimeOffset.UtcNow;
         await users.UpdateAsync(user, ct);
 
+        audit.Log(tenantSlug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.AuthLoginSuccess,
+            AuditActorFactory.ForLogin(user.Id, user.Name, user.Role.ToString()),
+            ipAddress: ip, userAgent: ua);
+
         return Results.Ok(new LoginResponse(
             accessToken,
             new LoginUserDto(user.Id, user.Name, user.Role.ToString(), null)));
+    }
+
+    private static Task<string?> ResolveTenantSlugAsync(Guid? tenantId, AppDbContext db, CancellationToken ct)
+    {
+        if (tenantId is not { } tid) return Task.FromResult<string?>(null);
+        return db.Tenants.AsNoTracking()
+            .Where(t => t.Id == tid)
+            .Select(t => (string?)t.Slug)
+            .FirstOrDefaultAsync(ct);
     }
 
     internal static async Task<(string AccessToken, string RefreshToken)> IssueTokensAsync(

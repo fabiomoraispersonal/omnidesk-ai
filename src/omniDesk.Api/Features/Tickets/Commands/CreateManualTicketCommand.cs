@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Contacts;
 using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Features.Contacts;
 using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Tickets;
 using omniDesk.Api.Infrastructure.WebSockets;
@@ -35,7 +37,8 @@ public class CreateManualTicketCommand(
     TicketProtocolService protocolService,
     ITicketEventStore eventStore,
     TicketEventPublisher publisher,
-    ITenantSlugAccessor slugAccessor)
+    ITenantSlugAccessor slugAccessor,
+    IAuditService audit)
 {
     public async Task<(object? Data, string? Error)> ExecuteAsync(
         CreateManualTicketRequest req,
@@ -195,6 +198,10 @@ public class CreateManualTicketCommand(
             await publisher.PublishCreatedAsync(slug, ticket.DepartmentId, payload);
         }
         catch { /* best-effort */ }
+
+        audit.Log(slug, Guid.Empty, AuditEventNames.TicketCreated,
+            new AuditActor { UserId = actorId, Role = "attendant" },
+            AuditTargetFactory.Ticket(ticket.Id, ticket.Protocol));
 
         return (new
         {

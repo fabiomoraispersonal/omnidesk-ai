@@ -7,6 +7,7 @@ using omniDesk.Api.Domain.PasswordResetTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.TotpRecoveryCodes;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Authentication;
 using omniDesk.Api.Infrastructure.Email;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Persistence.Repositories;
@@ -69,6 +70,8 @@ public static class AuthExtensions
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+                ApiKeyAuthenticationHandler.SchemeName, _ => { })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters

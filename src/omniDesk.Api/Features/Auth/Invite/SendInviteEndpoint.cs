@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.InviteTokens;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Email;
 using omniDesk.Api.Features.Auth.Login;
 
@@ -25,6 +27,7 @@ public static class SendInviteEndpoint
         IInviteTokenRepository inviteTokens,
         IEmailService email,
         IConfiguration config,
+        IAuditService audit,
         CancellationToken ct)
     {
         var currentRole = principal.FindFirst("role")?.Value;
@@ -92,6 +95,11 @@ public static class SendInviteEndpoint
         var inviteLink = $"{baseUrl}/aceitar-convite?token={rawToken}";
 
         await email.SendInviteAsync(emailNorm, tenantSlug, inviteLink, ct);
+
+        var actorRole = principal.FindFirst("role")?.Value ?? "tenant_admin";
+        audit.Log(tenantSlug, tenantId ?? Guid.Empty, AuditEventNames.UserInvited,
+            new AuditActor { UserId = currentUserId, Role = actorRole },
+            metadata: new { invited_email = emailNorm, role = role.ToString() });
 
         return Results.Created($"/api/auth/invite/{invite.Id}", new InviteResponse(
             invite.Id, invite.Email, role.ToString(), invite.ExpiresAt));

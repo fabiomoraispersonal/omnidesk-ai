@@ -12,14 +12,14 @@ public class ToolRegistryAgendaTests
     [Fact]
     public void AgendaEnabled_defaults_to_false()
     {
-        var settings = new AiSettings();
+        var settings = new omniDesk.Api.Domain.AiSettings.AiSettings();
         Assert.False(settings.AgendaEnabled);
     }
 
     [Fact]
     public void AgendaEnabled_can_be_set_true()
     {
-        var settings = new AiSettings { AgendaEnabled = true };
+        var settings = new omniDesk.Api.Domain.AiSettings.AiSettings { AgendaEnabled = true };
         Assert.True(settings.AgendaEnabled);
     }
 

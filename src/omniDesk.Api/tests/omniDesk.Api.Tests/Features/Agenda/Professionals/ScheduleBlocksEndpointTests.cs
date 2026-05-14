@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using omniDesk.Api.Features.Agenda.Professionals.Commands;
+using omniDesk.Api.Features.Agenda.Professionals.Queries;
 using omniDesk.Api.Features.Agenda.Validators;
 using omniDesk.Api.Infrastructure.Agenda;
 using omniDesk.Api.Infrastructure.Persistence;

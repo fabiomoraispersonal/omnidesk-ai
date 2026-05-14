@@ -1,6 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.PasswordResetTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
+using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Security;
 using omniDesk.Api.Features.Auth.Login;
 
@@ -23,6 +27,8 @@ public static class ResetPasswordEndpoint
         IUserRepository users,
         IRefreshTokenRepository refreshTokens,
         PasswordHasher hasher,
+        AppDbContext db,
+        IAuditService audit,
         CancellationToken ct)
     {
         if (request.NewPassword.Length < 8)
@@ -51,8 +57,13 @@ public static class ResetPasswordEndpoint
         await users.UpdateAsync(user, ct);
 
         await resetTokens.MarkUsedAsync(resetToken, ct);
-
         await refreshTokens.RevokeAllByUserIdAsync(user.Id, ct: ct);
+
+        var slug = user.TenantId is { } tid
+            ? await db.Tenants.AsNoTracking().Where(t => t.Id == tid).Select(t => (string?)t.Slug).FirstOrDefaultAsync(ct)
+            : null;
+        audit.Log(slug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.AuthPasswordReset,
+            AuditActorFactory.ForLogin(user.Id, user.Name, user.Role.ToString()));
 
         return Results.NoContent();
     }

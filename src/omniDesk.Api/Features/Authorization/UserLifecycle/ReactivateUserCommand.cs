@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Authorization;
 using omniDesk.Api.Infrastructure.Persistence;
 
@@ -11,15 +13,18 @@ public class ReactivateUserCommandHandler
 {
     private readonly AppDbContext _db;
     private readonly ClaimsCache _claimsCache;
+    private readonly IAuditService _audit;
     private readonly ILogger<ReactivateUserCommandHandler> _logger;
 
     public ReactivateUserCommandHandler(
         AppDbContext db,
         ClaimsCache claimsCache,
+        IAuditService audit,
         ILogger<ReactivateUserCommandHandler> logger)
     {
         _db = db;
         _claimsCache = claimsCache;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -56,6 +61,11 @@ public class ReactivateUserCommandHandler
             await _claimsCache.InvalidateAsync(tenantSlug, user.Id, ct);
 
         _logger.LogInformation("UserReactivated {UserId} {TenantSlug}", user.Id, tenantSlug);
+
+        _audit.Log(tenantSlug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.UserReactivated,
+            AuditActorFactory.System(),
+            AuditTargetFactory.User(user.Id, user.Name));
+
         return user;
     }
 }

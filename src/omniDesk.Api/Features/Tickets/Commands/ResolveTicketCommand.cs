@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.LiveChat;
 using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Domain.WhatsApp;
 using omniDesk.Api.Features.WhatsApp.Adapters;
 using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.WebSockets;
 
@@ -14,6 +16,7 @@ public class ResolveTicketCommand(
     ITicketEventStore eventStore,
     TicketEventPublisher eventPublisher,
     ITenantSlugAccessor slugAccessor,
+    IAuditService audit,
     WhatsAppOutgoingAdapter? whatsAppOutgoing = null,
     ILogger<ResolveTicketCommand>? logger = null)
 {
@@ -31,6 +34,7 @@ public class ResolveTicketCommand(
             return (true, true, null);
 
         var now = DateTimeOffset.UtcNow;
+        var prevStatus = ticket.Status;
 
         // Compute final SLA pause if currently waiting
         if (ticket.Status == TicketStatus.WaitingClient && ticket.WaitingClientSince.HasValue)
@@ -119,6 +123,11 @@ public class ResolveTicketCommand(
         {
             // Best-effort
         }
+
+        audit.Log(tenantSlug, Guid.Empty, AuditEventNames.TicketStatusChanged,
+            new AuditActor { UserId = actorId, Role = "attendant" },
+            AuditTargetFactory.Ticket(ticket.Id, ticket.Protocol),
+            metadata: new { from = prevStatus.ToWireValue(), to = TicketStatus.Resolved.ToWireValue() });
 
         // Spec 010 Phase 9 T094 — automatic follow-up WhatsApp template send.
         // Opt-in per tenant via tenant_notification_settings.follow_up_enabled (FR-026).

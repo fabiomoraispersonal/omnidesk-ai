@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using omniDesk.Api.Domain.Agenda;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Features.Agenda.Appointments.Commands;
 using omniDesk.Api.Features.Agenda.Appointments.Queries;
 using omniDesk.Api.Features.Agenda.Validators;
 using omniDesk.Api.Infrastructure.Agenda;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Authentication;
 using omniDesk.Api.Infrastructure.Persistence;
 
@@ -107,6 +109,7 @@ public static class AppointmentsEndpoints
         ClientTypeResolver clientTypeResolver,
         ServiceRepository serviceRepo,
         AppDbContext db,
+        IAuditService audit,
         CancellationToken ct)
     {
         var validation = validator.Validate(new CreateAppointmentValidator.Request(
@@ -143,6 +146,10 @@ public static class AppointmentsEndpoints
                 ? Results.Conflict(Error(result.ErrorCode, "The requested slot is not available."))
                 : Results.UnprocessableEntity(Error(result.ErrorCode!, "Could not create appointment."));
         }
+
+        audit.Log(caller.TenantSlug, caller.TenantId ?? Guid.Empty, AuditEventNames.AppointmentCreated,
+            AuditActorFactory.FromCurrentUser(caller),
+            AuditTargetFactory.Appointment(result.Appointment!.Id));
 
         return Results.Created($"/api/appointments/{result.Appointment!.Id}",
             new { success = true, data = AppointmentDto(result.Appointment) });
@@ -184,6 +191,7 @@ public static class AppointmentsEndpoints
         Guid id,
         ICurrentUser caller,
         ConfirmAppointmentCommand command,
+        IAuditService audit,
         CancellationToken ct)
     {
         var result = await command.ExecuteAsync(id, caller.UserId.GetValueOrDefault(), ct);
@@ -195,6 +203,11 @@ public static class AppointmentsEndpoints
                 _ => Results.UnprocessableEntity(Error(result.ErrorCode!, "Cannot confirm appointment.")),
             };
         }
+
+        audit.Log(caller.TenantSlug, caller.TenantId ?? Guid.Empty, AuditEventNames.AppointmentConfirmed,
+            AuditActorFactory.FromCurrentUser(caller),
+            AuditTargetFactory.Appointment(result.Appointment!.Id));
+
         return Results.Ok(new { success = true, data = AppointmentDto(result.Appointment!) });
     }
 
@@ -206,6 +219,7 @@ public static class AppointmentsEndpoints
         ICurrentUser caller,
         CancelAppointmentCommand command,
         CancelAppointmentValidator validator,
+        IAuditService audit,
         CancellationToken ct)
     {
         var validation = validator.Validate(new CancelAppointmentValidator.Request(request.CancellationReason));
@@ -223,6 +237,12 @@ public static class AppointmentsEndpoints
                 _ => Results.UnprocessableEntity(Error(result.ErrorCode!, "Cannot cancel appointment.")),
             };
         }
+
+        audit.Log(caller.TenantSlug, caller.TenantId ?? Guid.Empty, AuditEventNames.AppointmentCancelled,
+            AuditActorFactory.FromCurrentUser(caller),
+            AuditTargetFactory.Appointment(result.Appointment!.Id),
+            metadata: new { cancelled_by = "attendant" });
+
         return Results.Ok(new { success = true, data = AppointmentDto(result.Appointment!) });
     }
 
@@ -232,6 +252,7 @@ public static class AppointmentsEndpoints
         Guid id,
         ICurrentUser caller,
         MarkNoShowCommand command,
+        IAuditService audit,
         CancellationToken ct)
     {
         var result = await command.ExecuteAsync(id, caller.UserId.GetValueOrDefault(), ct);
@@ -243,6 +264,11 @@ public static class AppointmentsEndpoints
                 _ => Results.UnprocessableEntity(Error(result.ErrorCode!, "Cannot mark appointment as no-show.")),
             };
         }
+
+        audit.Log(caller.TenantSlug, caller.TenantId ?? Guid.Empty, AuditEventNames.AppointmentNoShow,
+            AuditActorFactory.FromCurrentUser(caller),
+            AuditTargetFactory.Appointment(result.Appointment!.Id));
+
         return Results.Ok(new { success = true, data = AppointmentDto(result.Appointment!) });
     }
 

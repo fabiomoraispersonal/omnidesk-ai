@@ -19,7 +19,7 @@ O módulo de Tickets é o coração do CRM. Um ticket representa um atendimento 
 |---|---|---|---|
 | `id` | UUID | sim | PK |
 | `protocol` | varchar(20) | sim | Número único de identificação. Gerado automaticamente. Formato: `TK-YYYYMMDD-XXXXX` (ex: `TK-20260503-00042`). Imutável. |
-| `channel` | enum | sim | `live_chat` ou `whatsapp` |
+| `channel` | enum | sim | `live_chat`, `whatsapp` ou `manual` (criado pelo atendente sem conversa) |
 | `status` | enum | sim | `new`, `in_progress`, `waiting_client`, `resolved`, `cancelled`. Ver seção 3.1. |
 | `priority` | enum | sim | `low`, `normal`, `high`, `urgent`. Default: `normal` |
 | `conversation_id` | UUID | sim | FK → conversations. Conversa que originou o ticket. |
@@ -36,6 +36,11 @@ O módulo de Tickets é o coração do CRM. Um ticket representa um atendimento 
 | `sla_paused_duration_minutes` | int | sim | Tempo total (em minutos) em que o SLA de resolução ficou pausado por status `waiting_client`. Default: `0`. Somado ao prazo final para cálculo real do tempo restante. |
 | `waiting_client_since` | timestamptz | não | Momento em que o status mudou para `waiting_client`. `null` se não estiver neste status. Usado para calcular a pausa do SLA. |
 | `has_reminder_alert` | boolean | sim | `true` quando o envio automático de lembrete de agendamento falhou. Exibe badge ⚠️ no card do Kanban. Resetado para `false` após reenvio bem-sucedido ou encerramento do ticket. Default: `false`. |
+| `number` | bigint | sim | Sequencial interno por tenant (`ticket_number_seq`). Identificador numérico legível para uso interno. **Não é o protocolo público.** |
+| `assigned_at` | timestamptz | não | Momento em que o atendente atual foi atribuído ao ticket. |
+| `sla_started_at` | timestamptz | não | Momento de início do contrato de SLA (preservado do scaffold Spec 005; usado quando o prazo SLA é calculado a partir de um momento diferente da criação do ticket). |
+| `search_vector` | tsvector | não | Coluna GENERATED pelo Postgres para full-text search. Calculada automaticamente. **Read-only do lado C#.** |
+| `deleted_at` | timestamptz | não | Soft delete. `null` em todos os tickets V1 — tickets são cancelados, nunca deletados. Reservado para limpeza futura. |
 | `created_at` | timestamptz | sim | — |
 | `updated_at` | timestamptz | sim | — |
 
@@ -369,6 +374,7 @@ GET    /api/tickets/{id}/notes                   → listar anotações internas
 GET    /api/tickets/{id}/events                  → histórico de eventos do ticket
 POST   /api/tickets/{id}/resolve                 → encerrar ticket
 POST   /api/tickets/{id}/cancel                  → cancelar ticket
+POST   /api/tickets/{ticketId}/send-template     → enviar template WhatsApp aprovado (atendente humano; IA bloqueada)
 
 # Pipelines (configuração)
 GET    /api/pipelines                            → listar pipelines do tenant
@@ -438,3 +444,47 @@ GET    /api/contacts/{id}/conversations          → conversas do contato (pagin
 | P3 | Cada coluna mapeia para exatamente um status — sem duplicatas por pipeline | v1.1 |
 | P4 | Deduplicação automática de contatos por e-mail (P1) ou telefone normalizado (P2) | v1.1 |
 | P5 | Perfil do contato com histórico paginado de tickets e conversas; atendente acessa histórico completo | v1.1 |
+
+---
+
+## 11. Códigos de Erro Semânticos
+
+Todos os erros seguem o envelope `{ "success": false, "error": { "code": "...", "message": "..." } }`.
+
+### Tickets
+
+| Código | HTTP | Descrição |
+|---|---|---|
+| `TICKET_NOT_FOUND` | 404 | Ticket não existe no tenant |
+| `TICKET_ALREADY_CLOSED` | 409 | Tentativa de operar em ticket com status `resolved` ou `cancelled` |
+| `TICKET_NOT_ASSIGNED_TO_USER` | 403 | Atendente tentou enviar template em ticket não atribuído a ele |
+| `TICKET_HAS_NO_CONVERSATION` | 422 | Ticket manual sem `conversation_id`; impossível enviar template |
+| `FORBIDDEN_DEPARTMENT` | 403 | Atendente tentou acessar ticket de departamento ao qual não pertence |
+| `DEPARTMENT_NOT_FOUND` | 404 | Departamento informado na criação manual não existe |
+| `NOT_AN_ATTENDANT` | 403 | Usuário não tem role `attendant` para a operação |
+
+### Contatos
+
+| Código | HTTP | Descrição |
+|---|---|---|
+| `CONTACT_NOT_FOUND` | 404 | Contato não existe no tenant |
+
+### Pipelines
+
+| Código | HTTP | Descrição |
+|---|---|---|
+| `PIPELINE_NOT_FOUND` | 404 | Pipeline não existe no tenant |
+
+### Templates WhatsApp (`/send-template`)
+
+| Código | HTTP | Descrição |
+|---|---|---|
+| `TEMPLATE_NOT_FOUND` | 404 | Template não existe ou não pertence ao tenant |
+| `TEMPLATE_NOT_APPROVED` | 422 | Template existe mas não está com status `approved` na Meta |
+| `TEMPLATE_VARIABLES_MISSING` | 422 | Variáveis obrigatórias do template não foram fornecidas |
+| `CONVERSATION_NOT_FOUND` | 404 | Conversa vinculada ao ticket não encontrada |
+| `CONVERSATION_CLOSED` | 409 | Conversa já encerrada; impossível enviar |
+| `WA_OUTSIDE_WINDOW` | 422 | Janela de 24h do WhatsApp expirada; necessário template aprovado |
+| `WA_AI_TEMPLATE_FORBIDDEN` | 403 | IA tentou enviar template — operação exclusiva de atendente humano |
+| `WRONG_CHANNEL` | 422 | Ticket não é do canal WhatsApp; templates só se aplicam a WhatsApp |
+| `INVALID_CONTENT` | 422 | Conteúdo do template inválido |

@@ -28,8 +28,11 @@ using omniDesk.Api.Features.AiAgents.Playground;
 using omniDesk.Api.Features.AiAgents.Variables;
 using omniDesk.Api.Features.AiSettings;
 using omniDesk.Api.Features.AiSuggestions;
+using omniDesk.Api.Features.Audit;
+using omniDesk.Api.Features.ApiKeys;
 using omniDesk.Api.Features.Attendants;
 using omniDesk.Api.Infrastructure.ActivityLogs;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.AgentRuntime;
 using omniDesk.Api.Infrastructure.AiAgents;
 using omniDesk.Api.Infrastructure.OpenAi;
@@ -164,6 +167,15 @@ if (builder.Environment.IsDevelopment())
 }
 builder.Services.AddScoped<OpenAiKeyResolver>();
 builder.Services.AddScoped<AgentActivityLogger>();
+// Spec 012 — Audit
+builder.Services.AddScoped<AuditMongoRepository>();
+builder.Services.AddScoped<ApiKeyRepository>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<AuditMongoIndexInitializer>();
+builder.Services.AddScoped<omniDesk.Api.Features.Audit.GetAuditLogsHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.ApiKeys.CreateApiKeyHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.ApiKeys.ListApiKeysHandler>();
+builder.Services.AddScoped<omniDesk.Api.Features.ApiKeys.RevokeApiKeyHandler>();
 builder.Services.AddScoped<RetryPolicy>();
 builder.Services.AddScoped<PromptVariableSubstitutor>();
 builder.Services.AddScoped<HandoffKeywordDetector>();
@@ -494,7 +506,20 @@ RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.NotificationArchiverJo
     job => job.RunAsync(CancellationToken.None),
     "0 3 * * *");
 
+// Spec 012 — Audit retention: 1st of each month at 2 AM UTC. Removes logs older than 12 months.
+RecurringJob.AddOrUpdate<omniDesk.Api.Infrastructure.Jobs.AuditRetentionJob>(
+    "audit-retention",
+    job => job.RunAsync(CancellationToken.None),
+    "0 2 1 * *");
+
 await app.SeedDatabaseAsync();
+
+// Spec 012 — Audit MongoDB indexes (idempotent, best-effort).
+using (var initScope = app.Services.CreateScope())
+{
+    var indexInit = initScope.ServiceProvider.GetRequiredService<AuditMongoIndexInitializer>();
+    await indexInit.InitializeAsync();
+}
 
 // Spec 010 US4 T079 — restore per-tenant appointment-reminder cron jobs on startup.
 // Idempotent: AddOrUpdate replaces existing definitions; RemoveIfExists is a no-op when absent.
@@ -705,6 +730,18 @@ app.Map("/ws/crm",
         await endpoint.HandleAsync(ctx, ct);
     })
     .RequireAuthorization();
+
+// Spec 012 US2 — Audit logs query (tenant_admin + API Key)
+var auditLogs = api.MapGroup("/audit-logs")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+auditLogs.MapAuditEndpoints();
+
+// Spec 012 US4 — API Keys management (tenant_admin only)
+var apiKeys = api.MapGroup("/api-keys")
+    .RequireAuthorization()
+    .AddEndpointFilter<ImpersonationAuditFilter>();
+apiKeys.MapApiKeyEndpoints();
 
 app.Run();
 

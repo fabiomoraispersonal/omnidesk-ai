@@ -81,6 +81,8 @@ public class TenantSchemaFixture : IAsyncLifetime
             "pipeline_columns", "pipelines",
             "attendant_status", "attendant_departments",
             "canned_responses", "attendants", "departments",
+            // Spec 012 — api_keys
+            "api_keys",
         };
         foreach (var t in tables)
         {
@@ -138,6 +140,8 @@ public class TenantSchemaFixture : IAsyncLifetime
             "Add_Agenda_SchedulesAndBlocks.sql",
             "Add_Agenda_Appointments.sql",
             "Add_Agenda_Settings.sql",
+            // Spec 012 — api_keys
+            "Add_ApiKeys.sql",
         };
         foreach (var name in tenantMigrations)
         {

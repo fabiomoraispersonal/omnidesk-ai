@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using omniDesk.Api.Domain.Agenda;
 using omniDesk.Api.Features.Agenda.Availability;
+using omniDesk.Api.Features.Agenda.Professionals.Commands;
+using omniDesk.Api.Features.Agenda.Services.Commands;
 using omniDesk.Api.Infrastructure.Agenda;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Tests.Helpers;
@@ -40,9 +42,9 @@ public class AvailabilityEndpointContractTests : IAsyncLifetime
         var profRepo = new ProfessionalRepository(_db!);
         var schRepo  = new WeeklyScheduleRepository(_db!);
 
-        var svc  = await new Features.Agenda.Services.Commands.CreateServiceCommand(svcRepo)
+        var svc  = await new CreateServiceCommand(svcRepo)
             .ExecuteAsync("Consulta", null, null, 30, null, false, default);
-        var prof = await new Features.Agenda.Professionals.Commands.CreateProfessionalCommand(profRepo)
+        var prof = await new CreateProfessionalCommand(profRepo)
             .ExecuteAsync("Dr. Slot", null, null, null, default);
 
         await schRepo.ReplaceAllAsync(prof.Id, new[]
@@ -57,7 +59,7 @@ public class AvailabilityEndpointContractTests : IAsyncLifetime
         }, default);
 
         // Link service to professional
-        await new Features.Agenda.Professionals.Commands.UpdateProfessionalServicesCommand(profRepo)
+        await new UpdateProfessionalServicesCommand(profRepo)
             .ExecuteAsync(prof.Id, new[] { svc.Id }, default);
 
         var sbRepo   = new ScheduleBlockRepository(_db!);

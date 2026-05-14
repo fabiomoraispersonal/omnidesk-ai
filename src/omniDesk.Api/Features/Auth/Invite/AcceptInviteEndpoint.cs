@@ -1,6 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.InviteTokens;
 using omniDesk.Api.Domain.RefreshTokens;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
+using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Security;
 using omniDesk.Api.Features.Auth.Login;
 
@@ -27,6 +31,8 @@ public static class AcceptInviteEndpoint
         IRefreshTokenRepository refreshTokens,
         PasswordHasher hasher,
         JwtService jwt,
+        AppDbContext db,
+        IAuditService audit,
         CancellationToken ct)
     {
         if (request.Password.Length < 8)
@@ -68,6 +74,12 @@ public static class AcceptInviteEndpoint
 
         user.LastLoginAt = DateTimeOffset.UtcNow;
         await users.UpdateAsync(user, ct);
+
+        var slug = user.TenantId is { } tid
+            ? await db.Tenants.AsNoTracking().Where(t => t.Id == tid).Select(t => (string?)t.Slug).FirstOrDefaultAsync(ct)
+            : null;
+        audit.Log(slug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.UserInviteAccepted,
+            AuditActorFactory.ForLogin(user.Id, user.Name, user.Role.ToString()));
 
         return Results.Ok(new LoginResponse(
             accessToken,

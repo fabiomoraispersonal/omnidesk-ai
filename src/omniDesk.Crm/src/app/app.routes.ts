@@ -146,5 +146,19 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/agenda-settings/agenda-settings.routes').then(m => m.agendaSettingsRoutes),
   },
+  // Spec 012 US2 — Audit activity (tenant_admin only)
+  {
+    path: 'configuracoes/atividade-recente',
+    canActivate: [roleGuard('tenant_admin')],
+    loadChildren: () =>
+      import('./features/audit/audit.routes').then(m => m.auditRoutes),
+  },
+  // Spec 012 US4 — API Keys management (tenant_admin only)
+  {
+    path: 'configuracoes/integrações',
+    canActivate: [roleGuard('tenant_admin')],
+    loadChildren: () =>
+      import('./features/settings/api-keys/api-keys.routes').then(m => m.apiKeysRoutes),
+  },
   { path: '', redirectTo: 'kanban', pathMatch: 'full' },
 ];

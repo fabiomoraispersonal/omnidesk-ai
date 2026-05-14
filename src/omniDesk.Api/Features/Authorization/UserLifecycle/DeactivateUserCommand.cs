@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Authorization;
 using omniDesk.Api.Infrastructure.Persistence;
 using StackExchange.Redis;
@@ -14,6 +16,7 @@ public class DeactivateUserCommandHandler
     private readonly LastTenantAdminGuard _guard;
     private readonly ClaimsCache _claimsCache;
     private readonly IConnectionMultiplexer _redis;
+    private readonly IAuditService _audit;
     private readonly ILogger<DeactivateUserCommandHandler> _logger;
 
     public DeactivateUserCommandHandler(
@@ -21,12 +24,14 @@ public class DeactivateUserCommandHandler
         LastTenantAdminGuard guard,
         ClaimsCache claimsCache,
         IConnectionMultiplexer redis,
+        IAuditService audit,
         ILogger<DeactivateUserCommandHandler> logger)
     {
         _db = db;
         _guard = guard;
         _claimsCache = claimsCache;
         _redis = redis;
+        _audit = audit;
         _logger = logger;
     }
 
@@ -81,6 +86,10 @@ public class DeactivateUserCommandHandler
 
         _logger.LogInformation("UserDeactivated {UserId} {TenantSlug} {Role}",
             user.Id, tenantSlug, user.Role);
+
+        _audit.Log(tenantSlug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.UserDeactivated,
+            AuditActorFactory.System(),
+            AuditTargetFactory.User(user.Id, user.Name));
 
         return user;
     }

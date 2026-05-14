@@ -118,7 +118,7 @@ public class AgentTransbordoMessageTests : IAsyncLifetime
         var ticket = new StubTicketCreationGateway(_db!, _redis!, slug,
             NullLogger<StubTicketCreationGateway>.Instance);
         var resolver = new AgentResolver(_db!);
-        return new ToolCallDispatcher(_db!, conv, ticket, resolver,
+        return new ToolCallDispatcher(_db!, conv, ticket, resolver, null!, null!,
             NullLogger<ToolCallDispatcher>.Instance);
     }
 

@@ -476,9 +476,10 @@ Respeite o grafo de dependências definido em `docs/DEPENDENCIES.md`.
 <!-- SPECKIT START -->
 ## Active Spec
 
-Nenhuma spec ativa no momento. Próxima: **Spec 012 — Audit e Observabilidade**.
+Nenhuma spec ativa no momento. Próxima: definir Spec 013.
 
 Specs implementadas:
+- **Spec 012 — Auditoria e Observabilidade**: ✅ implementado (42/42 tasks). Logs MongoDB append-only (29 eventos: auth, users, tickets, appointments, tenant config, AI agents), `IAuditService` fire-and-forget, API REST paginada (`GET /api/audit-logs`), autenticação dupla JWT+ApiKey, gestão de API Keys (create/list/revoke, limite 5 ativas), CRM UI "Atividade Recente" (tenant_admin), job Hangfire retenção 12 meses, testes de integração Testcontainers. **Pendente**: QS-1 a QS-7 (requer stack local rodando).
 - **Spec 011 — Agenda e Catálogo de Serviços**: ✅ implementado (147/147 tasks). Catálogo de serviços, profissionais, disponibilidade, agendamentos, tool calls IA (`check_availability`, `create_appointment`), cancelamento via WhatsApp "NÃO" (`ReminderResponseInterpreter`), `agenda_settings` singleton. `IAppointmentReadRepository` (Spec 010) agora lê a tabela real.
 - **Spec 010 — Notifications**: ✅ implementado (107/107 tasks). Bell + push (8 event types), preferências, SLA/queue monitors, AppointmentReminderJob, follow-up automático, archiver 90d, métricas. `IAppointmentReadRepository` graceful-empty até Spec 011 mergear — agora destravado.
 - **Spec 009 — Tickets/CRM**: ✅ implementado. **Dívida aberta**: T184 (atualizar `docs/specs/09-tickets.spec.md`) e T188 (rodar QS1–QS13 + `quickstart-evidences.md`), reabertas em 2026-05-12.

@@ -1,5 +1,9 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Users;
+using omniDesk.Api.Infrastructure.Audit;
+using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.Security;
 
 namespace omniDesk.Api.Features.Me;
@@ -20,6 +24,8 @@ public static class ChangePasswordEndpoint
         ClaimsPrincipal principal,
         IUserRepository users,
         PasswordHasher hasher,
+        AppDbContext db,
+        IAuditService audit,
         CancellationToken ct)
     {
         if (request.NewPassword.Length < 8)
@@ -42,6 +48,12 @@ public static class ChangePasswordEndpoint
 
         user.PasswordHash = await hasher.HashAsync(request.NewPassword);
         await users.UpdateAsync(user, ct);
+
+        var slug = user.TenantId is { } tid
+            ? await db.Tenants.AsNoTracking().Where(t => t.Id == tid).Select(t => (string?)t.Slug).FirstOrDefaultAsync(ct)
+            : null;
+        audit.Log(slug ?? string.Empty, user.TenantId ?? Guid.Empty, AuditEventNames.AuthPasswordChanged,
+            AuditActorFactory.ForLogin(user.Id, user.Name, user.Role.ToString()));
 
         return Results.NoContent();
     }

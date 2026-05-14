@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Authorization;
 using omniDesk.Api.Domain.Tenants;
 using omniDesk.Api.Features.Authorization.Impersonation;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Persistence;
 
 namespace omniDesk.Api.Features.Admin.Impersonate;
@@ -32,6 +34,7 @@ public static class ImpersonateEndpoint
         AppDbContext db,
         ImpersonationTokenIssuer issuer,
         IConfiguration config,
+        IAuditService audit,
         ILogger<ImpersonateResponse> logger,
         CancellationToken ct)
     {
@@ -65,6 +68,10 @@ public static class ImpersonateEndpoint
         logger.LogInformation(
             "ImpersonationTokenIssued {TenantSlug} {TenantId} {Jti} {ExpiresAt}",
             slug, tenant.Id, token.Jti, token.ExpiresAt);
+
+        audit.Log(slug, tenant.Id, AuditEventNames.AuthImpersonationStarted,
+            new AuditActor { UserId = null, Role = "saas_admin", ImpersonatedBy = "saas_admin" },
+            AuditTargetFactory.Tenant(tenant.Id, slug));
 
         var redirectUrl = $"{crmBaseUrl}/impersonate?token={Uri.EscapeDataString(token.Token)}";
         return Results.Ok(new ImpersonateResponse(token.Token, token.ExpiresAt, redirectUrl, token.Jti));

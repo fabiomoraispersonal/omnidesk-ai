@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Tickets;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Authentication;
 using omniDesk.Api.Infrastructure.Distribution;
 using omniDesk.Api.Infrastructure.Persistence;
@@ -28,6 +30,7 @@ public static class PickupTicketEndpoint
         TicketLock ticketLock,
         ICurrentUser currentUser,
         DepartmentEventBus bus,
+        IAuditService audit,
         CancellationToken ct)
     {
         if (currentUser.UserId is not Guid userId)
@@ -120,6 +123,10 @@ public static class PickupTicketEndpoint
         ticket.UpdatedAt = nowUtc;
         if (ticket.SlaStartedAt is null) ticket.SlaStartedAt = nowUtc;
         await db.SaveChangesAsync(ct);
+
+        audit.Log(slug, Guid.Empty, AuditEventNames.TicketAssigned,
+            new AuditActor { UserId = userId, Role = "attendant" },
+            AuditTargetFactory.Ticket(ticket.Id, ticket.Protocol));
 
         if (hadPrevious)
         {

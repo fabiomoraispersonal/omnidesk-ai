@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using omniDesk.Api.Domain.Audit;
 using omniDesk.Api.Domain.Tickets;
 using omniDesk.Api.Features.Tickets.Validators;
 using omniDesk.Api.Infrastructure.AgentRuntime;
+using omniDesk.Api.Infrastructure.Audit;
 using omniDesk.Api.Infrastructure.Persistence;
 using omniDesk.Api.Infrastructure.WebSockets;
 
@@ -11,7 +13,8 @@ public class ChangeTicketStatusCommand(
     AppDbContext db,
     ITicketEventStore eventStore,
     TicketEventPublisher eventPublisher,
-    ITenantSlugAccessor slugAccessor)
+    ITenantSlugAccessor slugAccessor,
+    IAuditService audit)
 {
     public async Task<(bool Found, bool Forbidden, string? Error, object? Data)> ExecuteAsync(
         Guid ticketId,
@@ -92,6 +95,11 @@ public class ChangeTicketStatusCommand(
         {
             // Best-effort side-effects — do not revert the DB change
         }
+
+        audit.Log(tenantSlug, Guid.Empty, AuditEventNames.TicketStatusChanged,
+            new AuditActor { UserId = actorId, Role = "attendant" },
+            AuditTargetFactory.Ticket(ticket.Id, ticket.Protocol),
+            metadata: new { from = prevStatus.ToWireValue(), to = targetStatus.Value.ToWireValue() });
 
         return (true, false, null, new
         {
